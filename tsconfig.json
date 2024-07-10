@@ -2,11 +2,17 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
+    "allowJs": true,
     "skipLibCheck": true,
-    "outDir": "./dist"
+    "noImplicitReturns": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "inlineSources": true
   },
-  "include": ["src/**/*.ts", "*/.ts", "*/.tsx",],
+  "include": ["src/**/*.ts", "*/.ts", "*/.tsx", "**/*.ts",
+  "./types/types.d.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 import { Client, FlightOfferSearchParams } from 'amadeus';
 
 class AmadeusClient {
-  private client: Client;
+  private client:Client;
 
   constructor() {
     this.client = new Client({
@@ -10,7 +10,7 @@ class AmadeusClient {
     });
   }
 
-  async searchFlights(params: FlightOfferSearchParams): Promise<any> {
+  async searchFlights(params:FlightOfferSearchParams): Promise<any> {
     try {
       const response = await this.client.shopping.flightOffersSearch.get(params);
       return response.data;
