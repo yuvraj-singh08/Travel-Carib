@@ -1,5 +1,6 @@
-import Amadus, { Client, FlightOfferSearchParams } from 'amadeus';
+import Amadus, { Client } from 'amadeus';
 import config from '../configs/config';
+import { FlightOfferSearchParams } from '../../types/amadeusTypes';
 
 class AmadeusClient {
   private client: Client;
@@ -27,10 +28,15 @@ class AmadeusClient {
 
   async searchFlights(params: FlightOfferSearchParams): Promise<any> {
     try {
-      const response = await this.client.shopping.flightOffersSearch.get(params);
+      const response = await this.client.shopping.flightOffersSearch.get({
+        originLocationCode: params.locationDeparture,
+        destinationLocationCode: params.locationArrival,
+        departureDate: params.departure,
+        adults: "1"
+      });
       return response.data;
     } catch (error) {
-      throw new Error('Error fetching flights from Amadeus: ' + (error as Error).message);
+      throw error;
     }
   }
 }
