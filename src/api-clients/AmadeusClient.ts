@@ -40,35 +40,29 @@ class AmadeusClient {
     }
   }
   
-  async flightPrice (params: FlightOfferSearchParams): Promise<any> {
-    
+  async flightPrice(params: FlightOfferSearchParams): Promise<any> {
     try {
-      // Perform flight offers search
-      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
-        originLocationCode: params.locationDeparture,
-        destinationLocationCode: params.locationArrival,
-        departureDate: params.departure,
-        adults: 1
-      });
-      const flightOffer = flightOffersSearchResponse.data[0]; // This method will select the first offer always
-      // The below mentioned method will select the lowest price from the flight offer search
-  
-      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
-  
-      // Perform flight pricing
-      const response = await this.client.shopping.flightOffers.pricing.post(
-        JSON.stringify({
-          'data': {
-            'type': 'flight-offers-pricing',
-            'flightOffers': [flightOffer]
-          }
-        }), { include: 'credit-card-fees,detailed-fare-rules' }
-      );
-  
-      // Send response back to client
-      return response.data
+        const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+            originLocationCode: params.locationDeparture,
+            destinationLocationCode: params.locationArrival,
+            departureDate: params.departure,
+            adults: 1
+        });
+
+        const flightOffer = flightOffersSearchResponse.data[0];
+        const response = await this.client.shopping.flightOffers.pricing.post(
+            {
+                'data': {
+                    'type': 'flight-offers-pricing',
+                    'flightOffers': [flightOffer]
+                }
+            },
+            { include: 'credit-card-fees,detailed-fare-rules' }
+        );
+
+        return response.data;
     } catch (error) {
-      throw error;
+        throw error;
     }
   }
 }
