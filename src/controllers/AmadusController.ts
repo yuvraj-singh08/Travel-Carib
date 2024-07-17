@@ -36,19 +36,18 @@ class AmadusController {
     }
     async flightPrice(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const flight = {
-                locationDeparture: req.body.locationDeparture,
-                locationArrival: req.body.locationArrival,
-                departure: req.body.departure,
-            };
-
-            const price = await this.amadusClient.flightPrice(flight);
-            res.status(200).json(price);
+          const { departure, locationDeparture, locationArrival } = req.body;
+    
+          if (!departure || !locationDeparture || !locationArrival) {
+            throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
+          }
+    
+          const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival });
+          res.status(200).json(response);
         } catch (error) {
-            next(error);
+          next(error);
         }
-    }
-
+      }
 }
 
 export default AmadusController;

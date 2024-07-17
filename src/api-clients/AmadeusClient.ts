@@ -39,30 +39,29 @@ class AmadeusClient {
       throw error;
     }
   }
-  
+
   async flightPrice(params: FlightOfferSearchParams): Promise<any> {
     try {
-        const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
-            originLocationCode: params.locationDeparture,
-            destinationLocationCode: params.locationArrival,
-            departureDate: params.departure,
-            adults: 1
-        });
+      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+        originLocationCode: params.locationDeparture,
+        destinationLocationCode: params.locationArrival,
+        departureDate: params.departure,
+        adults: "1"
+      });
+      const flightOffer = flightOffersSearchResponse.data[0];
+      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
+      const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
+        JSON.stringify({
+          'data': {
+            'type': 'flight-offers-pricing',
+            'flightOffers': [flightOffer]
+          }
+        }), { include: 'credit-card-fees,detailed-fare-rules' }
+      );
 
-        const flightOffer = flightOffersSearchResponse.data[0];
-        const response = await this.client.shopping.flightOffers.pricing.post(
-            {
-                'data': {
-                    'type': 'flight-offers-pricing',
-                    'flightOffers': [flightOffer]
-                }
-            },
-            { include: 'credit-card-fees,detailed-fare-rules' }
-        );
-
-        return response.data;
+      return flightPricingResponse.data;
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
 }
