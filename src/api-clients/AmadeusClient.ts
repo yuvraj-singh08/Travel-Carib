@@ -32,7 +32,7 @@ class AmadeusClient {
         originLocationCode: params.locationDeparture,
         destinationLocationCode: params.locationArrival,
         departureDate: params.departure,
-        adults: "1"
+        adults: params.adults,
       });
       return response.data;
     } catch (error) {
@@ -46,7 +46,7 @@ class AmadeusClient {
         originLocationCode: params.locationDeparture,
         destinationLocationCode: params.locationArrival,
         departureDate: params.departure,
-        adults: "1"
+        adults: params.adults,
       });
       const flightOffer = flightOffersSearchResponse.data[0];
       // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);

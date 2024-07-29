@@ -15,7 +15,7 @@ class AmadusController {
         try {
             const { query } = req.params;
             const response = await this.amadusClient.citySearch(query, "CITY,AIRPORT");
-            res.json({ data: response });
+            res.json({ data: JSON.parse(response) });
         } catch (error) {
             console.log(error);
             next(error);
@@ -24,11 +24,11 @@ class AmadusController {
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const {departure, locationDeparture, locationArrival} = req.body;
+            const {departure, locationDeparture, locationArrival, adults} = req.body;
             if(departure === undefined || locationArrival === undefined || locationDeparture === undefined){
                 throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
             }
-            const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival });
+            const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival, adults });
             res.status(200).json(response);
         } catch (error) {
             next(error);
@@ -36,13 +36,13 @@ class AmadusController {
     }
     async flightPrice(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-          const { departure, locationDeparture, locationArrival } = req.body;
+          const { departure, locationDeparture, locationArrival, adults} = req.body;
     
           if (!departure || !locationDeparture || !locationArrival) {
             throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
           }
     
-          const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival });
+          const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival, adults });
           res.status(200).json(response);
         } catch (error) {
           next(error);
