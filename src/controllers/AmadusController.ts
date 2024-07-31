@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import AmadeusClient from "../api-clients/AmadeusClient";
+import { parseFlightOfferSearchResponse } from "../utils/amadeus";
 
 class AmadusController {
     private amadusClient;
@@ -29,7 +30,8 @@ class AmadusController {
                 throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
             }
             const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival, adults });
-            res.status(200).json(response);
+            const parsedResponse = parseFlightOfferSearchResponse(response);
+            res.status(200).json(parsedResponse);
         } catch (error) {
             next(error);
         }

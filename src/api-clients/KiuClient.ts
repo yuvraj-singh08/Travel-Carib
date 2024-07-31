@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { getDateString } from '../utils/kiu';
-import { create } from 'xmlbuilder2';
+import { buildFlightSearchRequest, getDateString, parseFlightSearchResponse } from '../utils/kiu';
 import xml2js from 'xml2js';
 import { FlightSearchParams } from '../../types/kiuTypes';
 
@@ -16,7 +15,7 @@ class KiuClient {
       baseURL: `${baseURL}`, // Base URL for all requests
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded' // Default content type
-      }
+      },
     })
 
     this.searchFlights = this.searchFlights.bind(this);
@@ -25,57 +24,18 @@ class KiuClient {
   async searchFlights(params: FlightSearchParams): Promise<any> {
     try {
       const DepartureDate = getDateString(params.DepartureDate)
-      const xmlObj = {
-        KIU_AirAvailRQ: {
-          '@EchoToken': '1',
-          '@Target': 'Production',
-          '@Version': '3.0',
-          '@SequenceNmbr': '1',
-          '@PrimaryLangID': 'en-us',
-          '@DirectFlightsOnly': 'false',
-          '@MaxResponses': '10',
-          '@CombinedItineraries': 'false',
-          POS: {
-            Source: {
-              '@AgentSine': 'PTYS3653X',
-              '@TerminalID': 'PTYS36504R',
-              '@ISOCountry': 'PA'
-            }
-          },
-          OriginDestinationInformation: {
-            DepartureDateTime: DepartureDate,
-            OriginLocation: {
-              '@LocationCode': params.OriginLocation
-            },
-            DestinationLocation: {
-              '@LocationCode': params.DestinationLocation
-            }
-          },
-          TravelPreferences: {
-            '@MaxStopsQuantity': '4'
-          },
-          TravelerInfoSummary: {
-            AirTravelerAvail: {
-              PassengerTypeQuantity: {
-                '@Code': 'ADT',
-                '@Quantity': params.Passengers
-              }
-            }
-          }
-        }
-      }
-      const doc = create(xmlObj);
-      const xml = doc.end({ prettyPrint: true });
+      const requestXML =  buildFlightSearchRequest({...params, DepartureDate: DepartureDate});
       const response = await this.axiosInstance.post('', {
-        user: "MYDESTINYPANAMA",
-        password: "!%XQJ7MB3969J*Qn",
-        request: xml
+        user: process.env.KIU_USER,
+        password: process.env.KIU_PASSWORD,
+        request: requestXML
       })
       const parser = new xml2js.Parser();
-      const parsedResponse = await parser.parseStringPromise(response.data);
+      const jsonResponse = await parser.parseStringPromise(response.data);
+      const parsedResponse = await parseFlightSearchResponse(jsonResponse);
       return parsedResponse;
     } catch (error) {
-      throw new Error('Error fetching flights from KIU: ' + (error as Error).message);
+      throw error;
     }
   }
 }
