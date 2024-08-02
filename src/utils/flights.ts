@@ -87,8 +87,12 @@ export const getRoute = (segment1: DuffelResponse<OfferRequest>, segment2: Duffe
                     layovers: segment1Offer?.slices[0]?.destination,
                     departureTime,
                     arrivalTime,
-                    duration: diffInHours
-                });
+                    duration: diffInHours ,
+                    segments: {
+                        segment1: segment1Offer?.slices[0]?.segments,  
+                        segment2: segment2Offer?.slices[0]?.segments
+                    }
+            });
             }
         });
     });
