@@ -3,4 +3,5 @@ export type FlightOfferSearchParams = {
     arrival: string,
     locationDeparture: string,
     locationArrival: string,
+    adults: string,
 }

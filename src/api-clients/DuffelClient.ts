@@ -1,10 +1,29 @@
 import { Duffel } from '@duffel/api';
+import { CreateOfferRequest } from '@duffel/api/types';
 
 class DuffelClient {
   private client: Duffel;
 
   constructor() {
-    this.client = new Duffel({ token: 'your-token' });
+    this.client = new Duffel({ token: process.env.DUFFEL_TOKEN });
+  }
+
+  async createOfferRequest(offerRequestData: CreateOfferRequest) {
+    try {
+      const createdOfferRequest = await this.client.offerRequests.create(offerRequestData);
+      return createdOfferRequest
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getOfferRequestById(id: string) {
+    try {
+      const offerRequest = await this.client.offerRequests.get(id);
+      return offerRequest;
+    } catch (error) {
+      throw error
+    }
   }
 
   async searchFlights(params: any): Promise<any> {
@@ -16,5 +35,5 @@ class DuffelClient {
     }
   }
 }
-
+export type DuffelClientInstance = InstanceType<typeof DuffelClient>;
 export default DuffelClient;

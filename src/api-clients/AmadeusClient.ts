@@ -32,9 +32,34 @@ class AmadeusClient {
         originLocationCode: params.locationDeparture,
         destinationLocationCode: params.locationArrival,
         departureDate: params.departure,
-        adults: "1"
+        adults: params.adults,
       });
       return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async flightPrice(params: FlightOfferSearchParams): Promise<any> {
+    try {
+      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+        originLocationCode: params.locationDeparture,
+        destinationLocationCode: params.locationArrival,
+        departureDate: params.departure,
+        adults: params.adults,
+      });
+      const flightOffer = flightOffersSearchResponse.data[0];
+      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
+      const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
+        JSON.stringify({
+          'data': {
+            'type': 'flight-offers-pricing',
+            'flightOffers': [flightOffer]
+          }
+        }), { include: 'credit-card-fees,detailed-fare-rules' }
+      );
+
+      return flightPricingResponse.data;
     } catch (error) {
       throw error;
     }
