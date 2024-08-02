@@ -1,96 +1,96 @@
-import axiosInstance from "./axios";
-import xml2js from "xml2js";
+import { DuffelResponse, OfferRequest } from "@duffel/api/types";
+import DuffelClient from "../api-clients/DuffelClient";
 
+const duffelClient = new DuffelClient();
 
-export const getAvailableFlights = async (data) => {
-    const {
-        from,
-        to,
-        cabinPref,
-        passengerQuantity,
-        dateString
-    } = data;
-    const response = await axiosInstance.post('', {
-        user: process.env.USERID,
-        password: process.env.PASSWORD,
-        request: `<?xml version="1.0" encoding="UTF-8"?>
-<KIU_AirAvailRQ EchoToken="1" Target="Production" Version="3.0" SequenceNmbr="1" PrimaryLangID="en-us" DirectFlightsOnly="false" MaxResponses="10" CombinedItineraries="false">
-    <POS>
-        <Source AgentSine="PTYS3653X" TerminalID="PTYS36504R" ISOCountry="PA" />
-    </POS>
-    <OriginDestinationInformation>
-        <DepartureDateTime>${dateString}</DepartureDateTime>
-        <OriginLocation LocationCode="${from}" />
-        <DestinationLocation LocationCode="${to}" />
-    </OriginDestinationInformation>
-        <TravelPreferences MaxStopsQuantity="4">
-        
-    </TravelPreferences>
-    <TravelerInfoSummary>
-        <AirTravelerAvail>
-            <PassengerTypeQuantity Code="ADT" Quantity="${passengerQuantity}" />
-        </AirTravelerAvail>
-    </TravelerInfoSummary>
-</KIU_AirAvailRQ>`
-    })
-    const parser = new xml2js.Parser();
-    const parsedResponse = await parser.parseStringPromise(response.data);
-    return parsedResponse;
-}
+export const getSegment1 = async (from: string, layovers: string[]) => {
+    try {
+        const firstHalf = layovers.map((layover) => {
+            // Assuming you have a duffelClient instance already set up
+            return duffelClient.createOfferRequest({
+                slices: [
+                    {
+                        origin: from,
+                        destination: layover,
+                        departure_date: "2024-08-14",
+                        // Optionally include return and layovers if needed
+                        // return: new Date(),
+                        // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
+                    }
+                ],
+                passengers: [{ type: "adult" }],
+                cabin_class: "economy",
+                max_connections: 2
+            });
+        });
 
-export const getFlightPrice = async (data) => {
-
-    let requestData = "";
-
-    data.map((data) => {
-        let flightSegments = "";
-        data.map((data) => {
-            flightSegments += `<FlightSegment DepartureDateTime="${data.departureDateTime}" ArrivalDateTime="${data.arrivalDateTime}" StopQuantity="0" FlightNumber="${data.flightNumber}" ResBookDesigCode="${data.bookingClassAvailable[0].resBookDesignCode}" JourneyDuration="${data.journeyDuration}"><DepartureAirport LocationCode="${data.from}"/><ArrivalAirport LocationCode="${data.to}"/><MarketingAirline Code="${data.ailinecode}"/></FlightSegment>`;
+        const offerRequests = await Promise.all(firstHalf);
+        const dataRequest = offerRequests.map((response) => {
+            return duffelClient.getOfferRequestById(response.data.id);
         })
-        requestData += `<OriginDestinationOptions><OriginDestinationOption>${flightSegments}</OriginDestinationOption></OriginDestinationOptions>`;
-    })
-    const request = `<?xml version="1.0" encoding="UTF-8"?><KIU_AirPriceRQ EchoToken="WS3DOCEXAMPLE" TimeStamp="2024-06-28T15:27:52+00:00" Target="Production" Version="3.0" SequenceNmbr="1" PrimaryLangID="en-us"><POS><Source AgentSine="PTYS3653X" TerminalID="PTYS36504R" ISOCountry="PA" ISOCurrency="USD"><RequestorID Type="5" /><BookingChannel Type="1" /></Source></POS><AirItinerary>${requestData}</AirItinerary><TravelerInfoSummary><PriceRequestInformation><TPA_Extension><TourCode Type="N" /></TPA_Extension></PriceRequestInformation><AirTravelerAvail><PassengerTypeQuantity Code="ADT" Quantity="1" /></AirTravelerAvail></TravelerInfoSummary></KIU_AirPriceRQ>`
-    console.log("Request: ");
-    console.log(request);
-    const response = await axiosInstance.post('', {
-        user: process.env.USERID,
-        password: process.env.PASSWORD,
-        request,
-    })
-    console.log("Response data: ", response.data)
-    // return response.data;
-    const parser = new xml2js.Parser();
-    const parsedResponse = await parser.parseStringPromise(response.data);
-    return parsedResponse;
+        const response = await Promise.all(dataRequest);
+        return response;
+    } catch (error) {
+        throw error
+    }
 }
 
-export const getData = (segments) => {
-    const flights = segments.map((segment, index) => {
-        const flightSegment = segment.FlightSegment;
-        const stopsDetails = flightSegment.map((data, index) => {
-            const bookingClassAvailable = data.BookingClassAvail.map((bookingClass, index) => {
-                return {
-                    resBookDesignCode: bookingClass.$.ResBookDesigCode,
-                    resBookDesignQuantity: bookingClass.$.ResBookDesigQuantity
-                }
-            })
-            return {
-                from: data.DepartureAirport[0].$.LocationCode,
-                to: data.ArrivalAirport[0].$.LocationCode,
-                ailinecode: data.MarketingAirline[0].$.CompanyShortName,
-                flightNumber: data.$.FlightNumber,
-                departureDateTime: data.$.DepartureDateTime,
-                arrivalDateTime: data.$.ArrivalDateTime,
-                journeyDuration: data.$.JourneyDuration,
-                bookingClassAvailable,
+export const getSegment2 = async (to: string, layovers: string[]) => {
+    try {
+        const firstHalf = layovers.map((layover) => {
+            // Assuming you have a duffelClient instance already set up
+            return duffelClient.createOfferRequest({
+                slices: [
+                    {
+                        origin: layover,
+                        destination: to,
+                        departure_date: "2024-08-14",
+                        // Optionally include return and layovers if needed
+                        // return: new Date(),
+                        // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
+                    }
+                ],
+                passengers: [{ type: "adult" }],
+                cabin_class: "economy",
+                max_connections: 2
+            });
+        });
+
+        const offerRequests = await Promise.all(firstHalf);
+        const dataRequest = offerRequests.map((response) => {
+            return duffelClient.getOfferRequestById(response.data.id);
+        })
+        const response = await Promise.all(dataRequest);
+        return response;
+    } catch (error) {
+        throw error
+    }
+}
+
+export const getRoute = (segment1: DuffelResponse<OfferRequest>, segment2: DuffelResponse<OfferRequest>) => {
+    const pairs = [];
+    segment1?.data?.offers?.forEach(segment1Offer => {
+        // const departureTime = offer?.slices[0]?.segments[0]?.departing_at;
+        const n = segment1Offer?.slices[0]?.segments?.length;
+        const arrivalTime = segment1Offer?.slices[0]?.segments[n - 1]?.arriving_at;
+        segment2?.data?.offers?.forEach(segment2Offer => {
+            const departureTime = segment2Offer?.slices[0]?.segments[0]?.departing_at;
+            const dateArrival = new Date(arrivalTime);
+            const dateDeparture = new Date(departureTime);
+            //@ts-ignore
+            const diffInMs = dateArrival - dateDeparture;
+            const diffInHours = diffInMs / 3600000;
+            if(diffInHours > 2){
+                pairs?.push({
+                    from: segment1Offer?.slices[0]?.origin,
+                    to: segment2Offer?.slices[0]?.destination,
+                    layovers: segment1Offer?.slices[0]?.destination,
+                    departureTime,
+                    arrivalTime,
+                    duration: diffInHours
+                });
             }
-        })
-        console.log(stopsDetails);
-        return {stopsDetails}
-    })
-    return flights;
-}
-
-export const getPriceData = (dataSegments) => {
-    
+        });
+    });
+    return pairs;
 }

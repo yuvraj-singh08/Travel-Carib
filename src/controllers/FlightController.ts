@@ -1,19 +1,26 @@
-import { Request, Response } from 'express';
-import FlightSearchService from '../services/FlightSearchService';
+import { NextFunction, Request, Response } from 'express';
+import FlightClient, { FlightClientInstance } from '../api-clients/FlightClient';
 
 class FlightController {
-  private flightSearchService: FlightSearchService;
+  private flightClient: FlightClientInstance;
 
   constructor() {
-    this.flightSearchService = new FlightSearchService();
+    this.flightClient = new FlightClient();
+    this.searchFlights = this.searchFlights.bind(this);
   }
 
-  async searchFlights(req: Request, res: Response): Promise<void> {
+  async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const flights = await this.flightSearchService.searchFlights(req.body);
-      res.json(flights);
+      const { originLocation, destinationLocation, departureDate, passengerType, returnDate, cabinClass, maxConnections } = req.body;
+      const response = await this.flightClient.flightOfferSearch({
+        originLocation,
+        destinationLocation,
+        departureDate,
+        passengerType
+      })
+      res.status(200).json(response);
     } catch (error: any) {
-      res.status(500).json({ error: (error as Error).message });
+      next(error);
     }
   }
 }

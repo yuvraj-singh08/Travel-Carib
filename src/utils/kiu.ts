@@ -53,6 +53,51 @@ export const buildFlightSearchRequest = (params: FlightSearchParams) => {
       return xml;
 }
 
+export const buildFlightPriceRequest = (params: FlightSearchParams) => {
+  const xmlObj = {
+      KIU_AirAvailRQ: {
+        '@EchoToken': '1',
+        '@Target': 'Production',
+        '@Version': '3.0',
+        '@SequenceNmbr': '1',
+        '@PrimaryLangID': 'en-us',
+        '@DirectFlightsOnly': 'false',
+        '@MaxResponses': '10',
+        '@CombinedItineraries': 'false',
+        POS: {
+          Source: {
+            '@AgentSine': process.env.AgentSine,
+            '@TerminalID': process.env.TerminalID,
+            '@ISOCountry': process.env.ISOCountry
+          }
+        },
+        OriginDestinationInformation: {
+          DepartureDateTime: params.DepartureDate,
+          OriginLocation: {
+            '@LocationCode': params.OriginLocation
+          },
+          DestinationLocation: {
+            '@LocationCode': params.DestinationLocation
+          }
+        },
+        TravelPreferences: {
+          '@MaxStopsQuantity': '4'
+        },
+        TravelerInfoSummary: {
+          AirTravelerAvail: {
+            PassengerTypeQuantity: {
+              '@Code': 'ADT',
+              '@Quantity': params.Passengers
+            }
+          }
+        }
+      }
+    }
+    const doc = create(xmlObj);
+    const xml = doc.end({ prettyPrint: true });
+    return xml;
+}
+
 export const parseFlightSearchResponse = (jsonResponse: any) => {
     const segments = jsonResponse?.KIU_AirAvailRS?.OriginDestinationInformation[0]?.OriginDestinationOptions[0]?.OriginDestinationOption;
     if(segments === undefined) {
@@ -76,7 +121,7 @@ export const parseFlightSearchResponse = (jsonResponse: any) => {
                 arrivalDateTime: data?.$?.ArrivalDateTime,
                 journeyDuration: data?.$?.JourneyDuration,
                 bookingClassAvailable,
-            }
+            }   
         })
         console.log(stopsDetails);
         return {stopsDetails}
