@@ -71,6 +71,8 @@ export const getRoute = (segment1: DuffelResponse<OfferRequest>, segment2: Duffe
     const pairs = [];
     segment1?.data?.offers?.forEach(segment1Offer => {
         // const departureTime = offer?.slices[0]?.segments[0]?.departing_at;
+        console.log("Start of getRoute", (new Date()))
+
         const n = segment1Offer?.slices[0]?.segments?.length;
         const arrivalTime = segment1Offer?.slices[0]?.segments[n - 1]?.arriving_at;
         segment2?.data?.offers?.forEach(segment2Offer => {
@@ -96,5 +98,6 @@ export const getRoute = (segment1: DuffelResponse<OfferRequest>, segment2: Duffe
             }
         });
     });
-    return pairs;
+        console.log("End of getRoute", (new Date()))
+        return pairs;
 }

@@ -8,6 +8,7 @@ dotenv.config()
 import queryRoutes from './src/routes/queryRoutes';
 import kiuRoutes from './src/routes/kiuRoutes';
 import flightRoutes from './src/routes/flightRoutes';
+import duffelRoutes from './src/routes/duffelRoutes';
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 app.use('/', queryRoutes)
 app.use('/kiu', kiuRoutes);
 app.use('/flight', flightRoutes);
+app.use('/duffel', duffelRoutes);
 
 const PORT = process.env.PORT || 8080;
 

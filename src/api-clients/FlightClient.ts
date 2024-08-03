@@ -19,16 +19,55 @@ class FlightClient {
                 if (flight.from === params.originLocation && flight.to === params.destinationLocation)
                     return true;
             })
-            const [segment1, segment2] = await Promise.all([
+            if(!(flights.length>0)){
+                const offer = await this.duffelClient.createOfferRequest({
+                    slices: [
+                        {
+                            origin: params.originLocation,
+                            destination: params.destinationLocation,
+                            departure_date: params.departureDate,
+                            // Optionally include return and layovers if needed
+                            // return: new Date(),
+                            // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
+                        }
+                    ],
+                    passengers: [{ type: "adult" }],
+                    cabin_class: "economy",
+                    max_connections: 2
+                })
+                const directResults = await this.duffelClient.getOfferRequestById(offer.data.id)
+                return directResults
+            }
+            // const ret = await this.getSegment1(flights[0].from, flights[0].layovers)
+            // return ret
+            const [segment1, segment2, offer] = await Promise.all([
                 this.getSegment1(flights[0].from, flights[0].layovers),
-                this.getSegment2(flights[0].to, flights[0].layovers)
+                this.getSegment2(flights[0].to, flights[0].layovers),
+                this.duffelClient.createOfferRequest({
+                    slices: [
+                        {
+                            origin: params.originLocation,
+                            destination: params.destinationLocation,
+                            departure_date: params.departureDate,
+                            // Optionally include return and layovers if needed
+                            // return: new Date(),
+                            // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
+                        }
+                    ],
+                    passengers: [{ type: "adult" }],
+                    cabin_class: "economy",
+                    max_connections: 2
+                })
             ])
+            console.log("Before calling getRoute of flightOfferSearch", (new Date()))
             const response = []
             for (let i = 0; i < segment1.length; i++) {
                 const pairs = getRoute(segment1[i], segment2[i])
                 response.push(...pairs)
             }
-            return response
+            const directResults = await this.duffelClient.getOfferRequestById(offer.data.id)
+            console.log("Before Returning", (new Date()))
+            return [directResults,...response]
         } catch (error) {
             throw error;
         }
@@ -36,8 +75,10 @@ class FlightClient {
 
     async getSegment1(from: string, layovers: string[]) {
         try {
+            console.log("Start of getSegment1", (new Date()))
             const firstHalf = layovers.map((layover) => {
                 // Assuming you have a duffelClient instance already set up
+                console.log("Time in mapping segment1 createOffer", (new Date()))
                 return this.duffelClient.createOfferRequest({
                     slices: [
                         {
@@ -56,10 +97,12 @@ class FlightClient {
             });
 
             const offerRequests = await Promise.all(firstHalf);
+            console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
             const dataRequest = offerRequests.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
             })
             const response = await Promise.all(dataRequest);
+            console.log("End of getSegment1", (new Date()))
             return response;
         } catch (error) {
             throw error
@@ -68,8 +111,10 @@ class FlightClient {
 
     async getSegment2(to: string, layovers: string[]) {
         try {
+            console.log("Start of getSegment2", (new Date()))
             const firstHalf = layovers.map((layover) => {
                 // Assuming you have a this.duffelClient instance already set up
+                console.log("Time in mapping segment2 createOffer", (new Date()))
                 return this.duffelClient.createOfferRequest({
                     slices: [
                         {
@@ -88,10 +133,12 @@ class FlightClient {
             });
 
             const offerRequests = await Promise.all(firstHalf);
+            console.log("Before Getting getOfferRequest of getSegment2", (new Date()))
             const dataRequest = offerRequests.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
             })
             const response = await Promise.all(dataRequest);
+            console.log("End of getSegment2", (new Date()))
             return response;
         } catch (error) {
             throw error
