@@ -1,4 +1,4 @@
-import Amadus, { Client } from 'amadeus';
+import Amadus, { Client } from 'amadeus'
 import config from '../configs/config';
 import { FlightOfferSearchParams } from '../../types/amadeusTypes';
 
@@ -66,4 +66,5 @@ class AmadeusClient {
   }
 }
 
+export type AmadeusClientInstance = InstanceType<typeof AmadeusClient>;
 export default AmadeusClient;

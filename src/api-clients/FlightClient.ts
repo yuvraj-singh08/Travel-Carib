@@ -1,18 +1,21 @@
 import { flightsRoutes } from "../../constants/flightRoutes";
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { getRoute } from "../utils/flights";
+import { amadeusGetRoute, getRoute  } from "../utils/flights";
+import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
+    private amadeusClient : AmadeusClientInstance
 
     constructor() {
         this.duffelClient = new DuffelClient();
+        this.amadeusClient= new AmadeusClient();
         this.getSegment1 = this.getSegment1.bind(this);
         this.getSegment2 = this.getSegment2.bind(this);
         this.flightOfferSearch = this.flightOfferSearch.bind(this);
     }
-
+    
     async flightOfferSearch(params: FlightOfferSearchParams) {
         try {
             const flights = flightsRoutes.filter((flight): boolean | void => {
@@ -73,6 +76,30 @@ class FlightClient {
         }
     }
 
+    async amadeusOfferSearch(params: FlightOfferSearchParams){
+        try {
+            const  flights = flightsRoutes.filter((flight): boolean | void =>{
+               if (flight.from === params.originLocation && flight.to === params.destinationLocation)
+                    return true;
+
+            })
+            const[segment1 , segment2]= await Promise.all([
+                this.amadeusGetSegment1(flights[0].from ,flights[0].layovers),
+                this.amadeusGetSegment2(flights[0].to, flights[0].layovers)
+            ])
+            const response=[]
+             for (let i = 0; i < segment1.length; i++) {
+                const pairs = amadeusGetRoute(segment1[i], segment2[i])
+                response.push(...pairs)
+            }
+            return response;
+            
+        } catch (error) {
+            throw error;
+            
+        }
+    }
+
     async getSegment1(from: string, layovers: string[]) {
         try {
             console.log("Start of getSegment1", (new Date()))
@@ -108,11 +135,38 @@ class FlightClient {
             throw error
         }
     }
+    
+    async amadeusGetSegment1(from : string , layover:string[] ){
+        try {
+            const firstHalf = layover.map((layover)=>{
+                return this.amadeusClient.searchFlights({
+                    locationDeparture : from,
+                    locationArrival : layover,
+                    departure:"2024-08-14",
+                    arrival:'2024-08-16',
+                    adults:"2"
+
+
+
+                });
+            });
+            const offerRequests = await Promise.all(firstHalf);
+            return offerRequests;
+          
+        
+            
+            
+        } catch (error) {
+            throw error
+            
+        }
+    }
+
 
     async getSegment2(to: string, layovers: string[]) {
         try {
             console.log("Start of getSegment2", (new Date()))
-            const firstHalf = layovers.map((layover) => {
+            const secondHalf = layovers.map((layover) => {
                 // Assuming you have a this.duffelClient instance already set up
                 console.log("Time in mapping segment2 createOffer", (new Date()))
                 return this.duffelClient.createOfferRequest({
@@ -132,8 +186,7 @@ class FlightClient {
                 });
             });
 
-            const offerRequests = await Promise.all(firstHalf);
-            console.log("Before Getting getOfferRequest of getSegment2", (new Date()))
+            const offerRequests = await Promise.all(secondHalf);
             const dataRequest = offerRequests.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
             })
@@ -144,7 +197,32 @@ class FlightClient {
             throw error
         }
     }
+    
+    async amadeusGetSegment2 (to:string , layover:string[]){
+     try {
+         const secondHalf = layover.map((layover)=>{
+            return this.amadeusClient.searchFlights({
+                    locationDeparture : layover,
+                    locationArrival : to,
+                    departure:"2024-08-14", //flight can also reach on next date to layover 
+                    arrival:'2024-08-16',
+                    adults:"2"
+
+
+
+                });
+            });
+            const offerRequests = await Promise.all(secondHalf);
+            return offerRequests;
+         
+     } catch (error) {
+         throw error
+     }
+    }
 }
+
+
+
 
 export type FlightClientInstance = InstanceType<typeof FlightClient>
 export default FlightClient;

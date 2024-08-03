@@ -31,7 +31,7 @@ class AmadusController {
             }
             const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival, adults });
             const parsedResponse = parseFlightOfferSearchResponse(response);
-            res.status(200).json(parsedResponse);
+            res.status(200).json(response);
         } catch (error) {
             next(error);
         }
