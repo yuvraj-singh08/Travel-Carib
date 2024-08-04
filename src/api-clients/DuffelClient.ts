@@ -29,7 +29,7 @@ class DuffelClient {
 
   async getFlightDetails(id: string) {
     try {
-      const flightDetails = await this.client.offerRequests.get(id);
+      const flightDetails = await this.client.airlines.get(id);
       return flightDetails;
     } catch (error) {
       throw error;

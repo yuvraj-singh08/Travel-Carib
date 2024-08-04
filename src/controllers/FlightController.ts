@@ -37,7 +37,7 @@ class FlightController {
        console.log("Amadeus API Response:", response);
       res.status(200).json(response)
     } catch (error:any) {
-      next(error);
+      res.json(error);
       
     }
   }

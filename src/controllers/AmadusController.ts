@@ -30,7 +30,7 @@ class AmadusController {
                 throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
             }
             const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival, adults });
-            const parsedResponse = parseFlightOfferSearchResponse(response);
+            const parsedResponse = parseFlightOfferSearchResponse(response.data);
             res.status(200).json(response);
         } catch (error) {
             next(error);
