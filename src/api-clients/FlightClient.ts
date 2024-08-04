@@ -131,10 +131,12 @@ class FlightClient {
                 })
             });
 
-            const [duffelData,amadeusData] = await Promise.all([
-                Promise.all(duffelRequestOffers),
-                Promise.all(amadeusRequest)
-            ]);
+            // const [duffelData,amadeusData] = await Promise.all([
+            //     Promise.all(duffelRequestOffers),
+            //     Promise.all(amadeusRequest)
+            // ]);
+            const duffelData = await Promise.all(duffelRequestOffers);
+            const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
             const dataRequest = duffelData.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
@@ -184,10 +186,12 @@ class FlightClient {
                 })
             });
 
-            const [duffelData,amadeusData] = await Promise.all([
-                Promise.all(duffelRequestOffers),
-                Promise.all(amadeusRequest)
-            ]);
+            // const [duffelData,amadeusData] = await Promise.all([
+            //     Promise.all(duffelRequestOffers),
+            //     Promise.all(amadeusRequest)
+            // ]);
+            const duffelData = await Promise.all(duffelRequestOffers);
+            const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
             const dataRequest = duffelData.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
