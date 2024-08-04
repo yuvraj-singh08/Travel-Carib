@@ -1,6 +1,6 @@
 import { flightsRoutes } from "../../constants/flightRoutes";
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { amadeusGetRoute, getRoute, parseAmadeusResponse, parseDuffelResponse } from "../utils/flights";
+import { amadeusGetRoute, getRoute, parseAmadeusResponse, parseDuffelResponse1, parseDuffelResponse2 } from "../utils/flights";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 
@@ -48,7 +48,7 @@ class FlightClient {
                     })
                 ])
                 const directResults = await this.duffelClient.getOfferRequestById(offer1.data.id)
-                const duffelResponse = parseDuffelResponse(directResults);
+                const duffelResponse = parseDuffelResponse1(directResults);
                 const amadeusResponse = parseAmadeusResponse(offer2, params.originLocation, params.destinationLocation)
                 return [...duffelResponse, ...amadeusResponse]
                 // return {directResults, offer2}
@@ -89,7 +89,7 @@ class FlightClient {
                 response.push(...pairs)
             }
             const directResults = await this.duffelClient.getOfferRequestById(directDuffel.data.id)
-            const parsedDirectResults = parseDuffelResponse(directResults);
+            const parsedDirectResults = parseDuffelResponse1(directResults);
             console.log("Before Returning", (new Date()))
             return [...parsedDirectResults, ...response]
             // return {segment1, segment2}
@@ -148,7 +148,7 @@ class FlightClient {
             })
             const duffelResponse = await Promise.all(dataRequest);
             const parsedDuffelResponse = duffelResponse.map((response) => {
-                return parseDuffelResponse(response);
+                return parseDuffelResponse2(response);
             })
             const parsedAmadeusResponse = amadeusData.map((response) => {
                 return parseAmadeusResponse(response, from, "Needs to be fixed");
@@ -208,7 +208,7 @@ class FlightClient {
             })
             const duffelResponse = await Promise.all(dataRequest);
             const parsedDuffelResponse = duffelResponse.map((response) => {
-                return parseDuffelResponse(response);
+                return parseDuffelResponse2(response);
             })
             const parsedAmadeusResponse = amadeusData.map((response) => {
                 return parseAmadeusResponse(response, "Needs to be fixed",to);

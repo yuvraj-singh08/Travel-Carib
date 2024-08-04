@@ -53,7 +53,7 @@ export const getRoute = (segment1: any, segment2: any) => {
     return pairs;
 }
 
-export const parseDuffelResponse = (duffelRespnose: DuffelResponse<OfferRequest>) => {
+export const parseDuffelResponse1 = (duffelRespnose: DuffelResponse<OfferRequest>) => {
     const response = duffelRespnose.data.offers.map((data) => {
         return {
             origin: data?.slices[0]?.origin,
@@ -64,6 +64,28 @@ export const parseDuffelResponse = (duffelRespnose: DuffelResponse<OfferRequest>
             // layovers: data?.slices[0]?.destination,
             // class: data?.itineraries[0]?.pricing?.fare_basis,
             segments: [data?.slices[0]?.segments],
+            prices: {
+                total_amount: data?.total_amount,
+                tax_amount: data?.tax_amount,
+                base_currency: data?.base_currency,
+                tax_currency: data?.tax_currency
+            }
+        }
+    })
+    return response;
+}
+
+export const parseDuffelResponse2 = (duffelRespnose: DuffelResponse<OfferRequest>) => {
+    const response = duffelRespnose.data.offers.map((data) => {
+        return {
+            origin: data?.slices[0]?.origin,
+            destination: data?.slices[0]?.destination,
+            departureTime: data?.slices[0]?.segments[0]?.departing_at,
+            arrivalTime: data?.slices[0]?.segments[data?.slices[0]?.segments.length - 1]?.arriving_at,
+            // duration: data?.slices[0]?.duration,
+            // layovers: data?.slices[0]?.destination,
+            // class: data?.itineraries[0]?.pricing?.fare_basis,
+            segments: data?.slices[0]?.segments,
             prices: {
                 total_amount: data?.total_amount,
                 tax_amount: data?.tax_amount,
