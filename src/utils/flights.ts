@@ -63,7 +63,7 @@ export const parseDuffelResponse = (duffelRespnose: DuffelResponse<OfferRequest>
             // duration: data?.slices[0]?.duration,
             // layovers: data?.slices[0]?.destination,
             // class: data?.itineraries[0]?.pricing?.fare_basis,
-            segments: data?.slices[0]?.segments,
+            segments: [data?.slices[0]?.segments],
             prices: {
                 total_amount: data?.total_amount,
                 tax_amount: data?.tax_amount,
