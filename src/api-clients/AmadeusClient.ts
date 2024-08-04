@@ -34,7 +34,7 @@ class AmadeusClient {
         departureDate: params.departure,
         adults: params.adults,
       });
-      await new Promise(resolve => setTimeout(resolve,30 ))
+      await new Promise(resolve => setTimeout(resolve,50 ))
       return {data: response.data, dictionaries: response.result.dictionaries};
     } catch (error) {
       throw error;

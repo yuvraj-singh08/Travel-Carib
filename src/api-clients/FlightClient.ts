@@ -131,14 +131,19 @@ class FlightClient {
                 })
             });
 
-            // const [duffelData,amadeusData] = await Promise.all([
-            //     Promise.all(duffelRequestOffers),
-            //     Promise.all(amadeusRequest)
-            // ]);
-            const duffelData = await Promise.all(duffelRequestOffers);
-            const amadeusData = await Promise.all(amadeusRequest);
+            const [duffelDataResult, amadeusDataResult] = await Promise.allSettled([
+                Promise.all(duffelRequestOffers),
+                Promise.all(amadeusRequest)
+              ]);
+              
+              // Filter only fulfilled results and extract their values
+              const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
+              const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
+              
+            // const duffelData = await Promise.all(duffelRequestOffers);
+            // const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
-            const dataRequest = duffelData.map((response) => {
+            const dataRequest = duffelData?.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
             })
             const duffelResponse = await Promise.all(dataRequest);
@@ -186,12 +191,17 @@ class FlightClient {
                 })
             });
 
-            // const [duffelData,amadeusData] = await Promise.all([
-            //     Promise.all(duffelRequestOffers),
-            //     Promise.all(amadeusRequest)
-            // ]);
-            const duffelData = await Promise.all(duffelRequestOffers);
-            const amadeusData = await Promise.all(amadeusRequest);
+            const [duffelDataResult, amadeusDataResult] = await Promise.allSettled([
+                Promise.all(duffelRequestOffers),
+                Promise.all(amadeusRequest)
+              ]);
+              
+              // Filter only fulfilled results and extract their values
+              const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
+              const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
+              
+            // const duffelData = await Promise.all(duffelRequestOffers);
+            // const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
             const dataRequest = duffelData.map((response) => {
                 return this.duffelClient.getOfferRequestById(response.data.id);
