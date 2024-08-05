@@ -56,8 +56,8 @@ class FlightClient {
             // const ret = await this.getSegment1(flights[0].from, flights[0].layovers)
             // return ret
             const [segment1, segment2, directDuffel, directAmadeus] = await Promise.all([
-                this.getSegment1(flights[0].from, flights[0].layovers),
-                this.getSegment2(flights[0].to, flights[0].layovers),
+                this.getSegment1(flights[0].from, flights[0].layovers, params.departureDate),
+                this.getSegment2(flights[0].to, flights[0].layovers, params.departureDate),
                 this.duffelClient.createOfferRequest({
                     slices: [
                         {
@@ -98,7 +98,7 @@ class FlightClient {
         }
     }
 
-    async getSegment1(from: string, layovers: string[]) {
+    async getSegment1(from: string, layovers: string[], departureDate: string) {
         try {
             console.log("Start of getSegment1", (new Date()))
             const duffelRequestOffers = [], amadeusRequest = []
@@ -110,7 +110,7 @@ class FlightClient {
                         {
                             origin: from,
                             destination: layover,
-                            departure_date: "2024-08-14",
+                            departure_date: departureDate,
                             // Optionally include return and layovers if needed
                             // return: new Date(),
                             // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
@@ -122,7 +122,7 @@ class FlightClient {
                 }))
                 amadeusRequest.push({
                     amadeus: this.amadeusClient.searchFlights({
-                        departure: "2024-08-14",
+                        departure: departureDate,
                         arrival: "1238",
                         locationDeparture: from,
                         locationArrival: layover,
@@ -159,7 +159,7 @@ class FlightClient {
         }
     }
 
-    async getSegment2(to: string, layovers: string[]) {
+    async getSegment2(to: string, layovers: string[], departureDate: string) {
         try {
             const duffelRequestOffers = [], amadeusRequest = []
             layovers.forEach((layover) => {
@@ -170,7 +170,7 @@ class FlightClient {
                         {
                             origin: layover,
                             destination: to,
-                            departure_date: "2024-08-14",
+                            departure_date: departureDate,
                             // Optionally include return and layovers if needed
                             // return: new Date(),
                             // layovers: flights.find(f => f.from === from && f.to === to).layovers.map(l => ({ code: l, duration: 120 }))
@@ -182,7 +182,7 @@ class FlightClient {
                 }))
                 amadeusRequest.push({
                     amadeus: this.amadeusClient.searchFlights({
-                        departure: "2024-08-14",
+                        departure: departureDate,
                         arrival: "1238",
                         locationDeparture: layover,
                         locationArrival: to,
@@ -227,8 +227,8 @@ class FlightClient {
 
             })
             const [segment1, segment2] = await Promise.all([
-                this.amadeusGetSegment1(flights[0].from, flights[0].layovers),
-                this.amadeusGetSegment2(flights[0].to, flights[0].layovers)
+                this.amadeusGetSegment1(flights[0].from, flights[0].layovers, params.departureDate),
+                this.amadeusGetSegment2(flights[0].to, flights[0].layovers, params.departureDate)
             ])
             const response = []
             for (let i = 0; i < segment1.length; i++) {
@@ -244,13 +244,13 @@ class FlightClient {
     }
 
 
-    async amadeusGetSegment1(from: string, layover: string[]) {
+    async amadeusGetSegment1(from: string, layover: string[], departureDate: string) {
         try {
             const firstHalf = layover.map((layover) => {
                 return this.amadeusClient.searchFlights({
                     locationDeparture: from,
                     locationArrival: layover,
-                    departure: "2024-08-14",
+                    departure: departureDate,
                     arrival: '2024-08-16',
                     adults: "2"
 
@@ -271,13 +271,13 @@ class FlightClient {
     }
 
 
-    async amadeusGetSegment2(to: string, layover: string[]) {
+    async amadeusGetSegment2(to: string, layover: string[], departureDate: string) {
         try {
             const secondHalf = layover.map((layover) => {
                 return this.amadeusClient.searchFlights({
                     locationDeparture: layover,
                     locationArrival: to,
-                    departure: "2024-08-14", //flight can also reach on next date to layover 
+                    departure: departureDate, //flight can also reach on next date to layover 
                     arrival: '2024-08-16',
                     adults: "2"
 
