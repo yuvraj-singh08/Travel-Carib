@@ -1,6 +1,6 @@
 import { flightsRoutes } from "../../constants/flightRoutes";
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { amadeusGetRoute, getRoute, parseAmadeusResponse, parseDuffelResponse1, parseDuffelResponse2 } from "../utils/flights";
+import { amadeusGetRoute, getRoute, parseAmadeusResponse1, parseAmadeusResponse2, parseDuffelResponse1, parseDuffelResponse2 } from "../utils/flights";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 
@@ -49,7 +49,7 @@ class FlightClient {
                 ])
                 const directResults = await this.duffelClient.getOfferRequestById(offer1.data.id)
                 const duffelResponse = parseDuffelResponse1(directResults);
-                const amadeusResponse = parseAmadeusResponse(offer2, params.originLocation, params.destinationLocation)
+                const amadeusResponse = parseAmadeusResponse1(offer2, params.originLocation, params.destinationLocation)
                 return [...duffelResponse, ...amadeusResponse]
                 // return {directResults, offer2}
             }
@@ -151,7 +151,7 @@ class FlightClient {
                 return parseDuffelResponse2(response);
             })
             const parsedAmadeusResponse = amadeusData.map((response) => {
-                return parseAmadeusResponse(response, from, "Needs to be fixed");
+                return parseAmadeusResponse2(response, from, "Needs to be fixed");
             })
             return [...parsedDuffelResponse, ...parsedAmadeusResponse];
         } catch (error) {
@@ -211,7 +211,7 @@ class FlightClient {
                 return parseDuffelResponse2(response);
             })
             const parsedAmadeusResponse = amadeusData.map((response) => {
-                return parseAmadeusResponse(response, "Needs to be fixed",to);
+                return parseAmadeusResponse2(response, "Needs to be fixed",to);
             })
             return [...parsedDuffelResponse, ...parsedAmadeusResponse];
         } catch (error) {

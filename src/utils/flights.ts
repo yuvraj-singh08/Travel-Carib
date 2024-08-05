@@ -97,7 +97,47 @@ export const parseDuffelResponse2 = (duffelRespnose: DuffelResponse<OfferRequest
     return response;
 }
 
-export const parseAmadeusResponse = (amadeusResponse: any, originLocation: string, destinationLocation: string) => {
+export const parseAmadeusResponse1 = (amadeusResponse: any, originLocation: string, destinationLocation: string) => {
+    const response = amadeusResponse?.data?.map((data) => {
+        const segments = data?.itineraries[0]?.segments?.map((itinery) => {
+            return {
+                origin: {
+                    iata_city_code: itinery?.departure?.iataCode,
+                },
+                destination: {
+                    iata_city_code: itinery?.arrival?.iataCode,
+                },
+                departing_at: itinery?.departure?.at,
+                arrival_at: itinery?.arrival?.at,
+                operating_carrier: {
+                    iata_code: itinery?.operating?.carrierCode
+                },
+                marketing_carrier: {
+                    iata_code: itinery?.operating?.carrierCode
+                },
+                aircraft: {
+                    code: itinery?.aircraft?.code
+                },
+                operating_carrier_flight_number: itinery?.aircraft?.code
+            }
+        })
+        return {
+            origin: originLocation,
+            destination: destinationLocation,
+            segments: [segments],
+            prices: {
+                total_amount: data?.price?.total,
+                tax_amount: data?.price?.total - data?.price?.base,
+                base_currency: data?.price?.currency,
+                tax_currency: data?.price?.currency
+            },
+            fareDetailsBySegment: data?.travelerPricings[0]?.fareDetailsBySegment
+        }
+    })
+    return response
+}
+
+export const parseAmadeusResponse2 = (amadeusResponse: any, originLocation: string, destinationLocation: string) => {
     const response = amadeusResponse?.data?.map((data) => {
         const segments = data?.itineraries[0]?.segments?.map((itinery) => {
             return {
