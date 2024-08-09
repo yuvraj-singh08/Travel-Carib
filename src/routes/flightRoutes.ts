@@ -6,5 +6,6 @@ const flightController = new FlightController();
 
 router.post('/search-flights', flightController.searchFlights);
 router.post('/amadeus-flight', flightController.amadeusSearchFlights);
+router.post('/get-possible-routes', flightController.getPossibleRoutes);
 
 export default router;

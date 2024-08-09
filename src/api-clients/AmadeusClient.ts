@@ -1,14 +1,15 @@
-import Amadus, { Client } from 'amadeus'
+import Amadus from 'amadeus'
 import config from '../configs/config';
-import { FlightOfferSearchParams } from '../../types/amadeusTypes';
+import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
+import { routeType } from '../../types/flightTypes';
 
 class AmadeusClient {
-  private client: Client;
+  private client: amadeusClientType;
 
   constructor() {
     this.client = new Amadus({
       clientId: process.env.AMADEUS_CLIENT_ID,
-      clientSecret:process.env.AMADEUS_CLIENT_SECRET
+      clientSecret: process.env.AMADEUS_CLIENT_SECRET
     });
   }
 
@@ -34,10 +35,53 @@ class AmadeusClient {
         departureDate: params.departure,
         adults: params.adults,
       });
-      await new Promise(resolve => setTimeout(resolve,50 ))
-      return {data: response.data, dictionaries: response.result.dictionaries};
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async multiCityFlightSearch({ routeSegments, departureDate, passengers }: multiCityFlightSearchParams): Promise<any> {
+    try {
+      const segments = routeSegments.map((routeSegment, index) => {
+        return {
+          id: index + 1,
+          originLocationCode: routeSegment.origin,
+          destinationLocationCode: routeSegment.destination,
+          // departureDate: new Date().toISOString().split('T')[0],
+          departureDateTimeRange: {
+            date: departureDate
+          },
+        }
+      })
+      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
+        originDestinations: segments,
+        // adults: passengers
+        travelers: [
+          {
+            "id": "1",
+            "travelerType": "ADULT",
+            "fareOptions": [
+              "STANDARD"
+            ]
+          },
+          {
+            "id": "2",
+            "travelerType": "CHILD",
+            "fareOptions": [
+              "STANDARD"
+            ]
+          }
+        ],
+        sources: [
+          "GDS"
+        ],
+      }))
+      await new Promise(resolve => setTimeout(resolve, 100))
+      return { data: response.data, dictionaries: response.result.dictionaries };
+    } catch (error) {
+      console.log(error)
     }
   }
 

@@ -1,6 +1,6 @@
 import { flightsRoutes } from "../../constants/flightRoutes";
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { amadeusGetRoute, getRoute, parseAmadeusResponse1, parseAmadeusResponse2, parseDuffelResponse1, parseDuffelResponse2 } from "../utils/flights";
+import { amadeusGetRoute, getPossibleRoutes, getRoute, parseAmadeusResponse, parseAmadeusResponse1, parseAmadeusResponse2, parseDuffelResponse, parseDuffelResponse1, parseDuffelResponse2 } from "../utils/flights";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 
@@ -14,6 +14,55 @@ class FlightClient {
         this.getSegment1 = this.getSegment1.bind(this);
         this.getSegment2 = this.getSegment2.bind(this);
         this.flightOfferSearch = this.flightOfferSearch.bind(this);
+    }
+
+    async flightSearch(params: FlightOfferSearchParams) {
+        try {
+            const possibleRoutes = [
+                [
+                    {
+                        origin: params.originLocation,
+                        destination: params.destinationLocation
+                    }
+                ],
+                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, params.maxLayovers))
+            ]
+            console.log(possibleRoutes)
+            const duffelRequests = possibleRoutes.map((route) => {
+                const slices = route.map((data) => {
+                    return {
+                        origin: data.origin,
+                        destination: data.destination,
+                        departure_date: params.departureDate,
+                    }
+                })
+                return this.duffelClient.createOfferRequest({
+                    slices,
+                    passengers: [{ type: "adult" }],
+                    cabin_class: params.cabinClass,
+                    max_connections: 2
+                })
+            })
+
+            const amadeusRequest = possibleRoutes.map((route) => {
+                const request = this.amadeusClient.multiCityFlightSearch({
+                    routeSegments: route,
+                    passengers: 2,
+                    departureDate: params.departureDate
+                })
+                return request
+            })
+            const [duffelResponse, amadeusResponse] = await Promise.all([
+                Promise.all(duffelRequests),
+                Promise.all(amadeusRequest)
+            ])
+            const parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse)
+            const parsedDuffelResponse = parseDuffelResponse(duffelResponse)
+            const combinedResponse = [...parsedDuffelResponse, ...parsedAmadeusResponse]
+            return combinedResponse
+        } catch (error) {
+            throw (error);
+        }
     }
 
     async flightOfferSearch(params: FlightOfferSearchParams) {
@@ -134,12 +183,12 @@ class FlightClient {
             const [duffelDataResult, amadeusDataResult] = await Promise.allSettled([
                 Promise.all(duffelRequestOffers),
                 Promise.all(amadeusRequest)
-              ]);
-              
-              // Filter only fulfilled results and extract their values
-              const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
-              const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
-              
+            ]);
+
+            // Filter only fulfilled results and extract their values
+            const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
+            const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
+
             // const duffelData = await Promise.all(duffelRequestOffers);
             // const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
@@ -194,12 +243,12 @@ class FlightClient {
             const [duffelDataResult, amadeusDataResult] = await Promise.allSettled([
                 Promise.all(duffelRequestOffers),
                 Promise.all(amadeusRequest)
-              ]);
-              
-              // Filter only fulfilled results and extract their values
-              const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
-              const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
-              
+            ]);
+
+            // Filter only fulfilled results and extract their values
+            const duffelData = duffelDataResult.status === 'fulfilled' ? duffelDataResult.value : [];
+            const amadeusData = amadeusDataResult.status === 'fulfilled' ? amadeusDataResult.value : [];
+
             // const duffelData = await Promise.all(duffelRequestOffers);
             // const amadeusData = await Promise.all(amadeusRequest);
             console.log("Before Getting getOfferRequest of getSegment1", (new Date()))
@@ -211,7 +260,7 @@ class FlightClient {
                 return parseDuffelResponse2(response);
             })
             const parsedAmadeusResponse = amadeusData.map((response) => {
-                return parseAmadeusResponse2(response, "Needs to be fixed",to);
+                return parseAmadeusResponse2(response, "Needs to be fixed", to);
             })
             return [...parsedDuffelResponse, ...parsedAmadeusResponse];
         } catch (error) {
