@@ -96,14 +96,6 @@ export const routesData: routeType[] =[
     },
     {
         origin:"PTY",
-        destination:"SDQ"
-    },
-    {
-        origin:"SDQ",
-        destination:"CCS"
-    },
-    {
-        origin:"PTY",
         destination:"CCS"
     },
     {
