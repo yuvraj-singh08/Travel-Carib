@@ -14,6 +14,9 @@ class FlightController {
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections } = req.body;
+      if(!(originLocation!== undefined && destinationLocation!== undefined && departureDate!== undefined && maxLayovers!== undefined && passengerType!== undefined && cabinClass!== undefined))
+        throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
+
       const response = await this.flightClient.flightSearch({
         originLocation,
         destinationLocation,
