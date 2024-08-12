@@ -52,8 +52,12 @@ class FlightClient {
                 Promise.all(duffelRequests),
                 Promise.all(amadeusRequest)
             ])
-            const parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse)
-            const parsedDuffelResponse = parseDuffelResponse(duffelResponse)
+            const parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse).map((data) => {
+                return {...data, cabin_class: params.cabinClass}
+            })
+            const parsedDuffelResponse = parseDuffelResponse(duffelResponse).map((data) => {
+                return {...data, cabin_class: params.cabinClass}
+            })
             const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse])
             return combinedResponse
         } catch (error) {
