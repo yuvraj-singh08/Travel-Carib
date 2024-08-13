@@ -30,7 +30,7 @@ export const parseAmadeusResponse = (amadeusResponse: any) => {
         if (index === 0) {
             return;
         }
-        response.push(...(data.data))
+        response.push(...(data?.data))
         dictionaries.locations = { ...dictionaries?.locations, ...data?.dictionaries?.locations }
         dictionaries.aircraft = { ...dictionaries?.aircraft, ...data?.dictionaries?.aircraft }
         dictionaries.currencies = { ...dictionaries?.currencies, ...data?.dictionaries?.currencies }
@@ -53,8 +53,8 @@ export const parseAmadeusResponse = (amadeusResponse: any) => {
                         iata_city_code: dictionaries?.locations[segment?.arrival?.iataCode]?.cityCode,
                         iata_country_code: dictionaries?.locations[segment?.arrival?.iataCode]?.countryCode
                     },
-                    departure_at: segment?.departure?.at,
-                    arrival_at: segment?.arrival?.at,
+                    departing_at: segment?.departure?.at,
+                    arriving_at: segment?.arrival?.at,
                     operating_carrier: {
                         iata_code: segment?.carrierCode,
                         name: dictionaries?.carriers[segment?.operating?.carrierCode]
