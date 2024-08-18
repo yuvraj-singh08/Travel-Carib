@@ -35,14 +35,13 @@ class AmadeusClient {
         departureDate: params.departure,
         adults: params.adults,
       });
-      await new Promise(resolve => setTimeout(resolve, 100))
       return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       console.log(error);
     }
   }
 
-  async multiCityFlightSearch({ routeSegments, departureDate, passengers }: multiCityFlightSearchParams): Promise<any> {
+  async multiCityFlightSearch({ routeSegments, departureDate, passengers, index }: multiCityFlightSearchParams): Promise<any> {
     try {
       const segments = routeSegments.map((routeSegment, index) => {
         return {
@@ -55,6 +54,9 @@ class AmadeusClient {
           },
         }
       })
+      console.log(index);
+      await new Promise(resolve => setTimeout(resolve, 50*(index+1)))
+      console.log("Resolved ", index)
       const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
         originDestinations: segments,
         // adults: passengers
@@ -78,7 +80,6 @@ class AmadeusClient {
           "GDS"
         ],
       }))
-      await new Promise(resolve => setTimeout(resolve, 300))
       return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       console.log(error)

@@ -12,7 +12,8 @@ export type FlightOfferSearchParams = {
 export type multiCityFlightSearchParams = {
     routeSegments: routeType[],
     departureDate: string,
-    passengers: number
+    passengers: number,
+    index?: number
 }
 
 export type amadeusClientType = InstanceType<typeof Amadus>

@@ -44,11 +44,12 @@ class FlightClient {
                 })
             })
 
-            const amadeusRequest = possibleRoutes.map((route) => {
+            const amadeusRequest = possibleRoutes.map((route, index) => {
                 const request = this.amadeusClient.multiCityFlightSearch({
                     routeSegments: route,
                     passengers: 2,
-                    departureDate: params.departureDate
+                    departureDate: params.departureDate,
+                    index
                 })
                 return request
             })

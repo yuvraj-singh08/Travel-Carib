@@ -35,6 +35,7 @@ export const parseAmadeusResponse = (amadeusResponse: any) => {
             dictionaries.locations = { ...dictionaries?.locations, ...data?.dictionaries?.locations }
             dictionaries.aircraft = { ...dictionaries?.aircraft, ...data?.dictionaries?.aircraft }
             dictionaries.currencies = { ...dictionaries?.currencies, ...data?.dictionaries?.currencies }
+            dictionaries.carriers = { ...dictionaries?.carriers, ...data?.dictionaries?.carriers }
         });
 
         const parsedResponse = response.map((data, index) => {
@@ -58,7 +59,7 @@ export const parseAmadeusResponse = (amadeusResponse: any) => {
                         arriving_at: segment?.arrival?.at,
                         operating_carrier: {
                             iata_code: segment?.carrierCode,
-                            name: dictionaries?.carriers[segment?.operating?.carrierCode]
+                            name: dictionaries?.carriers[segment?.operating?.carrierCode] || "NA"
                         },
                         marketing_carrier: {
                             iata_code: segment?.carrierCode
