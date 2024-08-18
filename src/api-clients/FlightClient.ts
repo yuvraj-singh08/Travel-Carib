@@ -82,7 +82,7 @@ class FlightClient {
             if(parsedAmadeusResponse === undefined) parsedAmadeusResponse = []
             
             const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse,...parsedKiuResponse])
-            return [...parsedDuffelResponse, ...parsedAmadeusResponse,...parsedKiuResponse]
+            return combinedResponse
         } catch (error) {
             throw (error);
         }
