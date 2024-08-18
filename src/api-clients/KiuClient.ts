@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineFlightsWithMinimumLayover, getDateString, parseFlightSearchResponse } from '../utils/kiu';
+import { buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineFlightsWithMinimumLayover, getDateString, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
 import { FlightSearchParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
@@ -32,9 +32,9 @@ class KiuClient {
         request: requestXML
       })
       const parser = new xml2js.Parser();
-      const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = await parseFlightSearchResponse(jsonResponse);
-      return response;
+      // const jsonResponse = await parser.parseStringPromise(response.data);
+      // const parsedResponse = await parseFlightSearchResponse(jsonResponse);
+      return response.data;
     } catch (error) {
       throw error;
     }
@@ -51,9 +51,10 @@ class KiuClient {
       console.log(response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = combineFlightsWithMinimumLayover(jsonResponse);
+      // const parsedResponse = combineFlightsWithMinimumLayover(jsonResponse);
       // const parsedResponse = await parseFlightSearchResponse(jsonResponse);
-      return parsedResponse
+      // const parsedResponse = parseKiuResposne(jsonResponse);
+      return jsonResponse;
     } catch (error) {
       throw error
     }

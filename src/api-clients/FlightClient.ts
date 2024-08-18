@@ -1,15 +1,19 @@
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { combineResponses, getPossibleRoutes, parseAmadeusResponse, parseDuffelResponse} from "../utils/flights";
+import { combineResponses, getPossibleRoutes, parseAmadeusResponse, parseDuffelResponse } from "../utils/flights";
+import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
+import KiuClient, { KiuClientInstance } from "./KiuClient";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
     private amadeusClient: AmadeusClientInstance
+    private kiuClient: KiuClientInstance
 
     constructor() {
         this.duffelClient = new DuffelClient();
         this.amadeusClient = new AmadeusClient();
+        this.kiuClient = new KiuClient();
     }
 
     async flightSearch(params: FlightOfferSearchParams) {
@@ -48,17 +52,35 @@ class FlightClient {
                 })
                 return request
             })
-            const [duffelResponse, amadeusResponse] = await Promise.all([
+
+            const kiuRequest = possibleRoutes.map((route) => {
+                const request = this.kiuClient.multiCitySearch({
+                    routeSegments: route,
+                    departureDate: params.departureDate,
+                    passengers: 1
+                })
+                return request
+            })
+            const [duffelResponse, amadeusResponse, kiuResponse] = await Promise.all([
                 Promise.all(duffelRequests),
-                Promise.all(amadeusRequest)
+                Promise.all(amadeusRequest),
+                Promise.all(kiuRequest)
             ])
-            const parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse).map((data) => {
-                return {...data, cabin_class: params.cabinClass}
+            let parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse)?.map((data) => {
+                return { ...data, cabin_class: params.cabinClass }
             })
-            const parsedDuffelResponse = parseDuffelResponse(duffelResponse).map((data) => {
-                return {...data, cabin_class: params.cabinClass}
+            const parsedDuffelResponse = parseDuffelResponse(duffelResponse)?.map((data) => {
+                return { ...data, cabin_class: params.cabinClass }
             })
-            const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse])
+            let parsedKiuResponse = [];
+
+            kiuResponse.forEach((response: any) => {
+                const parsedResponse = parseKiuResposne(response);
+                parsedKiuResponse = [...parsedKiuResponse,...parsedResponse]
+            });
+            if(parsedAmadeusResponse === undefined) parsedAmadeusResponse = []
+            
+            const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse,...parsedKiuResponse])
             return combinedResponse
         } catch (error) {
             throw (error);

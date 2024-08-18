@@ -78,7 +78,7 @@ class AmadeusClient {
           "GDS"
         ],
       }))
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise(resolve => setTimeout(resolve, 300))
       return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       console.log(error)

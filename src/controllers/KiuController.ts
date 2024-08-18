@@ -15,7 +15,7 @@ class KiuController {
         try {
             const { OriginLocation, DestinationLocation, DepartureDate, ReturnDate, Passengers } = req.body;
             const response = await this.kiuClient.searchFlights({ OriginLocation, DestinationLocation, DepartureDate, ReturnDate, Passengers });
-            res.json(response);
+            res.send(response);
         } catch (error) {
             next(error);
         }
@@ -34,9 +34,9 @@ class KiuController {
                     {
                         origin: "CCS",
                         destination: "SDQ"
-                    }
+                    },
                 ],
-                departureDate: "2024-08-14",
+                departureDate: DepartureDate,
                 passengers: 1
             })
             res.json(response);

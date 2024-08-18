@@ -223,34 +223,130 @@ export function combineFlightsWithMinimumLayover(data: KIU_AirAvailRS) {
     const currentLeg = data?.KIU_AirAvailRS?.OriginDestinationInformation[legIndex];
 
     currentLeg?.OriginDestinationOptions?.forEach((option) => {
-     try {
-      if (currentCombination?.length > 0) {
-        const previousLegOption = currentCombination[currentCombination?.length - 1];
-        const lastFlightOfPreviousLeg = previousLegOption?.FlightSegment[previousLegOption?.FlightSegment?.length - 1];
-        const firstFlightOfCurrentLeg = option?.FlightSegment[0];
+      try {
+        if (currentCombination?.length > 0) {
+          const previousLegOption = currentCombination[currentCombination?.length - 1];
+          const lastFlightOfPreviousLeg = previousLegOption?.FlightSegment[previousLegOption?.FlightSegment?.length - 1];
+          const firstFlightOfCurrentLeg = option?.FlightSegment[0];
 
-        const arrivalTimePreviousLeg = new Date(lastFlightOfPreviousLeg?.$?.ArrivalDateTime)?.getTime();
-        const departureTimeCurrentLeg = new Date(firstFlightOfCurrentLeg?.$?.DepartureDateTime)?.getTime();
+          const arrivalTimePreviousLeg = new Date(lastFlightOfPreviousLeg?.$?.ArrivalDateTime)?.getTime();
+          const departureTimeCurrentLeg = new Date(firstFlightOfCurrentLeg?.$?.DepartureDateTime)?.getTime();
 
-        const timeDifferenceMinutes = (departureTimeCurrentLeg - arrivalTimePreviousLeg) / (1000 * 60);
+          const timeDifferenceMinutes = (departureTimeCurrentLeg - arrivalTimePreviousLeg) / (1000 * 60);
 
-        if (timeDifferenceMinutes > 30) {
+          if (timeDifferenceMinutes > 30) {
+            currentCombination?.push(option);
+            combineLegs(currentCombination, legIndex + 1);
+            currentCombination?.pop();
+          }
+        } else {
           currentCombination?.push(option);
           combineLegs(currentCombination, legIndex + 1);
           currentCombination?.pop();
         }
-      } else {
-        currentCombination?.push(option);
-        combineLegs(currentCombination, legIndex + 1);
-        currentCombination?.pop();
+      } catch (error) {
+        console.log(error);
       }
-     } catch (error) {
-      console.log(error);
-     }
     });
   }
 
   combineLegs([], 0);
 
   return results;
+}
+
+export const combineRoute = (route1: any, route2: any) => {
+  try {
+    const SELF_TRANSFER_TIME_DIFF: number = parseInt(process.env.SELF_TRANSFER_TIME_DIFF);
+    const response = [];
+    if (route1 === undefined || route2 === undefined) {
+      return [];
+    }
+    route1.forEach((route1) => {
+      route2.forEach((route2) => {
+        const route1Arrival = new Date(route1?.FlightSegment[0]?.$?.ArrivalDateTime);
+        const route2Departure = new Date(route2?.FlightSegment[route2?.FlightSegment?.length - 1]?.$?.DepartureDateTime);
+        const timeDifferenceInHours = (route2Departure.getTime() - route1Arrival.getTime()) / (1000 * 60 * 60);
+        if (true) {
+        // if (timeDifferenceInHours > SELF_TRANSFER_TIME_DIFF) {
+          response.push({
+            FlightSegment: [
+              ...route1.FlightSegment,
+              { selfTransfer: true },
+              ...route2.FlightSegment
+            ]
+          })
+        }
+      })
+    })
+    return response
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const parseKiuResposne = (data: any) => {
+  try {
+    const n = data?.KIU_AirAvailRS?.OriginDestinationInformation?.length;
+    const options = data?.KIU_AirAvailRS?.OriginDestinationInformation;
+    const getParsedOptions = (data: any) => {
+      return data?.OriginDestinationOptions[0]?.OriginDestinationOption;
+    }
+    let combinedRoute = combineRoute(getParsedOptions(options[0]), getParsedOptions(options[1]));
+    for (let i = 2; i < n; i++) {
+      combinedRoute = combineRoute(combinedRoute, getParsedOptions(options[i]));
+    }
+    let slices = [], segments = [], response = [], responseId = "";
+
+    combinedRoute.forEach((option) => {
+
+      option?.FlightSegment?.forEach((route) => {
+
+        if (route?.selfTransfer === true) {
+          slices.push({
+            segments
+          })
+          segments = [];
+          return;
+        }
+
+        responseId += `${route?.MarketingAirline[0]?.$?.CompanyShortName}${route?.$?.FlightNumber}`
+
+        segments.push({
+          departing_at: route?.$?.DepartureDateTime,
+          arriving_at: route?.$?.ArrivalDateTime,
+          marketing_carrier: {
+            iata_code: route?.MarketingAirline[0]?.$?.CompanyShortName
+          },
+          marketing_carrier_flight_number: route?.$?.FlightNumber,
+          origin: {
+            iata_code: route?.DepartureAirport[0]?.$?.LocationCode
+          },
+          destination: {
+            iata_code: route?.ArrivalAirport[0]?.$?.LocationCode
+          }
+        });
+      });
+
+      slices.push({
+        segments
+      })
+      segments = [];
+      response.push({
+        responseId,
+        slices,
+        total_amount: 0,
+        tax_amount: 0,
+        base_currency: "EUR",
+        tax_currency: "EUR",
+        cabinClass: "economy"
+      });
+      slices = [];
+      responseId = "";
+    })
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
 }

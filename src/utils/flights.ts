@@ -24,69 +24,73 @@ export const parseDuffelResponse = (duffelRespnose: DuffelResponse<OfferRequest>
 }
 
 export const parseAmadeusResponse = (amadeusResponse: any) => {
-    const response = amadeusResponse[0]?.data || []
-    const dictionaries = amadeusResponse[0]?.dictionaries || [];
-    amadeusResponse.forEach((data, index) => {
-        if (index === 0) {
-            return;
-        }
-        response.push(...(data?.data))
-        dictionaries.locations = { ...dictionaries?.locations, ...data?.dictionaries?.locations }
-        dictionaries.aircraft = { ...dictionaries?.aircraft, ...data?.dictionaries?.aircraft }
-        dictionaries.currencies = { ...dictionaries?.currencies, ...data?.dictionaries?.currencies }
-    });
+    try {
+        const response = amadeusResponse[0]?.data || []
+        const dictionaries = amadeusResponse[0]?.dictionaries || [];
+        amadeusResponse.forEach((data, index) => {
+            if (index === 0) {
+                return;
+            }
+            response.push(...(data?.data))
+            dictionaries.locations = { ...dictionaries?.locations, ...data?.dictionaries?.locations }
+            dictionaries.aircraft = { ...dictionaries?.aircraft, ...data?.dictionaries?.aircraft }
+            dictionaries.currencies = { ...dictionaries?.currencies, ...data?.dictionaries?.currencies }
+        });
 
-    const parsedResponse = response.map((data, index) => {
-        let responseId = ""
-        const slices = data.itineraries.map((itinerary) => {
-            let sliceId = "";
-            const segments = itinerary?.segments?.map((segment) => {
-                sliceId += `${segment?.carrierCode}${segment?.number}`
+        const parsedResponse = response.map((data, index) => {
+            let responseId = ""
+            const slices = data.itineraries.map((itinerary) => {
+                let sliceId = "";
+                const segments = itinerary?.segments?.map((segment) => {
+                    sliceId += `${segment?.carrierCode}${segment?.number}`
+                    return {
+                        origin: {
+                            iata_code: segment?.departure?.iataCode,
+                            iata_city_code: dictionaries?.locations[segment?.departure?.iataCode]?.cityCode,
+                            iata_country_code: dictionaries?.locations[segment?.departure?.iataCode]?.countryCode
+                        },
+                        destination: {
+                            iata_code: segment?.arrival?.iataCode,
+                            iata_city_code: dictionaries?.locations[segment?.arrival?.iataCode]?.cityCode,
+                            iata_country_code: dictionaries?.locations[segment?.arrival?.iataCode]?.countryCode
+                        },
+                        departing_at: segment?.departure?.at,
+                        arriving_at: segment?.arrival?.at,
+                        operating_carrier: {
+                            iata_code: segment?.carrierCode,
+                            name: dictionaries?.carriers[segment?.operating?.carrierCode]
+                        },
+                        marketing_carrier: {
+                            iata_code: segment?.carrierCode
+                        },
+                        aircraft: {
+                            iata_code: segment?.aircraft?.code,
+                            name: dictionaries?.aircraft[segment?.aircraft?.code]
+                        },
+                        operating_carrier_flight_number: segment?.number,
+                        duration: segment?.duration
+                    }
+                })
+                responseId += sliceId;
                 return {
-                    origin: {
-                        iata_code: segment?.departure?.iataCode,
-                        iata_city_code: dictionaries?.locations[segment?.departure?.iataCode]?.cityCode,
-                        iata_country_code: dictionaries?.locations[segment?.departure?.iataCode]?.countryCode
-                    },
-                    destination: {
-                        iata_code: segment?.arrival?.iataCode,
-                        iata_city_code: dictionaries?.locations[segment?.arrival?.iataCode]?.cityCode,
-                        iata_country_code: dictionaries?.locations[segment?.arrival?.iataCode]?.countryCode
-                    },
-                    departing_at: segment?.departure?.at,
-                    arriving_at: segment?.arrival?.at,
-                    operating_carrier: {
-                        iata_code: segment?.carrierCode,
-                        name: dictionaries?.carriers[segment?.operating?.carrierCode]
-                    },
-                    marketing_carrier: {
-                        iata_code: segment?.carrierCode
-                    },
-                    aircraft: {
-                        iata_code: segment?.aircraft?.code,
-                        name: dictionaries?.aircraft[segment?.aircraft?.code]
-                    },
-                    operating_carrier_flight_number: segment?.number,
-                    duration: segment?.duration
+                    duration: itinerary?.duration,
+                    segments: segments,
                 }
             })
-            responseId += sliceId;
             return {
-                duration: itinerary?.duration,
-                segments: segments,
+                total_amount: data?.price?.total,
+                tax_amount: data?.price?.total - data?.price?.base,
+                base_currency: data?.price?.currency,
+                tax_currency: data?.price?.currency,
+                slices: slices,
+                responseId: responseId
             }
+            //Remaining: PricingOptions, travelerPricing
         })
-        return {
-            total_amount: data?.price?.total,
-            tax_amount: data?.price?.total - data?.price?.base,
-            base_currency: data?.price?.currency,
-            tax_currency: data?.price?.currency,
-            slices: slices,
-            responseId: responseId
-        }
-        //Remaining: PricingOptions, travelerPricing
-    })
-    return parsedResponse;
+        return parsedResponse;
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 export const combineResponses = (responses: any) => {

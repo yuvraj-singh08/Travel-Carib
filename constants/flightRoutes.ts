@@ -115,6 +115,14 @@ export const routesData: routeType[] =[
         destination: "SDQ"
     },
     {
+        origin:"VLN",
+        destination: "BOG"
+    },
+    {
+        origin:"BOG",
+        destination:"MIA"
+    },
+    {
         origin:"SDQ",
         destination:"MIA"
     }
