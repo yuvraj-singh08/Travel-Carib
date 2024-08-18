@@ -48,7 +48,7 @@ class KiuClient {
         password: process.env.KIU_PASSWORD,
         request: requestXML
       })
-      console.log(response.data);
+      // console.log(response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
       // const parsedResponse = combineFlightsWithMinimumLayover(jsonResponse);

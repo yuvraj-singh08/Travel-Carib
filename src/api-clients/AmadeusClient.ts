@@ -55,7 +55,7 @@ class AmadeusClient {
         }
       })
       console.log(index);
-      await new Promise(resolve => setTimeout(resolve, 50*(index+1)))
+      await new Promise(resolve => setTimeout(resolve, 100*(index+1)))
       console.log("Resolved ", index)
       const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
         originDestinations: segments,

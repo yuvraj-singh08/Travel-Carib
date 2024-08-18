@@ -4,7 +4,7 @@ import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 
 export const getDateString = (date: string) => {
   const newDate = new Date(date);
-  console.log(newDate);
+  // console.log(newDate);
   const dateString = newDate.toISOString().slice(0, 10);
   return dateString;
 }
@@ -59,7 +59,7 @@ export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchP
 
   const doc = create(xmlObj);
   const xml = doc.end({ prettyPrint: true });
-  console.log(xml)
+  // console.log(xml)
   return xml;
 }
 
@@ -184,7 +184,7 @@ export const parseFlightSearchResponse = (jsonResponse: any) => {
         bookingClassAvailable,
       }
     })
-    console.log(stopsDetails);
+    // console.log(stopsDetails);
     return { stopsDetails }
   })
   return flights;
@@ -268,7 +268,7 @@ export const combineRoute = (route1: any, route2: any) => {
         const route2Departure = new Date(route2?.FlightSegment[route2?.FlightSegment?.length - 1]?.$?.DepartureDateTime);
         const timeDifferenceInHours = (route2Departure.getTime() - route1Arrival.getTime()) / (1000 * 60 * 60);
         if (true) {
-        // if (timeDifferenceInHours > SELF_TRANSFER_TIME_DIFF) {
+          // if (timeDifferenceInHours > SELF_TRANSFER_TIME_DIFF) {
           response.push({
             FlightSegment: [
               ...route1.FlightSegment,
@@ -287,15 +287,26 @@ export const combineRoute = (route1: any, route2: any) => {
 
 export const parseKiuResposne = (data: any) => {
   try {
+    if (data?.Root?.Error !== undefined) {
+      console.log("Error in KIU response: ", data.Root.Error);
+      return []
+    }
     const n = data?.KIU_AirAvailRS?.OriginDestinationInformation?.length;
     const options = data?.KIU_AirAvailRS?.OriginDestinationInformation;
     const getParsedOptions = (data: any) => {
       return data?.OriginDestinationOptions[0]?.OriginDestinationOption;
     }
-    let combinedRoute = combineRoute(getParsedOptions(options[0]), getParsedOptions(options[1]));
-    for (let i = 2; i < n; i++) {
-      combinedRoute = combineRoute(combinedRoute, getParsedOptions(options[i]));
+
+    let combinedRoute;
+    if (options.length === 1)
+      combinedRoute = getParsedOptions(options[0])
+    else {
+      combinedRoute = combineRoute(getParsedOptions(options[0]), getParsedOptions(options[1]));
+      for (let i = 2; i < n; i++) {
+        combinedRoute = combineRoute(combinedRoute, getParsedOptions(options[i]));
+      }
     }
+
     let slices = [], segments = [], response = [], responseId = "";
 
     combinedRoute.forEach((option) => {
@@ -335,8 +346,8 @@ export const parseKiuResposne = (data: any) => {
       response.push({
         responseId,
         slices,
-        total_amount: 0,
-        tax_amount: 0,
+        total_amount: "Available Soon",
+        tax_amount: "Available Soon",
         base_currency: "EUR",
         tax_currency: "EUR",
         cabinClass: "economy"
