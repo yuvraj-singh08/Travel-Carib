@@ -267,8 +267,7 @@ export const combineRoute = (route1: any, route2: any) => {
         const route1Arrival = new Date(route1?.FlightSegment[0]?.$?.ArrivalDateTime);
         const route2Departure = new Date(route2?.FlightSegment[route2?.FlightSegment?.length - 1]?.$?.DepartureDateTime);
         const timeDifferenceInHours = (route2Departure.getTime() - route1Arrival.getTime()) / (1000 * 60 * 60);
-        if (true) {
-          // if (timeDifferenceInHours > SELF_TRANSFER_TIME_DIFF) {
+        if (timeDifferenceInHours > SELF_TRANSFER_TIME_DIFF) {
           response.push({
             FlightSegment: [
               ...route1.FlightSegment,
