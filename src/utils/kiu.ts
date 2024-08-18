@@ -357,6 +357,6 @@ export const parseKiuResposne = (data: any) => {
 
     return response;
   } catch (error) {
-    throw error;
+    console.log(error);
   }
 }
