@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int         @id @default(autoincrement())
+  email             String      @unique
+  password          String
+  name              String
+  mobileCountryCode String
+  mobileNumber      String
+  nationality       String?
+  gender            String?
+  dateOfBirth       DateTime?
+  passportNumber    String?
+  passportExpiry    DateTime?
+  address           Address?
+  identityCard      String?
+  bookings          Booking[]   @relation("UserBookings")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Address {
+  id        Int     @id @default(autoincrement())
+  country   String
+  state     String
+  city      String
+  zipCode   String
+  address   String
+  userId    Int     @unique
+  user      User    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  flightId   Int
+  seatClass  String    // e.g., "Economy", "Business"
+  price      Float
+  status     String    // e.g., "Booked", "Cancelled"
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user       User      @relation("UserBookings", fields: [userId], references: [id])
+  flight     Flight    @relation(fields: [flightId], references: [id])
+}
+
+model Flight {
+  id               Int        @id @default(autoincrement())
+  airlineId        Int
+  departureAirport String     // e.g., "Moi Intl, Mombasa, Kenya"
+  arrivalAirport   String     // e.g., "JFK Terminal, Nairobi, Kenya"
+  departureTime    DateTime
+  arrivalTime      DateTime
+  duration         String     // e.g., "9hr 50min"
+  price            Float
+  seatsRemaining   Int
+  isRefundable     Boolean
+  isSelfTransfer   Boolean
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  airline   Airline  @relation(fields: [airlineId], references: [id])
+  bookings  Booking[]
+}
+
+model Airline {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  flights   Flight[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

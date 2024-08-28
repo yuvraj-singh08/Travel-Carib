@@ -9,6 +9,7 @@ import queryRoutes from './src/routes/queryRoutes';
 import kiuRoutes from './src/routes/kiuRoutes';
 import flightRoutes from './src/routes/flightRoutes';
 import duffelRoutes from './src/routes/duffelRoutes';
+import userRoutes from './src/routes/userRoutes';
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use('/', queryRoutes)
 app.use('/kiu', kiuRoutes);
 app.use('/flight', flightRoutes);
 app.use('/duffel', duffelRoutes);
+app.use('/users',userRoutes)
 
 const PORT = process.env.PORT || 8080;
 
