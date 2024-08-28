@@ -14,7 +14,7 @@ datasource db {
 }
 
 model User {
-  id                Int         @id @default(autoincrement())
+  id                String      @id @default(uuid())
   email             String      @unique
   password          String
   name              String
@@ -33,25 +33,25 @@ model User {
 }
 
 model Address {
-  id        Int     @id @default(autoincrement())
+  id        String    @id @default(uuid())
   country   String
   state     String
   city      String
   zipCode   String
   address   String
-  userId    Int     @unique
+  userId    String     @unique
   user      User    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  flightId   Int
-  seatClass  String    // e.g., "Economy", "Business"
+  id         String       @id @default(uuid())
+  userId     String
+  flightId   String
+  seatClass  String    
   price      Float
-  status     String    // e.g., "Booked", "Cancelled"
+  status     String    
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -60,13 +60,13 @@ model Booking {
 }
 
 model Flight {
-  id               Int        @id @default(autoincrement())
-  airlineId        Int
-  departureAirport String     // e.g., "Moi Intl, Mombasa, Kenya"
-  arrivalAirport   String     // e.g., "JFK Terminal, Nairobi, Kenya"
+  id               String       @id @default(uuid())
+  airlineId        String
+  departureAirport String    
+  arrivalAirport   String     
   departureTime    DateTime
   arrivalTime      DateTime
-  duration         String     // e.g., "9hr 50min"
+  duration         String    
   price            Float
   seatsRemaining   Int
   isRefundable     Boolean
@@ -79,7 +79,7 @@ model Flight {
 }
 
 model Airline {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   name      String   @unique
   flights   Flight[]
   createdAt DateTime @default(now())

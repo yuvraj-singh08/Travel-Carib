@@ -35,7 +35,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
 export const getUserById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = Number(req.params.id);
+    const userId = req.params.id;
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -53,7 +53,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = Number(req.params.id);
+    const userId = req.params.id;
     const data: UpdateUserInput = req.body;
 
     const updatedUser = await prisma.user.update({
@@ -76,7 +76,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = Number(req.params.id);
+    const userId = req.params.id;
     await prisma.address.deleteMany({
         where: {
           userId: userId,
