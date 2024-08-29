@@ -28,7 +28,7 @@ model User {
   cotravellers        CoTravellers[]  @relation("UserCoTravellers")
   additionalEmails    ContactDetail?  //one to one relations
   passportDetails     PassportDetail[]   //one to many relation 
-  frequentFlyers      FrequentFlyerDetail[]
+  frequentFlyers      FrequentFlyerDetail[] //one to many relation
 }
 
 model CoTravellers {
