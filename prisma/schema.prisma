@@ -14,74 +14,89 @@ datasource db {
 }
 
 model User {
-  id                String      @id @default(uuid())
-  email             String      @unique
-  password          String
-  name              String
-  mobileCountryCode String
-  mobileNumber      String
-  nationality       String?
-  gender            String?
-  dateOfBirth       DateTime?
-  passportNumber    String?
-  passportExpiry    DateTime?
-  address           Address?
-  identityCard      String?
-  bookings          Booking[]   @relation("UserBookings")
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id                  String          @id @default(uuid())
+  email               String          @unique
+  password            String
+  mobileNumber        String
+  gender              String
+  dateOfBirth         DateTime
+  address             String
+  profilePhoto        String
+  fullName            String
+  nickName            String
+  pinCode             String
+  cotravellers        CoTravellers[]  @relation("UserCoTravellers")
+  additionalEmails    ContactDetail?  //one to one relations
+  passportDetails     PassportDetail[]   //one to many relation 
+  frequentFlyers      FrequentFlyerDetail[]
+}
+
+model CoTravellers {
+  id              String  @id @default(uuid())
+  userId          String?
+  name            String
+  email           String
+  dateOfBirth     DateTime
+  passportNumber  String
+  phoneNumber     String
+  user            User?    @relation("UserCoTravellers", fields: [userId], references: [id])
+}
+
+model ContactDetail {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  emailId     String
+  phoneNumber String
+  user        User    @relation(fields: [userId], references: [id])
+}
+
+model PassportDetail {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  passportNumber String
+  issuingCountry String
+  expiryDate     DateTime
+  passportImage  String
+  user           User    @relation(fields: [userId], references: [id])
+
+  
+}
+
+model FrequentFlyerDetail {
+  id              String  @id @default(uuid())
+  userId          String
+  frequentFlyerNumber String
+  airline         String
+  user            User    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// one to one relation between passenger and address
+model Passenger {
+  id                     String      @id @default(uuid())
+  firstName              String
+  surname                String
+  nationality            String
+  gender                 String
+  dateOfBirth            DateTime
+  passportNumber         String
+  passportExpiry         DateTime
+  address                Address    @relation(fields: [addressId], references: [id])
+  addressId              String      @unique    
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
 }
 
 model Address {
-  id        String    @id @default(uuid())
-  country   String
-  state     String
-  city      String
-  zipCode   String
-  address   String
-  userId    String     @unique
-  user      User    @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Booking {
-  id         String       @id @default(uuid())
-  userId     String
-  flightId   String
-  seatClass  String    
-  price      Float
-  status     String    
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  user       User      @relation("UserBookings", fields: [userId], references: [id])
-  flight     Flight    @relation(fields: [flightId], references: [id])
-}
-
-model Flight {
-  id               String       @id @default(uuid())
-  airlineId        String
-  departureAirport String    
-  arrivalAirport   String     
-  departureTime    DateTime
-  arrivalTime      DateTime
-  duration         String    
-  price            Float
-  seatsRemaining   Int
-  isRefundable     Boolean
-  isSelfTransfer   Boolean
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-
-  airline   Airline  @relation(fields: [airlineId], references: [id])
-  bookings  Booking[]
-}
-
-model Airline {
-  id        String      @id @default(uuid())
-  name      String   @unique
-  flights   Flight[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String      @id @default(uuid())
+  country                String
+  state                  String
+  city                   String
+  zipCode                String
+  address                String    
+  identityCard           String  
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  passenger              Passenger?  @relation
 }
