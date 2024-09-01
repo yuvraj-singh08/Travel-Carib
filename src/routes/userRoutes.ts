@@ -5,14 +5,20 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  registerUser,
+  loginUser,
 } from '../controllers/userController';
+import { authenticateToken } from '../middleware/authmiddleware';
 
 const router = Router();
+router.post('/register', registerUser);  
+router.post('/login', loginUser);        
 
-router.post('/', createUser);
-router.get('/', getAllUsers);
-router.get('/:id', getUserById);
-router.put('/:id', updateUser);
-router.delete('/:id', deleteUser);
+// Protected Routes
+router.get('/', authenticateToken, getAllUsers);
+router.get('/:id', authenticateToken, getUserById);
+router.post('/', authenticateToken, createUser);
+router.put('/:id', authenticateToken, updateUser);
+router.delete('/:id', authenticateToken, deleteUser);
 
 export default router;
