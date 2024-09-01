@@ -29,16 +29,6 @@ CREATE TABLE "CoTravellers" (
 );
 
 -- CreateTable
-CREATE TABLE "ContactDetail" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "emailId" TEXT NOT NULL,
-    "phoneNumber" TEXT NOT NULL,
-
-    CONSTRAINT "ContactDetail_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "PassportDetail" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -70,16 +60,6 @@ CREATE TABLE "Passenger" (
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
     "passportNumber" TEXT NOT NULL,
     "passportExpiry" TIMESTAMP(3) NOT NULL,
-    "addressId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Passenger_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Address" (
-    "id" TEXT NOT NULL,
     "country" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "city" TEXT NOT NULL,
@@ -89,29 +69,62 @@ CREATE TABLE "Address" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Passenger_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Booking" (
+    "id" TEXT NOT NULL,
+    "passengerId" TEXT NOT NULL,
+    "bookingDate" TIMESTAMP(3) NOT NULL,
+    "flightNumber" TEXT NOT NULL,
+    "seatNumber" TEXT NOT NULL,
+    "paymentId" TEXT,
+    "status" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Payment" (
+    "id" TEXT NOT NULL,
+    "bookingId" TEXT NOT NULL,
+    "paymentDate" TIMESTAMP(3) NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL,
+    "paymentMethod" TEXT NOT NULL,
+    "paymentStatus" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ContactDetail_userId_key" ON "ContactDetail"("userId");
+CREATE INDEX "CoTravellers_userId_idx" ON "CoTravellers"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PassportDetail_userId_key" ON "PassportDetail"("userId");
 
 -- CreateIndex
+CREATE INDEX "PassportDetail_userId_idx" ON "PassportDetail"("userId");
+
+-- CreateIndex
 CREATE INDEX "FrequentFlyerDetail_userId_idx" ON "FrequentFlyerDetail"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Passenger_addressId_key" ON "Passenger"("addressId");
+CREATE UNIQUE INDEX "Booking_paymentId_key" ON "Booking"("paymentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Payment_bookingId_key" ON "Payment"("bookingId");
 
 -- AddForeignKey
 ALTER TABLE "CoTravellers" ADD CONSTRAINT "CoTravellers_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ContactDetail" ADD CONSTRAINT "ContactDetail_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PassportDetail" ADD CONSTRAINT "PassportDetail_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -120,4 +133,7 @@ ALTER TABLE "PassportDetail" ADD CONSTRAINT "PassportDetail_userId_fkey" FOREIGN
 ALTER TABLE "FrequentFlyerDetail" ADD CONSTRAINT "FrequentFlyerDetail_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Passenger" ADD CONSTRAINT "Passenger_addressId_fkey" FOREIGN KEY ("addressId") REFERENCES "Address"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Booking" ADD CONSTRAINT "Booking_passengerId_fkey" FOREIGN KEY ("passengerId") REFERENCES "Passenger"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Payment" ADD CONSTRAINT "Payment_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
