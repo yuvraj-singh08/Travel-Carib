@@ -28,6 +28,7 @@ model User {
   cotravellers        CoTravellers[]  @relation("UserCoTravellers")
   passportDetails     PassportDetail[]   //one to many relation 
   frequentFlyers      FrequentFlyerDetail[] //one to many relation
+  passenger           Passenger[] // one to many relation
 }
 
 model CoTravellers {
@@ -65,6 +66,7 @@ model FrequentFlyerDetail {
 
 model Passenger {
   id             String    @id @default(uuid())
+  userId         String
   firstName      String
   surname        String
   nationality    String
@@ -79,6 +81,8 @@ model Passenger {
   address        String
   identityCard   String
   bookings       Booking[] 
+  user            User    @relation(fields: [userId], references: [id]) 
+  @@index([userId])
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
