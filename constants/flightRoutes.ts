@@ -121,9 +121,5 @@ export const routesData: routeType[] =[
     {
         origin:"BOG",
         destination:"MIA"
-    },
-    {
-        origin:"SDQ",
-        destination:"MIA"
     }
 ]

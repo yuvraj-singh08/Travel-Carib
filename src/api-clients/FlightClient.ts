@@ -16,6 +16,49 @@ class FlightClient {
         this.kiuClient = new KiuClient();
     }
 
+    async advanceFlightSearch(params: FlightOfferSearchParams) {
+        try {
+            //Calculating Possible Routes
+            const possibleRoutes = [
+                [
+                    {
+                        origin: params.originLocation,
+                        destination: params.destinationLocation
+                    }
+                ],
+                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, params.maxLayovers))
+            ]
+            console.log(possibleRoutes);
+
+            //Duffel Request
+            const duffelRequests = possibleRoutes.map((route) => {
+                const segmentRequest = route.map((segment) => {
+                    return this.duffelClient.createOfferRequest({
+                        passengers: [{ type: "adult" }],
+                        cabin_class: params.cabinClass,
+                        max_connections: 2,
+                        slices: [
+                            {
+                                origin: segment.origin,
+                                destination: segment.destination,
+                                departure_date: params.departureDate,
+                            }
+                        ],
+                    })
+                })
+                return segmentRequest
+            })
+            const duffelResponse = await Promise.all(duffelRequests.map(async (request) => {
+                const result = await Promise.all(request);
+                return result;
+            }))
+
+            return duffelResponse;
+        } catch (error) {
+            throw (error);
+        }
+    }
+
     async flightSearch(params: FlightOfferSearchParams) {
         try {
             const possibleRoutes = [
@@ -77,11 +120,11 @@ class FlightClient {
 
             kiuResponse.forEach((response: any) => {
                 const parsedResponse = parseKiuResposne(response);
-                parsedKiuResponse = [...parsedKiuResponse,...parsedResponse]
+                parsedKiuResponse = [...parsedKiuResponse, ...parsedResponse]
             });
-            if(parsedAmadeusResponse === undefined) parsedAmadeusResponse = []
-            
-            const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse,...parsedKiuResponse])
+            if (parsedAmadeusResponse === undefined) parsedAmadeusResponse = []
+
+            const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse, ...parsedKiuResponse])
             return combinedResponse
         } catch (error) {
             throw (error);
