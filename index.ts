@@ -9,6 +9,7 @@ import queryRoutes from './src/routes/queryRoutes';
 import kiuRoutes from './src/routes/kiuRoutes';
 import flightRoutes from './src/routes/flightRoutes';
 import duffelRoutes from './src/routes/duffelRoutes';
+import { initMongo } from './config/mongo';
 
 const app = express()
 
@@ -31,5 +32,10 @@ app.use('/duffel', duffelRoutes);
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
-    console.log(`> App running on port ${PORT} ...`);
+    console.log(`> App running on port ${PORT}  ...`);
+    try {
+        initMongo();
+    } catch (error) {
+        
+    }
 });
