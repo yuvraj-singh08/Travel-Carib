@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 require('dotenv').config();
 
-const DB_URL = process.env.DB_URL || 'mongodb://localhost:27017/tria';
+const DB_URL = process.env.MONGO_URI || 'mongodb://localhost:27017/tria';
 
 export const initMongo = () => {
     const connect = () => {
