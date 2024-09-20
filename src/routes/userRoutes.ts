@@ -10,7 +10,7 @@ import {
 } from '../controllers/userController';
 import {authenticateToken}  from '../middleware/authmiddleware';
 import { addPassenger, deletePassenger, updatePassenger } from '../controllers/passengerController';
-import { addCoTraveller, UpdatePassportDetail } from '../controllers/CoTravellerController';
+import { addCoTraveller, AddFrequentFlyer, UpdatePassportDetail } from '../controllers/CoTravellerController';
 
 const router = Router();
 router.post('/register', registerUser);  
@@ -21,6 +21,7 @@ router.get('/profile', authenticateToken,updateUserProfile);
 router.put('/profile', authenticateToken, updateUserProfile);
 router.post('/traveller',authenticateToken,addCoTraveller);
 router.post('/passport', authenticateToken,UpdatePassportDetail);
+router.post('/flyer',authenticateToken, AddFrequentFlyer);
 router.get('/',  getAllUsers);
 router.get('/:id', authenticateToken, getUserById);
 

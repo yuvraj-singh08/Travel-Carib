@@ -40,7 +40,7 @@ export interface PassportDetailInput {
 export interface FrequentFlyerDetailInput {
   userId: string;
   frequentFlyerNumber: string;
-  airline: string;
+  airlines: [string];
 }
 
 

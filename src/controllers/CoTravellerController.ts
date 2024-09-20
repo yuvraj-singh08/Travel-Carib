@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import CoTraveller from '../../models/coTravellersSchema';
 import User from '../../models/userModel';
 import PassportDetail from '../../models/passportDetailModel';
-import { CoTravellersInput } from '../../types/userTypes';
+import { CoTravellersInput, FrequentFlyerDetailInput } from '../../types/userTypes';
 import { PassportDetailInput } from '../../types/userTypes';
 import { AuthenticatedRequest } from '../../types/express';
+import Flyer from '../../models/FlyerDetailModel';
 
 // Add CoTraveller
 export const addCoTraveller = async (req: AuthenticatedRequest, res: Response) => {
@@ -36,7 +37,7 @@ export const addCoTraveller = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-// Add passport detail
+// Update passport detail
 export const UpdatePassportDetail = async(req: AuthenticatedRequest, res: Response) => {
     const PassportData: PassportDetailInput = req.body;
     const userId = req.user?.id;
@@ -78,3 +79,23 @@ export const UpdatePassportDetail = async(req: AuthenticatedRequest, res: Respon
 //     return res.status(500).json({ message: 'Error deleting co-traveller', error });
 //   }
 // };
+
+
+//Add Frequent flyer Details
+export const AddFrequentFlyer = async(req: AuthenticatedRequest, res: Response) => {
+  const FlyerData : FrequentFlyerDetailInput  = req.body;                        
+  const userId = req.user?.id;
+  try{
+    const newFlyer = new Flyer({
+      userId: userId,
+      frequentFlyerNumber: FlyerData.frequentFlyerNumber,
+      airlines: FlyerData.airlines
+    });
+    await newFlyer.save();
+    return res.status(201).json(newFlyer);
+  }
+  catch (error) {
+    return res.status(500).json({ message: 'Error adding new flyer', error });
+  }
+
+}
