@@ -20,7 +20,7 @@ router.post('/login', loginUser);
 router.get('/profile', authenticateToken,updateUserProfile);
 router.put('/profile', authenticateToken, updateUserProfile);
 router.post('/traveller',authenticateToken,addCoTraveller);
-router.put('/passport', authenticateToken,UpdatePassportDetail);
+router.post('/passport', authenticateToken,UpdatePassportDetail);
 router.get('/',  getAllUsers);
 router.get('/:id', authenticateToken, getUserById);
 

@@ -4,10 +4,7 @@ import mongoose,{Schema} from "mongoose";
 // const { Schema } = mongoose;
 
 const passportDetailSchema = new Schema({
-  id: {
-    type: String,
-    default: () => new mongoose.Types.ObjectId(), 
-  },
+  
   userId: {
     type: String,
     unique: true, 
