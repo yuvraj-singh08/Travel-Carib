@@ -1,5 +1,5 @@
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { combineResponses, getPossibleRoutes, parseAmadeusResponse, parseDuffelResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, getPossibleRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -32,7 +32,7 @@ class FlightClient {
 
             //Duffel Request
             const duffelRequests = possibleRoutes.map((route) => {
-                const segmentRequest = route.map((segment) => {
+                return route.map((segment) => {
                     return this.duffelClient.createOfferRequest({
                         passengers: [{ type: "adult" }],
                         cabin_class: params.cabinClass,
@@ -46,14 +46,74 @@ class FlightClient {
                         ],
                     })
                 })
-                return segmentRequest
             })
-            const duffelResponse = await Promise.all(duffelRequests.map(async (request) => {
-                const result = await Promise.all(request);
-                return result;
-            }))
 
-            return duffelResponse;
+            let index = 0;
+            const amadeusRequests = possibleRoutes.map((route) => {
+                return route.map((segment) => {
+                    return this.amadeusClient.searchFlights({
+                        departure: params.departureDate,
+                        arrival: params.departureDate,
+                        locationDeparture: segment.origin,
+                        locationArrival: segment.destination,
+                        adults: params.passengerType,
+                    }, index++)
+                })
+            })
+
+            const [duffelResponse, amadeusResponse] = await Promise.all([
+                Promise.all(duffelRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                })),
+                Promise.all(amadeusRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                }))
+            ])
+
+            const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
+                const parsedPossibleRoutes = possibleRoute.map((response) => {
+                    const parsedResponse = amadeusNewParser(response);
+                    return parsedResponse;
+                })
+                return parsedPossibleRoutes
+            })
+
+            const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
+                const parsedPossibleRoutes = possibleRoutes.map((response) => {
+                    const parsedResponse = duffelNewParser(response);
+                    return parsedResponse;
+                })
+                return parsedPossibleRoutes
+            })
+
+            let combination: any = [];
+
+            possibleRoutes.forEach((route, index) => {
+                const duffel = parsedDuffelResponse?.[index]
+                const amadeus = parsedAmadeusResponse?.[index]
+                const temp = [];
+                route.forEach((data, index2) => {
+                    temp.push([
+                        ...amadeus[index2],
+                        ...duffel[index2]
+                    ])
+                })
+                const paired = combineAllRoutes(temp)
+                if (paired.length > 0)
+                    combination.push(paired)
+            })
+
+            let temp: any = []
+
+            combination.forEach((route) => {
+                temp.push(...route)
+            })
+
+            const normalizedResponse = normalizeResponse(temp)
+
+            return normalizedResponse;
         } catch (error) {
             throw (error);
         }

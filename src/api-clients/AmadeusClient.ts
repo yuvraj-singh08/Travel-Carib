@@ -27,14 +27,76 @@ class AmadeusClient {
     }
   }
 
-  async searchFlights(params: FlightOfferSearchParams): Promise<any> {
+  async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
     try {
-      const response = await this.client.shopping.flightOffersSearch.get({
-        originLocationCode: params.locationDeparture,
-        destinationLocationCode: params.locationArrival,
-        departureDate: params.departure,
-        adults: params.adults,
-      });
+
+      await new Promise(resolve => setTimeout(resolve, 2000 * (index)))
+
+      // const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
+      //   originDestinations: [
+      //     {
+      //       originLocationCode: params.locationDeparture,
+      //       destinationLocationCode: params.locationArrival,
+      //       departureDateTimeRange: {
+      //         date: params.departure,
+      //         // time: "10:00:00"
+      //       }
+      //     }
+      //   ],
+      //   searchCriteria: {
+      //     addOneWayOffers: true
+      //   },
+      //   adults: 1,
+      // }));
+
+      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
+        currencyCode: "INR",
+        originDestinations: [
+          {
+            id: 1,
+            originLocationCode: params.locationDeparture,
+            destinationLocationCode: params.locationArrival,
+            departureDateTimeRange: {
+              date: params.departure,
+              // time: 10:00:00
+            }
+          },
+        ],
+        travelers: [
+          {
+            id: 1,
+            travelerType: "ADULT",
+            fareOptions: [
+              "STANDARD"
+            ]
+          },
+
+        ],
+        sources: [
+          "GDS"
+        ],
+        searchCriteria: {
+          maxFlightOffers: 50,
+          flightFilters: {
+            cabinRestrictions: [
+              {
+                cabin: "ECONOMY",
+                coverage: "MOST_SEGMENTS",
+                originDestinationIds: [
+                  1
+                ]
+              }
+            ],
+            // carrierRestrictions: {
+            //   excludedCarrierCodes: [
+            //     AA,
+            //     TP,
+            //     AZ
+            //   ]
+            // }
+          }
+        }
+      }))
       return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       console.log(error);
@@ -55,7 +117,7 @@ class AmadeusClient {
         }
       })
       console.log(index);
-      await new Promise(resolve => setTimeout(resolve, 100*(index+1)))
+      await new Promise(resolve => setTimeout(resolve, 100 * (index + 1)))
       console.log("Resolved ", index)
       const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
         originDestinations: segments,
