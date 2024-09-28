@@ -10,6 +10,7 @@ import kiuRoutes from "./src/routes/kiuRoutes";
 import flightRoutes from "./src/routes/flightRoutes";
 import duffelRoutes from "./src/routes/duffelRoutes";
 import userRoutes from "./src/routes/userRoutes";
+import adminRoutes from "./src/routes/adminRoutes";
 import { initMongo } from "./config/mongo";
 import { AuthenticatedRequest } from "./types/express";
 
@@ -32,6 +33,7 @@ app.use("/", queryRoutes);
 app.use("/kiu", kiuRoutes);
 app.use("/flight", flightRoutes);
 app.use("/duffel", duffelRoutes);
+app.use("/admin", adminRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;

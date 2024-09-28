@@ -68,7 +68,7 @@ enum AirlineFeeType {
 }
 
 model AirlineCommision {
-  id             String         @id @map("_id")
+  id             String         @id @default(uuid()) @map("_id")
   type           String
   commisionTitle String
   supplier       String
@@ -83,7 +83,7 @@ enum TicketStatus {
 }
 
 model Ticket {
-  id            String       @id @map("_id")
+  id            String       @id @default(uuid()) @map("_id")
   subject       String
   requesterName String
   requestedOn   DateTime
@@ -92,7 +92,7 @@ model Ticket {
 }
 
 model Booking {
-  id             String @id @map("_id")
+  id             String @id @default(uuid()) @map("_id")
   contactDetail  Json // email and phone number
   flightDetails  Json[]
   payment        String // Payment id
@@ -107,7 +107,7 @@ model Booking {
 }
 
 model Payment {
-  id          String   @id @map("_id")
+  id          String   @id @default(uuid()) @map("_id")
   amount      Float
   currency    String
   paymentType String
@@ -116,10 +116,63 @@ model Payment {
 }
 
 model passenger {
-  id          String @id @map("_id")
+  id          String @id @default(uuid()) @map("_id")
   name        String
   dob         String
   email       String
   passportNo  String
   phoneNumber String
+}
+
+enum FlightSupplier {
+  AMADEUS
+  KIUSYS
+  DUFFEL
+}
+
+model firewall {
+  id           String         @id @default(uuid()) @map("_id")
+  title        String
+  supplier     FlightSupplier
+  code         String
+  flightNumber String
+  from         String
+  to           String
+  updateTime   DateTime       @default(now())
+}
+
+enum CommissionType {
+  AIRLINE
+  HOTEL
+  CAR_RENTAL
+}
+
+model commissionManagement {
+  id             String         @id @default(uuid()) @map("_id")
+  type           CommissionType
+  commisionTitle String
+  supplier       FlightSupplier
+  commissionFees String
+  feeType        AirlineFeeType
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+model userManagement {
+  id       String   @id @default(uuid()) @map("_id")
+  name     String
+  address  String
+  email    String
+  password String
+  role     UserRole
+  status   Status
 }
