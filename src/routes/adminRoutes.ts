@@ -20,7 +20,7 @@ import {
 } from "../controllers/adminController";
 
 const router = Router();
-router.post("/firewall", getFirewall);
+router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
 
 router.get("/commission", getCommission);
