@@ -23,24 +23,24 @@ import {
 const router = Router();
 router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
-router.delete("/delete-firewall", deleteFirewall);
+router.post("/delete-firewall", deleteFirewall);
 
 router.get("/commission", getCommission);
 router.get("/commission/:id", getCommissionById);
 router.post("/add-commission", addCommission);
-router.put("/update-commission", updateCommision);
-router.delete("/delete-commission", deleteCommision);
+router.post("/update-commission", updateCommision);
+router.post("/delete-commission", deleteCommision);
 
 router.get("/roles", getRoles);
 router.get("/roles/:id", getRolesById);
 router.post("/add-roles", addRoles);
-router.put("/update-roles", updateRoles);
-router.delete("/delete-roles", deleteRoles);
+router.post("/update-roles", updateRoles);
+router.post("/delete-roles", deleteRoles);
 
 router.get("/users", getUsers);
 router.get("/user/:id", getUserById);
 router.post("/add-user", addUser);
-router.put("/update-user", updateUser);
-router.delete("/delete-user", deleteUser);
+router.post("/update-user", updateUser);
+router.post("/delete-user", deleteUser);
 
 export default router;
