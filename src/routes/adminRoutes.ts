@@ -23,7 +23,7 @@ import {
 const router = Router();
 router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
-router.post("/delete-firewall", deleteFirewall);
+router.delete("/delete-firewall", deleteFirewall);
 
 router.get("/commission", getCommission);
 router.get("/commission/:id", getCommissionById);
