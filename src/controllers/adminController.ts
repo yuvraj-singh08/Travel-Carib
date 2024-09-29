@@ -35,6 +35,25 @@ export const addFirewall = async (req: Request, res: Response) => {
   }
 };
 
+export const getFirewall = async (req: Request, res: Response) => {
+  try {
+    const firewall = await prisma.firewall.findMany();
+
+    if (firewall) {
+      res.status(200).json({
+        message: "Firewall fetched",
+        firewall: firewall,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Firewall not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch firewall" });
+  }
+};
+
 export const addCommission = async (req: Request, res: Response) => {
   const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
 
