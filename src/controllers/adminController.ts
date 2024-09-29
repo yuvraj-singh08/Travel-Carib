@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
+import HttpError from "../utils/httperror";
 
 export const addFirewall = async (req: Request, res: Response) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
@@ -104,20 +105,19 @@ export const getCommissionById = async (req: Request, res: Response) => {
 };
 
 export const updateCommision = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
+  const data = req.body;
 
   try {
-    const commission = prisma.commissionManagement.update({
+    const commission = await prisma.commissionManagement.update({
       where: {
-        id: id,
+        id: data.id,
       },
       data: {
-        type: type,
-        commissionTitle: commissionTitle,
-        supplier: supplier,
-        commissionFees: commissionFees,
-        feeType: feeType,
+        type: data.type,
+        commissionTitle: data.commissionTitle,
+        supplier: data.supplier,
+        commissionFees: data.commissionFees,
+        feeType: data.feeType,
       },
     });
 
@@ -137,10 +137,10 @@ export const updateCommision = async (req: Request, res: Response) => {
 };
 
 export const deleteCommision = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.body;
 
   try {
-    const commission = prisma.commissionManagement.delete({
+    const commission = await prisma.commissionManagement.delete({
       where: {
         id: id,
       },
@@ -149,7 +149,6 @@ export const deleteCommision = async (req: Request, res: Response) => {
     if (commission) {
       res.status(200).json({
         message: "Commission deleted",
-        commission: commission,
         success: true,
       });
     } else {
@@ -228,8 +227,7 @@ export const getRolesById = async (req: Request, res: Response) => {
 };
 
 export const updateRoles = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { title, description, permissionGroups } = req.body;
+  const { id, title, description, permissionGroups } = req.body;
 
   try {
     const roles = prisma.role.update({
@@ -259,7 +257,7 @@ export const updateRoles = async (req: Request, res: Response) => {
 };
 
 export const deleteRoles = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.body;
 
   try {
     const roles = prisma.role.delete({
@@ -280,5 +278,129 @@ export const deleteRoles = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("Error while updating:", err);
     res.status(500).json({ message: "Failed to delete roles" });
+  }
+};
+
+export const addUser = async (req: Request, res: Response) => {
+  const { name, address, email, password, role, status } = req.body;
+
+  try {
+    const user = await prisma.userManagement.create({
+      data: {
+        name: name,
+        address: address,
+        email: email,
+        password: password,
+        role: role,
+        status: status,
+      },
+    });
+
+    if (user) {
+      res.status(200).json({
+        message: "User created",
+        user: user,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "User not created" });
+    }
+  } catch (error) {
+    console.error("Error while creating:", error);
+    res.status(500).json({ error: "Failed to create user", success: false });
+  }
+};
+
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.userManagement.findMany();
+
+    if (users) {
+      res.status(200).json({
+        message: "Users fetched",
+        users: users,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Users not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const user = await prisma.userManagement.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (user) {
+      res.status(200).json({
+        message: "User fetched",
+        user: user,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  const data = req.body;
+
+  try {
+    const updatedUser = await prisma.userManagement.update({
+      where: {
+        id: data.id,
+      },
+      data: data,
+    });
+
+    if (updatedUser) {
+      res.status(200).json({
+        message: "User updated",
+        user: updatedUser,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "User not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const user = await prisma.userManagement.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (user) {
+      res.status(200).json({
+        message: "User deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "User not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete user" });
   }
 };

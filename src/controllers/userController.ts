@@ -188,6 +188,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to delete user" });
   }
 };
+
 export const addCoTraveller = async (
   req: AuthenticatedRequest,
   res: Response

@@ -3,29 +3,40 @@ import {
   addCommission,
   addFirewall,
   addRoles,
+  addUser,
   deleteCommision,
   deleteRoles,
+  deleteUser,
   getCommission,
   getCommissionById,
   getRoles,
   getRolesById,
+  getUserById,
+  getUsers,
   updateCommision,
   updateRoles,
+  updateUser,
 } from "../controllers/adminController";
 
 const router = Router();
 router.post("/add-firewall", addFirewall);
 
-router.get("/", getCommission);
-router.get("/:id", getCommissionById);
+router.get("/commission", getCommission);
+router.get("/commission/:id", getCommissionById);
 router.post("/add-commission", addCommission);
 router.put("/update-commission", updateCommision);
 router.delete("/delete-commission", deleteCommision);
 
-router.post("/", getRoles);
-router.post("/:id", getRolesById);
+router.get("/roles", getRoles);
+router.get("/roles/:id", getRolesById);
 router.post("/add-roles", addRoles);
-router.post("/update-roles", updateRoles);
-router.post("/delete-roles", deleteRoles);
+router.put("/update-roles", updateRoles);
+router.delete("/delete-roles", deleteRoles);
+
+router.get("/users", getUsers);
+router.get("/user/:id", getUserById);
+router.post("/add-user", addUser);
+router.put("/update-user", updateUser);
+router.delete("/delete-user", deleteUser);
 
 export default router;
