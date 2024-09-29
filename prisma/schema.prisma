@@ -176,3 +176,28 @@ model userManagement {
   role     UserRole
   status   Status
 }
+
+model Permission {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  view      Boolean
+  update    Boolean
+  groupId   String
+  group     PermissionGroup @relation(fields: [groupId], references: [id])
+}
+
+model PermissionGroup {
+  id          String   @id @default(uuid()) @map("_id")
+  name        String
+  active      Boolean
+  permissions Permission[]
+  roleId      String
+  role        Role @relation(fields: [roleId], references: [id])
+}
+
+model Role {
+  id               String   @id @default(uuid()) @map("_id")
+  name             String
+  description      String
+  permissionGroups PermissionGroup[]
+}
