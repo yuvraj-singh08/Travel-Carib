@@ -192,12 +192,12 @@ model PermissionGroup {
   active      Boolean
   permissions Permission[]
   roleId      String
-  role        Role @relation(fields: [roleId], references: [id])
+  // role        Role @relation(fields: [roleId], references: [id])
 }
 
 model Role {
   id               String   @id @default(uuid()) @map("_id")
   name             String
   description      String
-  permissionGroups PermissionGroup[]
+  permissionGroups Json[]
 }

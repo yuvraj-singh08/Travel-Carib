@@ -160,3 +160,30 @@ export const deleteCommision = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to delete commission" });
   }
 };
+
+export const addRoles = async (req: Request, res: Response) => {
+  const { title, description, permissionGroups } = req.body;
+
+  try {
+    const roles = await prisma.role.create({
+      data: {
+        name: title,
+        description: description,
+        permissionGroups: permissionGroups,
+      },
+    });
+
+    if (roles) {
+      res.status(200).json({
+        message: "Roles created",
+        roles: roles,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Roles not created" });
+    }
+  } catch (error) {
+    console.error("Error while creating:", error);
+    res.status(500).json({ error: "Failed to create roles", success: false });
+  }
+};
