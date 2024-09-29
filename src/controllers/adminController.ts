@@ -54,6 +54,30 @@ export const getFirewall = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteFirewall = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const firewall = await prisma.firewall.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (firewall) {
+      res.status(200).json({
+        message: "Firewall deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Firewall not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete firewall" });
+  }
+};
+
 export const addCommission = async (req: Request, res: Response) => {
   const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
 

@@ -5,6 +5,7 @@ import {
   addRoles,
   addUser,
   deleteCommision,
+  deleteFirewall,
   deleteRoles,
   deleteUser,
   getCommission,
@@ -22,6 +23,7 @@ import {
 const router = Router();
 router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
+router.post("/delete-firewall", deleteFirewall);
 
 router.get("/commission", getCommission);
 router.get("/commission/:id", getCommissionById);
