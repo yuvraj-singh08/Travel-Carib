@@ -65,6 +65,25 @@ export const addCommission = async (req: Request, res: Response) => {
   }
 };
 
+export const getCommission = async (req: Request, res: Response) => {
+  try {
+    const commission = await prisma.commissionManagement.findMany();
+
+    if (commission) {
+      res.status(200).json({
+        message: "Commission fetched",
+        commission: commission,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Commission not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch commission" });
+  }
+};
+
 export const updateCommision = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
