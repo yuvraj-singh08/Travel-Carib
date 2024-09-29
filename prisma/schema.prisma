@@ -150,7 +150,7 @@ enum CommissionType {
 model commissionManagement {
   id             String         @id @default(uuid()) @map("_id")
   type           CommissionType
-  commisionTitle String
+  commissionTitle String
   supplier       FlightSupplier
   commissionFees String
   feeType        AirlineFeeType

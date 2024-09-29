@@ -1,7 +1,16 @@
 import { Router } from "express";
-import { addFirewall } from "../controllers/adminController";
+import {
+  addCommission,
+  addFirewall,
+  deleteCommision,
+  updateCommision,
+} from "../controllers/adminController";
 
 const router = Router();
-router.post("/add", addFirewall);
+router.post("/add-firewall", addFirewall);
+
+router.post("/add-commission", addCommission);
+router.put("/update-commission", updateCommision);
+router.delete("/delete-commission", deleteCommision);
 
 export default router;

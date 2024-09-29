@@ -18,13 +18,11 @@ export const addFirewall = async (req: Request, res: Response) => {
     });
 
     if (firewall) {
-      res
-        .status(200)
-        .json({
-          message: "Firewall created",
-          firewall: firewall,
-          success: true,
-        });
+      res.status(200).json({
+        message: "Firewall created",
+        firewall: firewall,
+        success: true,
+      });
     } else {
       res.status(404).json({ error: "Firewall not created" });
     }
@@ -33,5 +31,94 @@ export const addFirewall = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ error: "Failed to create firewall", success: false });
+  }
+};
+
+export const addCommission = async (req: Request, res: Response) => {
+  const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
+
+  try {
+    const commission = await prisma.commissionManagement.create({
+      data: {
+        type: type,
+        commissionTitle: commissionTitle,
+        supplier: supplier,
+        commissionFees: commissionFees,
+        feeType: feeType,
+      },
+    });
+
+    if (commission) {
+      res.status(200).json({
+        message: "Commission created",
+        commission: commission,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Commission not created" });
+    }
+  } catch (error) {
+    console.error("Error while creating:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to create commission", success: false });
+  }
+};
+
+export const updateCommision = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
+
+  try {
+    const commission = prisma.commissionManagement.update({
+      where: {
+        id: id,
+      },
+      data: {
+        type: type,
+        commissionTitle: commissionTitle,
+        supplier: supplier,
+        commissionFees: commissionFees,
+        feeType: feeType,
+      },
+    });
+
+    if (commission) {
+      res.status(200).json({
+        message: "Commission updated",
+        commission: commission,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Commission not updated" });
+    }
+  } catch (err) {
+    console.error("Error while updating:", err);
+    res.status(500).json({ message: "Failed to update commission" });
+  }
+};
+
+export const deleteCommision = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const commission = prisma.commissionManagement.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (commission) {
+      res.status(200).json({
+        message: "Commission deleted",
+        commission: commission,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Commission not deleted" });
+    }
+  } catch (err) {
+    console.error("Error while updating:", err);
+    res.status(500).json({ message: "Failed to delete commission" });
   }
 };
