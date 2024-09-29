@@ -148,12 +148,13 @@ enum CommissionType {
 }
 
 model commissionManagement {
-  id             String         @id @default(uuid()) @map("_id")
-  type           CommissionType
+  id              String         @id @default(uuid()) @map("_id")
+  type            CommissionType
   commissionTitle String
-  supplier       FlightSupplier
-  commissionFees String
-  feeType        AirlineFeeType
+  supplier        FlightSupplier
+  commissionFees  String
+  feeType         AirlineFeeType
+  lastUpdate      DateTime       @default(now())
 }
 
 enum UserRole {
@@ -178,7 +179,7 @@ model userManagement {
 }
 
 model Role {
-  id               String   @id @default(uuid()) @map("_id")
+  id               String @id @default(uuid()) @map("_id")
   name             String
   description      String
   permissionGroups Json[]
