@@ -187,3 +187,98 @@ export const addRoles = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to create roles", success: false });
   }
 };
+
+export const getRoles = async (req: Request, res: Response) => {
+  try {
+    const roles = await prisma.role.findMany();
+
+    if (roles) {
+      res.status(200).json({
+        message: "Roles fetched",
+        roles: roles,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Roles not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch roles" });
+  }
+};
+
+export const getRolesById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const roles = await prisma.role.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (roles) {
+      res.json(roles);
+    } else {
+      res.status(404).json({ error: "Roles not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    res.status(500).json({ error: "Failed to fetch roles" });
+  }
+};
+
+export const updateRoles = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { title, description, permissionGroups } = req.body;
+
+  try {
+    const roles = prisma.role.update({
+      where: {
+        id: id,
+      },
+      data: {
+        name: title,
+        description: description,
+        permissionGroups: permissionGroups,
+      },
+    });
+
+    if (roles) {
+      res.status(200).json({
+        message: "Roles updated",
+        roles: roles,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Roles not updated" });
+    }
+  } catch (err) {
+    console.error("Error while updating:", err);
+    res.status(500).json({ message: "Failed to update roles" });
+  }
+};
+
+export const deleteRoles = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const roles = prisma.role.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (roles) {
+      res.status(200).json({
+        message: "Roles deleted",
+        roles: roles,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Roles not deleted" });
+    }
+  } catch (err) {
+    console.error("Error while updating:", err);
+    res.status(500).json({ message: "Failed to delete roles" });
+  }
+};

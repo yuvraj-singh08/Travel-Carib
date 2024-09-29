@@ -4,9 +4,13 @@ import {
   addFirewall,
   addRoles,
   deleteCommision,
+  deleteRoles,
   getCommission,
   getCommissionById,
+  getRoles,
+  getRolesById,
   updateCommision,
+  updateRoles,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -18,6 +22,10 @@ router.post("/add-commission", addCommission);
 router.put("/update-commission", updateCommision);
 router.delete("/delete-commission", deleteCommision);
 
+router.post("/", getRoles);
+router.post("/:id", getRolesById);
 router.post("/add-roles", addRoles);
+router.post("/update-roles", updateRoles);
+router.post("/delete-roles", deleteRoles);
 
 export default router;
