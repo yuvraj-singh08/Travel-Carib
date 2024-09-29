@@ -9,6 +9,7 @@ import {
   deleteUser,
   getCommission,
   getCommissionById,
+  getFirewall,
   getRoles,
   getRolesById,
   getUserById,
@@ -19,6 +20,7 @@ import {
 } from "../controllers/adminController";
 
 const router = Router();
+router.post("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
 
 router.get("/commission", getCommission);
