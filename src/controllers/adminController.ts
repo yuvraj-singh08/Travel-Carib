@@ -112,7 +112,7 @@ export const addCommission = async (req: Request, res: Response) => {
 export const getCommission = async (req: Request, res: Response) => {
   try {
     const commission = await prisma.commissionManagement.findMany();
-    
+
     if (commission) {
       res.status(200).json({
         message: "Commission fetched",
@@ -273,7 +273,7 @@ export const updateRoles = async (req: Request, res: Response) => {
   const { id, title, description, permissionGroups } = req.body;
 
   try {
-    const roles = prisma.role.update({
+    const roles = await prisma.role.update({
       where: {
         id: id,
       },
@@ -301,9 +301,9 @@ export const updateRoles = async (req: Request, res: Response) => {
 
 export const deleteRoles = async (req: Request, res: Response) => {
   const { id } = req.body;
-
+  console.log(id);
   try {
-    const roles = prisma.role.delete({
+    const roles = await prisma.role.delete({
       where: {
         id: id,
       },
@@ -312,7 +312,6 @@ export const deleteRoles = async (req: Request, res: Response) => {
     if (roles) {
       res.status(200).json({
         message: "Roles deleted",
-        roles: roles,
         success: true,
       });
     } else {
