@@ -16,7 +16,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
   }
 
   const token = authHeader.split(' ')[1];
-
+  
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & { id: string };
     console.log('Decoded token:', decoded);

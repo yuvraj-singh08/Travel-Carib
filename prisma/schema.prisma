@@ -1,115 +1,216 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
+enum RouteType {
+  ONEWAY
+  ROUNDTRIP
+  MULTIWAY
+}
+
+enum FlightType {
+  ECONOMY
+  PREMIUM_ECONOMY
+  BUSINESS
+  FIRST
+}
+
+model Flight {
+  id            String     @id @map("_id")
+  type          RouteType
+  from          String
+  to            String
+  airline       String
+  departureDate DateTime
+  flightClass   FlightType
+  passengers    Json[]
+}
+
+model CoTraveler {
+  id          String @id @map("_id")
+  name        String
+  dob         String
+  email       String
+  passportNo  String
+  phoneNumber String
+}
+
+//user model
+// api /auth/sign-up /auth/login
+// /user-profile update api 
 model User {
-  id                  String          @id @default(uuid())
-  email               String          @unique
-  password            String
-  mobileNumber        String
-  gender              String
-  dateOfBirth         DateTime
-  address             String
-  profilePhoto        String
-  fullName            String
-  nickName            String
-  pinCode             String
-  cotravellers        CoTravellers[]  @relation("UserCoTravellers")
-  passportDetails     PassportDetail[]   //one to many relation 
-  frequentFlyers      FrequentFlyerDetail[] //one to many relation
-  passenger           Passenger[] // one to many relation
+  id            String  @id @default(uuid()) @map("_id")
+  firstname     String
+  lastname      String
+  mobileNumber  String?
+  email         String  @unique
+  address       String?
+  dob           String?
+  passportNo    String?
+  lastBooking   String?
+  country       String?
+  gender        String?
+  pincode       String?
+  avatarSrc     String?
+  passportImage String?
+  password      String?
+  cotraveler    Json[]
 }
 
-model CoTravellers {
-  id              String  @id @default(uuid())
-  userId          String?
-  name            String
-  email           String
-  dateOfBirth     DateTime
-  passportNumber  String
-  phoneNumber     String
-  user            User?    @relation("UserCoTravellers", fields: [userId], references: [id])
-  @@index([userId])
+enum AirlineFeeType {
+  PERCENT
+  FIXED
 }
 
-model PassportDetail {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  passportNumber String
-  issuingCountry String
-  expiryDate     DateTime
-  passportImage  String
-  user           User    @relation(fields: [userId], references: [id])
-  @@index([userId])
-  
+model AirlineCommision {
+  id             String         @id @default(uuid()) @map("_id")
+  type           String
+  commisionTitle String
+  supplier       String
+  commissionFees String
+  feeType        AirlineFeeType
 }
 
-model FrequentFlyerDetail {
-  id              String  @id @default(uuid())
-  userId          String
-  frequentFlyerNumber String
-  airline         String
-  user            User    @relation(fields: [userId], references: [id]) 
-  @@index([userId])
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVE
 }
 
-model Passenger {
-  id             String    @id @default(uuid())
-  userId         String
-  firstName      String
-  surname        String
-  nationality    String
-  gender         String
-  dateOfBirth    DateTime
-  passportNumber String
-  passportExpiry DateTime
-  country        String
-  state          String
-  city           String
-  zipCode        String
-  address        String
-  identityCard   String
-  bookings       Booking[] 
-  user            User    @relation(fields: [userId], references: [id]) 
-  @@index([userId])
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+model TicketManagement {
+  id            String       @id @default(uuid()) @map("_id")
+  subject       String
+  requesterName String
+  requestedOn   DateTime     @default(now())
+  status        TicketStatus
+  images        String[]
 }
 
 model Booking {
-  id            String    @id @default(uuid())
-  passengerId   String
-  passenger     Passenger @relation(fields: [passengerId], references: [id])
-  bookingDate   DateTime
-  flightNumber  String
-  seatNumber    String
-  payment       Payment?  
-  paymentId     String?   @unique
-  status        String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String @id @default(uuid()) @map("_id")
+  contactDetail  Json // email and phone number
+  flightDetails  Json[]
+  payment        String // Payment id
+  passenger      Json[] // passenger[] id reference
+  address        Json
+  baseFare       Json[]
+  tax_fee_surges Json[]
+  otherCharges   Json[]
+  discount       Json
+  totalAmount    String
+  currency       String
 }
 
 model Payment {
-  id             String   @id @default(uuid())
-  bookingId      String   @unique 
-  booking        Booking  @relation(fields: [bookingId], references: [id])
-  paymentDate    DateTime
-  amount         Float
-  currency       String
-  paymentMethod  String   
-  paymentStatus  String   
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String   @id @default(uuid()) @map("_id")
+  amount      Float
+  currency    String
+  paymentType String
+  status      String
+  paymentDate DateTime
+}
+
+model passenger {
+  id          String @id @default(uuid()) @map("_id")
+  name        String
+  dob         String
+  email       String
+  passportNo  String
+  phoneNumber String
+}
+
+enum FlightSupplier {
+  AMADEUS
+  KIUSYS
+  DUFFEL
+}
+
+model firewall {
+  id           String         @id @default(uuid()) @map("_id")
+  title        String
+  supplier     FlightSupplier
+  code         String
+  flightNumber String
+  from         String
+  to           String
+  updateTime   DateTime       @default(now())
+}
+
+enum CommissionType {
+  AIRLINE
+  HOTEL
+  CAR_RENTAL
+}
+
+model commissionManagement {
+  id              String         @id @default(uuid()) @map("_id")
+  type            CommissionType
+  commissionTitle String
+  supplier        FlightSupplier
+  commissionFees  String
+  feeType         AirlineFeeType
+  updateTime      DateTime       @default(now())
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+model userManagement {
+  id       String   @id @default(uuid()) @map("_id")
+  name     String
+  address  String
+  email    String
+  password String
+  role     UserRole
+  status   Status
+}
+
+model Role {
+  id               String @id @default(uuid()) @map("_id")
+  name             String
+  description      String
+  permissionGroups Json[]
+}
+
+model Cookie {
+  id                        String  @id @default(uuid()) @map("_id")
+  cookieToggle              Boolean
+  enableLogging             Boolean
+  strictlyNecessaryCookies  Boolean
+  cookieDescription         String
+  cookieTitle               String
+  strictlyCookieTitle       String
+  strictlyCookieDescription String
+  contactUsDescription      String
+  contactUsURL              String
+}
+
+model Email {
+  id              String @id @default(uuid()) @map("_id")
+  mailDriver      String
+  mailDriverHost  String
+  mailPort        String
+  mailUsername    String
+  mailPassword    String
+  mailEncryption  String
+  mailFromAddress String
+  mailFromName    String
+}
+
+model Social {
+  id     String @id @default(uuid()) @map("_id")
+  social Json[]
 }

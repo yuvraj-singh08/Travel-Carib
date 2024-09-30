@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-// import { PrismaClient } from '@prisma/client';
 import { AddPassengerInput} from '../../types/userTypes';
 // import {Passenger} from '../../models/passengerModel';
 import Passenger from '../../models/passengerModel';
-// const prisma = new PrismaClient();
+
 export const addPassenger = async (req: Request, res: Response): Promise<Response> => {
     try {
       const passengerData: AddPassengerInput = req.body; 
