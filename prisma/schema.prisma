@@ -82,11 +82,11 @@ enum TicketStatus {
   RESOLVE
 }
 
-model Ticket {
+model TicketManagement {
   id            String       @id @default(uuid()) @map("_id")
   subject       String
   requesterName String
-  requestedOn   DateTime
+  requestedOn   DateTime     @default(now())
   status        TicketStatus
   images        String[]
 }
@@ -183,4 +183,34 @@ model Role {
   name             String
   description      String
   permissionGroups Json[]
+}
+
+model Cookie {
+  id                        String  @id @default(uuid()) @map("_id")
+  cookieToggle              Boolean
+  enableLogging             Boolean
+  strictlyNecessaryCookies  Boolean
+  cookieDescription         String
+  cookieTitle               String
+  strictlyCookieTitle       String
+  strictlyCookieDescription String
+  contactUsDescription      String
+  contactUsURL              String
+}
+
+model Email {
+  id              String @id @default(uuid()) @map("_id")
+  mailDriver      String
+  mailDriverHost  String
+  mailPort        String
+  mailUsername    String
+  mailPassword    String
+  mailEncryption  String
+  mailFromAddress String
+  mailFromName    String
+}
+
+model Social {
+  id     String @id @default(uuid()) @map("_id")
+  social Json[]
 }

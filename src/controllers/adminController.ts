@@ -447,3 +447,246 @@ export const deleteUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to delete user" });
   }
 };
+
+export const addTicket = async (req: Request, res: Response) => {
+  const data = req.body;
+
+  try {
+    const ticket = await prisma.ticketManagement.create({
+      data: data,
+    });
+
+    if (ticket) {
+      res.status(200).json({
+        message: "Ticket created",
+        ticket: ticket,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Ticket not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add ticket" });
+  }
+};
+
+export const getTickets = async (req: Request, res: Response) => {
+  try {
+    const tickets = await prisma.ticketManagement.findMany();
+
+    if (tickets) {
+      res.status(200).json({
+        message: "Tickets fetched",
+        tickets: tickets,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Tickets not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch tickets" });
+  }
+};
+
+export const getTicketById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const ticket = await prisma.ticketManagement.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (ticket) {
+      res.status(200).json({
+        message: "Ticket fetched",
+        ticket: ticket,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Ticket not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch ticket" });
+  }
+};
+
+export const updateTicket = async (req: Request, res: Response) => {
+  const data = req.body;
+
+  try {
+    const updatedTicket = await prisma.ticketManagement.update({
+      where: {
+        id: data.id,
+      },
+      data: data,
+    });
+
+    if (updatedTicket) {
+      res.status(200).json({
+        message: "Ticket updated",
+        ticket: updatedTicket,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Ticket not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update ticket" });
+  }
+};
+
+export const deleteTicket = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const ticket = await prisma.ticketManagement.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (ticket) {
+      res.status(200).json({
+        message: "Ticket deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Ticket not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete ticket" });
+  }
+};
+
+export const addCookie = async (req: AuthenticatedRequest, res: Response) => {
+  const data = req.body;
+
+  try {
+    const cookie = await prisma.cookie.create({
+      data: data,
+    });
+
+    if (cookie) {
+      res.status(200).json({
+        message: "Cookie created",
+        cookie: cookie,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Cookie not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add cookie" });
+  }
+};
+
+export const getCookies = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const cookies = await prisma.cookie.findMany();
+
+    if (cookies) {
+      res.status(200).json({
+        message: "Cookies fetched",
+        cookies: cookies,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Cookies not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch cookies" });
+  }
+};
+
+export const getCookieById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const cookie = await prisma.cookie.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (cookie) {
+      res.status(200).json({
+        message: "Cookie fetched",
+        cookie: cookie,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Cookie not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch cookie" });
+  }
+};
+
+export const updateCookie = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const data = req.body;
+
+  try {
+    const updatedCookie = await prisma.cookie.update({
+      where: {
+        id: data.id,
+      },
+      data: data,
+    });
+
+    if (updatedCookie) {
+      res.status(200).json({
+        message: "Cookie updated",
+        cookie: updatedCookie,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Cookie not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update cookie" });
+  }
+};
+
+export const deleteCookie = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const cookie = await prisma.cookie.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (cookie) {
+      res.status(200).json({
+        message: "Cookie deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Cookie not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete cookie" });
+  }
+};
