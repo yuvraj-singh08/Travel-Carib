@@ -204,12 +204,12 @@ export const deleteCommision = async (req: Request, res: Response) => {
 };
 
 export const addRoles = async (req: Request, res: Response) => {
-  const { title, description, permissionGroups } = req.body;
+  const { name, description, permissionGroups } = req.body;
 
   try {
     const roles = await prisma.role.create({
       data: {
-        name: title,
+        name: name,
         description: description,
         permissionGroups: permissionGroups,
       },
