@@ -26,7 +26,7 @@ router.post("/login", loginUser);
 
 // Protected Routes
 router.get("/profile", authenticateToken, updateUserProfile);
-router.put("/profile", authenticateToken, updateUserProfile);
+router.post("/profile", authenticateToken, updateUserProfile);
 router.post("/traveller", authenticateToken, addCoTraveller);
 router.post("/passport", authenticateToken, UpdatePassportDetail);
 router.post("/flyer", authenticateToken, AddFrequentFlyer);
@@ -36,7 +36,7 @@ router.get("/:id", authenticateToken, getUserById);
 // router.put('/:id', authenticateToken, updateUser);
 router.delete("/:id", authenticateToken, deleteUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
-router.delete("/deletePassenger/:id", authenticateToken, deletePassenger);
-router.put("/updatePassenger/:id", authenticateToken, updatePassenger);
+router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
+router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
 
 export default router;
