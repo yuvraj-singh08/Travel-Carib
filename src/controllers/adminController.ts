@@ -112,7 +112,7 @@ export const addCommission = async (req: Request, res: Response) => {
 export const getCommission = async (req: Request, res: Response) => {
   try {
     const commission = await prisma.commissionManagement.findMany();
-
+    
     if (commission) {
       res.status(200).json({
         message: "Commission fetched",

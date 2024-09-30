@@ -154,7 +154,7 @@ model commissionManagement {
   supplier        FlightSupplier
   commissionFees  String
   feeType         AirlineFeeType
-  updateTime      DateTime       @default(now())
+  updateTime      DateTime       @updatedAt
 }
 
 enum UserRole {
