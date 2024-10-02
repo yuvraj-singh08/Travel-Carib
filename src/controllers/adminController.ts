@@ -712,17 +712,20 @@ export const deleteCookie = async (
 };
 
 export const addSocials = async (req: AuthenticatedRequest, res: Response) => {
-  const data = req.body;
+  const { socialsEnable, socialPlatforms } = req.body;
 
   try {
     const socials = await prisma.socialSettings.create({
-      data: data,
+      data: {
+        socialsEnable: socialsEnable,
+        socialPlatforms: socialPlatforms,
+      },
     });
 
     if (socials) {
       res.status(200).json({
         message: "Socials added",
-        cookie: socials,
+        socials: socials,
         success: true,
       });
     } else {

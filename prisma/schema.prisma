@@ -181,20 +181,22 @@ enum Status {
 }
 
 model userManagement {
-  id       String   @id @default(uuid()) @map("_id")
+  id       String @id @default(uuid()) @map("_id")
   name     String
   address  String
   email    String
   password String
-  role     UserRole
+  roleId   String
+  role     Role   @relation(fields: [roleId], references: [id])
   status   Status
 }
 
 model Role {
-  id               String @id @default(uuid()) @map("_id")
+  id               String           @id @default(uuid()) @map("_id")
   name             String
   description      String
   permissionGroups Json[]
+  userManagement   userManagement[]
 }
 
 model Cookie {
