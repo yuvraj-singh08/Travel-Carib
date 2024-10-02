@@ -710,3 +710,132 @@ export const deleteCookie = async (
     res.status(500).json({ error: "Failed to delete cookie" });
   }
 };
+
+export const addSocials = async (req: AuthenticatedRequest, res: Response) => {
+  const data = req.body;
+
+  try {
+    const socials = await prisma.socialSettings.create({
+      data: data,
+    });
+
+    if (socials) {
+      res.status(200).json({
+        message: "Socials added",
+        cookie: socials,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Socials not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add socials" });
+  }
+};
+
+export const getSocials = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const socials = await prisma.socialSettings.findMany();
+
+    if (socials) {
+      res.status(200).json({
+        message: "Socials fetched",
+        socials: socials,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Socials not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch socials" });
+  }
+};
+
+export const getSocialById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const social = await prisma.socialSettings.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (social) {
+      res.status(200).json({
+        message: "Social fetched",
+        social: social,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Social not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch social" });
+  }
+};
+
+export const updateSocial = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id, socialsEnable, socialPlatforms } = req.body;
+
+  try {
+    const updatedSocials = await prisma.socialSettings.update({
+      where: {
+        id: id,
+      },
+      data: {
+        socialsEnable: socialsEnable,
+        socialPlatforms: socialPlatforms,
+      },
+    });
+
+    if (updatedSocials) {
+      res.status(200).json({
+        message: "Socials updated",
+        socials: updatedSocials,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Socials not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update socials" });
+  }
+};
+
+export const deleteSocials = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const social = await prisma.socialSettings.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (social) {
+      res.status(200).json({
+        message: "Social deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Social not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete social" });
+  }
+};
