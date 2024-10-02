@@ -21,7 +21,7 @@ enum FlightType {
 }
 
 model Flight {
-  id            String     @id @map("_id")
+  id            String     @id @default(uuid()) @map("_id")
   type          RouteType
   from          String
   to            String
@@ -32,7 +32,7 @@ model Flight {
 }
 
 model CoTraveler {
-  id          String @id @map("_id")
+  id          String @id @default(uuid()) @map("_id")
   name        String
   dob         String
   email       String
@@ -138,6 +138,8 @@ enum FlightSupplier {
   AMADEUS
   KIUSYS
   DUFFEL
+  ALL
+  NONE
 }
 
 model firewall {

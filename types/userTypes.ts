@@ -1,23 +1,22 @@
 export interface CreateUserInput {
   email: string;
-  password: string; 
-  mobileNumber: string; 
+  password: string;
+  mobileNumber: string;
   fullName: string;
   nickName: string;
   gender: string;
-  dateOfBirth: string; 
+  dateOfBirth: string;
   pinCode: string;
   address: string;
   profilePhoto: string;
 }
 
 export interface CoTravellersInput {
-  userId: string;           
   name: string;
-  email: string;            
-  dateOfBirth: string;      
-  passportNumber: string;   
-  phoneNumber: string;      
+  dob: string;
+  email: string;
+  passportNo: string;
+  phoneNumber: string;
 }
 
 export interface ContactDetailInput {
@@ -26,16 +25,13 @@ export interface ContactDetailInput {
   phoneNumber: string;
 }
 
-
-
 export interface PassportDetailInput {
   userId: string;
   passportNumber: string;
   issuingCountry: string;
-  expiryDate: string; 
+  expiryDate: string;
   passportImage: string;
 }
-
 
 export interface FrequentFlyerDetailInput {
   userId: string;
@@ -43,39 +39,36 @@ export interface FrequentFlyerDetailInput {
   airlines: [string];
 }
 
-
 export interface AddPassengerInput {
-    userId: string;
-    firstName: string;
-    surname: string;
-    nationality: string;
-    gender: string;
-    dateOfBirth: string;  
-    passportNumber: string;
-    passportExpiry: string;  
-    country: string;
-    state: string;
-    city: string;
-    zipCode: string;
-    address: string;
-    identityCard: string;
-  }
-  
-  
-  export interface UpdatePassengerInput {
-    name: string;
-    email: string;
-    mobileNumber: string;
-    nationality: string;
-    gender: string;
-    dateOfBirth: Date;
-    passportNumber: string;
-    passportExpiry: Date;
-    country: string;
-    state: string;
-    city: string;
-    zipCode: string;
-    address: string;
-    identityCard: string;
-  }
-  
+  userId: string;
+  firstName: string;
+  surname: string;
+  nationality: string;
+  gender: string;
+  dateOfBirth: string;
+  passportNumber: string;
+  passportExpiry: string;
+  country: string;
+  state: string;
+  city: string;
+  zipCode: string;
+  address: string;
+  identityCard: string;
+}
+
+export interface UpdatePassengerInput {
+  name: string;
+  email: string;
+  mobileNumber: string;
+  nationality: string;
+  gender: string;
+  dateOfBirth: Date;
+  passportNumber: string;
+  passportExpiry: Date;
+  country: string;
+  state: string;
+  city: string;
+  zipCode: string;
+  address: string;
+  identityCard: string;
+}
