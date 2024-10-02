@@ -11,7 +11,22 @@ const SALT_ROUNDS = 10;
 
 // Register User
 export const registerUser = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName } = req.body;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    mobileNumber,
+    passportNo,
+    dob,
+    lastBooking,
+    country,
+    gender,
+    pincode,
+    avatarSrc,
+    passportImage,
+    coTraveler,
+  } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
@@ -22,6 +37,16 @@ export const registerUser = async (req: Request, res: Response) => {
         password: hashedPassword,
         firstname: firstName,
         lastname: lastName,
+        mobileNumber: mobileNumber,
+        passportNo: passportNo,
+        dob: dob,
+        lastBooking: lastBooking,
+        country: country,
+        gender: gender,
+        pincode: pincode,
+        avatarSrc: avatarSrc,
+        passportImage: passportImage,
+        cotraveler: coTraveler,
       },
     });
 
