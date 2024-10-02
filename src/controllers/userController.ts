@@ -2,9 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import CoTraveller from "../../models/coTravellersSchema";
 import User from "../../models/userModel";
-import { CoTravellersInput } from "../../types/userTypes";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 
@@ -126,35 +124,21 @@ export const updateUserProfile = async (
   } = req.body;
 
   try {
-    const updates: any = {};
-
-    if (password) {
-      updates.password = await bcrypt.hash(password, 10);
-    }
-    if (mobileNumber) updates.mobileNumber = mobileNumber;
-    if (gender) updates.gender = gender;
-    if (dateOfBirth) updates.dateOfBirth = dateOfBirth;
-    if (address) updates.address = address;
-    if (profilePhoto) updates.profilePhoto = profilePhoto;
-    if (firstName) updates.firstName = firstName;
-    if (lastName) updates.lastName = lastName;
-    if (pincode) updates.pincode = pincode;
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
     const updatedUser = await prisma.user.update({
       where: {
         id: userId,
       },
-      data: updates,
+      data: {
+        password,
+        mobileNumber,
+        gender,
+        dob: dateOfBirth,
+        address,
+        avatarSrc: profilePhoto,
+        firstname: firstName,
+        lastname: lastName,
+        pincode,
+      },
     });
 
     return res.status(200).json(updatedUser);
