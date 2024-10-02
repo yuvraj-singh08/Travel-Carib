@@ -220,7 +220,7 @@ model SocialSettings {
   socialPlatforms Json[]
 }
 
-model Support {
+model UserSupport {
   id          String @id @default(uuid()) @map("_id")
   type        String
   title       String

@@ -178,7 +178,7 @@ export const addSupport = async (req: Request, res: Response) => {
   const data = req.body;
 
   try {
-    const support = await prisma.support.create({
+    const support = await prisma.userSupport.create({
       data: data,
     });
     return res.status(201).json({
@@ -196,7 +196,7 @@ export const addSupport = async (req: Request, res: Response) => {
 
 export const getSupport = async (req: Request, res: Response) => {
   try {
-    const support = await prisma.support.findMany();
+    const support = await prisma.userSupport.findMany();
     return res.json(support);
   } catch (err) {
     console.error("Error fetching support:", err);
@@ -209,7 +209,7 @@ export const getSupport = async (req: Request, res: Response) => {
 export const getSupportById = async (req: Request, res: Response) => {
   const { id } = req.body;
   try {
-    const support = await prisma.support.findUnique({
+    const support = await prisma.userSupport.findUnique({
       where: {
         id: id,
       },
@@ -231,7 +231,7 @@ export const updateSupport = async (req: Request, res: Response) => {
   const { id, type, title, name, email, description, imgUrl } = req.body;
 
   try {
-    const updatedSupport = await prisma.support.update({
+    const updatedSupport = await prisma.userSupport.update({
       where: {
         id: id,
       },
@@ -257,7 +257,7 @@ export const deleteSupport = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
-    await prisma.support.delete({
+    await prisma.userSupport.delete({
       where: {
         id: id,
       },
