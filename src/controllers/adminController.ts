@@ -638,14 +638,35 @@ export const updateCookie = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
-  const data = req.body;
+  const {
+    id,
+    cookieToggle,
+    enableLogging,
+    strictlyNecessaryCookies,
+    cookieDescription,
+    cookieTitle,
+    strictlyCookieTitle,
+    strictlyCookieDescription,
+    contactUsDescription,
+    contactUsURL,
+  } = req.body;
 
   try {
     const updatedCookie = await prisma.cookie.update({
       where: {
-        id: data.id,
+        id: id,
       },
-      data: data,
+      data: {
+        cookieToggle: cookieToggle,
+        enableLogging: enableLogging,
+        strictlyNecessaryCookies: strictlyNecessaryCookies,
+        cookieDescription: cookieDescription,
+        cookieTitle: cookieTitle,
+        strictlyCookieTitle: strictlyCookieTitle,
+        strictlyCookieDescription: strictlyCookieDescription,
+        contactUsDescription: contactUsDescription,
+        contactUsURL: contactUsURL,
+      },
     });
 
     if (updatedCookie) {

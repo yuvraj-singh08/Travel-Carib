@@ -59,7 +59,7 @@ model User {
   avatarSrc     String?
   passportImage String?
   password      String?
-  cotraveler    Json[]
+  cotraveler    Json[] 
 }
 
 enum AirlineFeeType {
