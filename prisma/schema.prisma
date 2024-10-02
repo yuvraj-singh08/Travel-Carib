@@ -59,7 +59,7 @@ model User {
   avatarSrc     String?
   passportImage String?
   password      String?
-  cotraveler    Json[] 
+  cotraveler    Json[]
 }
 
 enum AirlineFeeType {
@@ -210,7 +210,8 @@ model Email {
   mailFromName    String
 }
 
-model Social {
-  id     String @id @default(uuid()) @map("_id")
-  social Json[]
+model SocialSettings {
+  id              String  @id @default(uuid()) @map("_id")
+  socialsEnable   Boolean
+  socialPlatforms Json[]
 }
