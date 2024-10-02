@@ -21,7 +21,7 @@ enum FlightType {
 }
 
 model Flight {
-  id            String     @id @map("_id")
+  id            String     @id @default(uuid()) @map("_id")
   type          RouteType
   from          String
   to            String
@@ -32,7 +32,7 @@ model Flight {
 }
 
 model CoTraveler {
-  id          String @id @map("_id")
+  id          String @id @default(uuid()) @map("_id")
   name        String
   dob         String
   email       String
@@ -60,6 +60,16 @@ model User {
   passportImage String?
   password      String?
   cotraveler    Json[]
+}
+
+model Support {
+  id          String @id @default(uuid()) @map("_id")
+  type        String
+  title       String
+  name        String
+  email       String
+  description String
+  imgUrl      String
 }
 
 enum AirlineFeeType {
@@ -128,6 +138,8 @@ enum FlightSupplier {
   AMADEUS
   KIUSYS
   DUFFEL
+  ALL
+  NONE
 }
 
 model firewall {
@@ -169,20 +181,22 @@ enum Status {
 }
 
 model userManagement {
-  id       String   @id @default(uuid()) @map("_id")
+  id       String @id @default(uuid()) @map("_id")
   name     String
   address  String
   email    String
   password String
-  role     UserRole
+  roleId   String
+  role     Role   @relation(fields: [roleId], references: [id])
   status   Status
 }
 
 model Role {
-  id               String @id @default(uuid()) @map("_id")
+  id               String           @id @default(uuid()) @map("_id")
   name             String
   description      String
   permissionGroups Json[]
+  userManagement   userManagement[]
 }
 
 model Cookie {
