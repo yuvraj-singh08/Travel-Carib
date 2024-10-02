@@ -189,40 +189,6 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-export const addCoTraveller = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const TravellerData: CoTravellersInput = req.body;
-  const userId = req.user?.id;
-
-  try {
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const newCoTraveller = new CoTraveller({
-      userId: TravellerData.userId,
-      name: TravellerData.name,
-      email: TravellerData.email,
-      dateOfBirth: TravellerData.dateOfBirth,
-      passportNumber: TravellerData.passportNumber,
-      phoneNumber: TravellerData.phoneNumber,
-      //@ts-ignore
-      //   user: req.user?_id
-    });
-
-    await newCoTraveller.save();
-    return res.status(201).json(newCoTraveller);
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error adding co-traveller", error });
-  }
-};
-
 export const addSupport = async (req: Request, res: Response) => {
   // const userId = req.user?.id;
   const data = req.body;
