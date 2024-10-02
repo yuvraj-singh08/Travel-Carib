@@ -7,6 +7,9 @@ import {
   deleteUser,
   registerUser,
   loginUser,
+  getSupport,
+  updateSupport,
+  deleteSupport,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -38,5 +41,10 @@ router.delete("/:id", authenticateToken, deleteUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
 router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
+
+router.get("/support", getSupport);
+router.post("/add-support", getSupport);
+router.post("/update-support", updateSupport);
+router.post("/delete-support", deleteSupport);
 
 export default router;
