@@ -4,12 +4,14 @@ import {
   addCookie,
   addFirewall,
   addRoles,
+  addSocials,
   addTicket,
   addUser,
   deleteCommision,
   deleteCookie,
   deleteFirewall,
   deleteRoles,
+  deleteSocials,
   deleteTicket,
   deleteUser,
   getCommission,
@@ -19,6 +21,8 @@ import {
   getFirewall,
   getRoles,
   getRolesById,
+  getSocialById,
+  getSocials,
   getTicketById,
   getTickets,
   getUserById,
@@ -26,6 +30,7 @@ import {
   updateCommision,
   updateCookie,
   updateRoles,
+  updateSocial,
   updateTicket,
   updateUser,
 } from "../controllers/adminController";
@@ -64,5 +69,11 @@ router.get("/cookie/:id", getCookieById);
 router.post("/add-cookie", addCookie);
 router.post("/update-cookie", updateCookie);
 router.post("/delete-cookie", deleteCookie);
+
+router.get("/socials", getSocials);
+router.get("/social/:id", getSocialById);
+router.post("/add-social", addSocials);
+router.post("/update-social", updateSocial);
+router.post("/delete-social", deleteSocials);
 
 export default router;

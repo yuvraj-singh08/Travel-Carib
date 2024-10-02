@@ -62,6 +62,16 @@ model User {
   cotraveler    Json[]
 }
 
+model Support {
+  id          String @id @default(uuid()) @map("_id")
+  type        String
+  title       String
+  name        String
+  email       String
+  description String
+  imgUrl      String
+}
+
 enum AirlineFeeType {
   PERCENT
   FIXED

@@ -222,3 +222,101 @@ export const addCoTraveller = async (
       .json({ message: "Error adding co-traveller", error });
   }
 };
+
+export const addSupport = async (req: Request, res: Response) => {
+  // const userId = req.user?.id;
+  const data = req.body;
+
+  try {
+    const support = await prisma.support.create({
+      data: data,
+    });
+    return res.status(201).json({
+      message: "Support added successfully",
+      support: support,
+      success: true,
+    });
+  } catch (err) {
+    console.error("Error adding support:", err);
+    return res
+      .status(500)
+      .json({ message: "Error adding support", error: err, success: false });
+  }
+};
+
+export const getSupport = async (req: Request, res: Response) => {
+  try {
+    const support = await prisma.support.findMany();
+    return res.json(support);
+  } catch (err) {
+    console.error("Error fetching support:", err);
+    return res
+      .status(500)
+      .json({ message: "Error fetching support", error: err });
+  }
+};
+
+export const getSupportById = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  try {
+    const support = await prisma.support.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (support) {
+      return res.json(support);
+    } else {
+      return res.status(404).json({ message: "Support not found" });
+    }
+  } catch (err) {
+    console.error("Error fetching support:", err);
+    return res
+      .status(500)
+      .json({ message: "Error fetching support", error: err });
+  }
+};
+
+export const updateSupport = async (req: Request, res: Response) => {
+  const { id, type, title, name, email, description, imgUrl } = req.body;
+
+  try {
+    const updatedSupport = await prisma.support.update({
+      where: {
+        id: id,
+      },
+      data: {
+        type: type,
+        title: title,
+        name: name,
+        email: email,
+        description: description,
+        imgUrl: imgUrl,
+      },
+    });
+    return res.status(200).json({ message: "Support updated", updatedSupport });
+  } catch (err) {
+    console.error("Error updating support:", err);
+    return res
+      .status(500)
+      .json({ message: "Error updating support", error: err });
+  }
+};
+
+export const deleteSupport = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    await prisma.support.delete({
+      where: {
+        id: id,
+      },
+    });
+    return res.status(204).json({ message: "Support deleted" });
+  } catch (err) {
+    console.error("Error deleting support:", err);
+    return res
+      .status(500)
+      .json({ message: "Error deleting support", error: err });
+  }
+};
