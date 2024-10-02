@@ -324,13 +324,13 @@ export const deleteRoles = async (req: Request, res: Response) => {
 };
 
 export const addUser = async (req: Request, res: Response) => {
-  const { name, address, email, password, role, status } = req.body;
+  const { name, uniqueId, email, password, role, status } = req.body;
 
   try {
     const user = await prisma.userManagement.create({
       data: {
         name: name,
-        address: address,
+        uniqueId: uniqueId,
         email: email,
         password: password,
         role: role,
