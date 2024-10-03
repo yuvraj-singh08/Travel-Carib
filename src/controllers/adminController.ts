@@ -324,7 +324,17 @@ export const deleteRoles = async (req: Request, res: Response) => {
 };
 
 export const addUser = async (req: Request, res: Response) => {
-  const { name, uniqueId, address, email, password, role, status } = req.body;
+  const {
+    name,
+    uniqueId,
+    contact,
+    roleName,
+    address,
+    email,
+    password,
+    roleId,
+    status,
+  } = req.body;
 
   try {
     const user = await prisma.userManagement.create({
@@ -332,9 +342,11 @@ export const addUser = async (req: Request, res: Response) => {
         name: name,
         uniqueId: uniqueId,
         email: email,
+        contact: contact,
         address: address,
         password: password,
-        role: role,
+        roleId: roleId,
+        roleName: roleName,
         status: status,
       },
     });
@@ -399,14 +411,35 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 
 export const updateUser = async (req: Request, res: Response) => {
-  const data = req.body;
+  const {
+    id,
+    email,
+    address,
+    contact,
+    password,
+    name,
+    uniqueId,
+    status,
+    roleId,
+    roleName,
+  } = req.body;
 
   try {
     const updatedUser = await prisma.userManagement.update({
       where: {
-        id: data.id,
+        id: id,
       },
-      data: data,
+      data: {
+        email: email,
+        address: address,
+        password: password,
+        name: name,
+        contact: contact,
+        uniqueId: uniqueId,
+        status: status,
+        roleId: roleId,
+        roleName: roleName,
+      },
     });
 
     if (updatedUser) {

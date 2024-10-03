@@ -177,9 +177,11 @@ model userManagement {
   address  String
   email    String
   password String
+  contact  String
   roleId   String
-  role     Role   @relation(fields: [roleId], references: [id])
+  roleName String
   status   Status
+  role     Role   @relation(fields: [roleId], references: [id])
 }
 
 model Role {
