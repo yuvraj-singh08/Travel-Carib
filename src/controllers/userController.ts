@@ -175,11 +175,50 @@ export const updateUserProfile = async (
 
 // Update a user
 export const updateUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const data = req.body;
+  const {
+    id,
+    firstname,
+    lastname,
+    mobileNumber,
+    email,
+    address,
+    dob,
+    passportNo,
+    lastBooking,
+    country,
+    gender,
+    pincode,
+    avatarSrc,
+    passportImage,
+    password,
+    cotraveler,
+  } = req.body;
+
   try {
-    const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
-    res.json(updatedUser);
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        firstname: firstname,
+        lastname: lastname,
+        mobileNumber: mobileNumber,
+        email: email,
+        address: address,
+        dob: dob,
+        passportNo: passportNo,
+        lastBooking: lastBooking,
+        country: country,
+        gender: gender,
+        pincode: pincode,
+        avatarSrc: avatarSrc,
+        passportImage: passportImage,
+        password: password,
+        cotraveler: cotraveler,
+      },
+    });
+
+    res.status(200).json({ message: "User updated", updatedUser: updatedUser });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
@@ -188,10 +227,15 @@ export const updateUser = async (req: Request, res: Response) => {
 
 // Delete a user
 export const deleteUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.body;
   try {
-    await User.findByIdAndDelete(id);
-    res.status(204).send();
+    await prisma.user.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    res.status(204).json({ message: "User deleted" });
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Failed to delete user" });
@@ -206,6 +250,7 @@ export const addSupport = async (req: Request, res: Response) => {
     const support = await prisma.userSupport.create({
       data: data,
     });
+
     return res.status(201).json({
       message: "Support added successfully",
       support: support,
