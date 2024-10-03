@@ -7,6 +7,7 @@ import {
   addSocials,
   addTicket,
   addUser,
+  addPrivacy,
   deleteCommision,
   deleteCookie,
   deleteFirewall,
@@ -14,11 +15,13 @@ import {
   deleteSocials,
   deleteTicket,
   deleteUser,
+  deletePrivacy,
   getCommission,
   getCommissionById,
   getCookieById,
   getCookies,
   getFirewall,
+  getPrivacy,
   getRoles,
   getRolesById,
   getSocialById,
@@ -26,6 +29,7 @@ import {
   getTicketById,
   getTickets,
   getUserById,
+  getPrivacyById,
   getUsers,
   updateCommision,
   updateCookie,
@@ -33,6 +37,7 @@ import {
   updateSocial,
   updateTicket,
   updateUser,
+  updatePrivacy,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -69,6 +74,12 @@ router.get("/cookie/:id", getCookieById);
 router.post("/add-cookie", addCookie);
 router.post("/update-cookie", updateCookie);
 router.post("/delete-cookie", deleteCookie);
+
+router.get("/privacy", getPrivacy);
+router.get("/privacy/:id", getPrivacyById);
+router.post("/add-privacy", addPrivacy);
+router.post("/update-privacy", updatePrivacy);
+router.post("/delete-privacy", deletePrivacy);
 
 router.get("/socials", getSocials);
 router.get("/social/:id", getSocialById);
