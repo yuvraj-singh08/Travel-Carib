@@ -549,12 +549,12 @@ export const getTicketById = async (req: Request, res: Response) => {
 };
 
 export const updateTicket = async (req: Request, res: Response) => {
-  const data = req.body;
-
+  const {id, ...data} = req.body;
+  
   try {
     const updatedTicket = await prisma.ticketManagement.update({
       where: {
-        id: data.id,
+        id: id,
       },
       data: data,
     });
