@@ -232,3 +232,9 @@ model UserSupport {
   description String
   imgUrl      String
 }
+
+model privacyPolicy {
+  id        String  @id @default(uuid()) @map("_id")
+  isEnabled Boolean
+  content   Json[]
+}

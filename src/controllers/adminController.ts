@@ -549,8 +549,8 @@ export const getTicketById = async (req: Request, res: Response) => {
 };
 
 export const updateTicket = async (req: Request, res: Response) => {
-  const {id, ...data} = req.body;
-  
+  const { id, ...data } = req.body;
+
   try {
     const updatedTicket = await prisma.ticketManagement.update({
       where: {
@@ -874,5 +874,137 @@ export const deleteSocials = async (
   } catch (error) {
     console.error("Error while deleting:", error);
     res.status(500).json({ error: "Failed to delete social" });
+  }
+};
+
+export const addPrivacy = async (req: AuthenticatedRequest, res: Response) => {
+  const { isEnabled, content } = req.body;
+
+  try {
+    const privacy = await prisma.privacyPolicy.create({
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy added",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add privacy" });
+  }
+};
+
+export const getPrivacy = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const privacy = await prisma.privacyPolicy.findMany();
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const getPrivacyById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.privacyPolicy.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const updatePrivacy = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id, isEnabled, content } = req.body;
+
+  try {
+    const updatedPrivacy = await prisma.privacyPolicy.update({
+      where: {
+        id: id,
+      },
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (updatedPrivacy) {
+      res.status(200).json({
+        message: "Privacy updated",
+        privacy: updatedPrivacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update privacy" });
+  }
+};
+
+export const deletePrivacy = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.privacyPolicy.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete privacy" });
   }
 };
