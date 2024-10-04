@@ -1008,3 +1008,157 @@ export const deletePrivacy = async (
     res.status(500).json({ error: "Failed to delete privacy" });
   }
 };
+
+export const addEmailSMTP = async (req: Request, res: Response) => {
+  const {
+    mailDriver,
+    mailDriverHost,
+    mailPort,
+    mailUsername,
+    mailPassword,
+    mailEncryption,
+    mailFromAddress,
+    mailFromName,
+  } = req.body;
+
+  try {
+    const emailSMTP = await prisma.emailSMTP.create({
+      data: {
+        mailDriver: mailDriver,
+        mailDriverHost: mailDriverHost,
+        mailPort: mailPort,
+        mailUsername: mailUsername,
+        mailPassword: mailPassword,
+        mailEncryption: mailEncryption,
+        mailFromAddress: mailFromAddress,
+        mailFromName: mailFromName,
+      },
+    });
+
+    if (emailSMTP) {
+      res.status(200).json({
+        message: "Email SMTP added",
+        emailSMTP: emailSMTP,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Email SMTP not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add email SMTP" });
+  }
+};
+
+export const getEmailSMTP = async (req: Request, res: Response) => {
+  try {
+    const emailSMTP = await prisma.emailSMTP.findMany();
+
+    if (emailSMTP) {
+      res.status(200).json({
+        message: "Email SMTP fetched",
+        emailSMTP: emailSMTP,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Email SMTP not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch email SMTP" });
+  }
+};
+
+export const getEmailSMTPById = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const emailSMTP = await prisma.emailSMTP.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (emailSMTP) {
+      res.status(200).json({
+        message: "Email SMTP fetched",
+        emailSMTP: emailSMTP,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Email SMTP not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch email SMTP" });
+  }
+};
+
+export const updateEmailSMTP = async (req: Request, res: Response) => {
+  const {
+    id,
+    mailDriver,
+    mailDriverHost,
+    mailPort,
+    mailUsername,
+    mailPassword,
+    mailEncryption,
+    mailFromAddress,
+    mailFromName,
+  } = req.body;
+
+  try {
+    const updatedEmailSMTP = await prisma.emailSMTP.update({
+      where: {
+        id: id,
+      },
+      data: {
+        mailDriver: mailDriver,
+        mailDriverHost: mailDriverHost,
+        mailPort: mailPort,
+        mailUsername: mailUsername,
+        mailPassword: mailPassword,
+        mailEncryption: mailEncryption,
+        mailFromAddress: mailFromAddress,
+        mailFromName: mailFromName,
+      },
+    });
+
+    if (updatedEmailSMTP) {
+      res.status(200).json({
+        message: "Email SMTP updated",
+        emailSMTP: updatedEmailSMTP,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Email SMTP not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update email SMTP" });
+  }
+};
+
+export const deleteEmailSMTP = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const emailSMTP = await prisma.emailSMTP.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (emailSMTP) {
+      res.status(200).json({
+        message: "Email SMTP deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Email SMTP not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete email SMTP" });
+  }
+};
