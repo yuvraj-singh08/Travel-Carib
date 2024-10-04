@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
+import { Offer } from "../../types/flightTypes";
 
 export const addFirewall = async (req: Request, res: Response) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
@@ -1058,10 +1059,7 @@ export const getTerms = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getTermById = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const getTermById = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.body;
 
   try {
@@ -1086,10 +1084,7 @@ export const getTermById = async (
   }
 };
 
-export const updateTerm = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const updateTerm = async (req: AuthenticatedRequest, res: Response) => {
   const { id, isEnabled, content } = req.body;
 
   try {
@@ -1118,10 +1113,7 @@ export const updateTerm = async (
   }
 };
 
-export const deleteTerm = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+export const deleteTerm = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.body;
 
   try {
@@ -1329,6 +1321,24 @@ export const getDealById = async (req: Request, res: Response) => {
     });
     if (deal) {
       res.status(200).json(deal);
+    } else {
+      res.status(404).json({ error: "Deal not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching deal:", error);
+    res.status(500).json({ error: "Failed to fetch deal" });
+  }
+};
+
+export const getDealByCode = async (req: Request, res: Response) => {
+  const { code } = req.params;
+
+  try {
+    const deal = await prisma.deals.findUnique({
+      where: { code },
+    });
+    if (deal) {
+      res.status(200).json({ deal: deal });
     } else {
       res.status(404).json({ error: "Deal not found" });
     }

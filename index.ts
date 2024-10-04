@@ -12,7 +12,7 @@ import duffelRoutes from "./src/routes/duffelRoutes";
 import userRoutes from "./src/routes/userRoutes";
 import adminRoutes from "./src/routes/adminRoutes";
 import storageRoutes from "./src/routes/storageRoutes";
-import { initMongo } from "./config/mongo";
+import passengerRoutes from "./src/routes/passengerRoutes";
 import { AuthenticatedRequest } from "./types/express";
 
 const app = express();
@@ -30,6 +30,7 @@ app.get("/", (req, res) => {
   res.send("The server is working fine and running on port 8000");
 });
 app.use("/user", userRoutes);
+app.use("/passenger", passengerRoutes);
 app.use("/", queryRoutes);
 app.use("/kiu", kiuRoutes);
 app.use("/flight", flightRoutes);
