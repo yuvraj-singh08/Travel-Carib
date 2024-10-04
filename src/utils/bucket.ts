@@ -1,20 +1,29 @@
-import aws from "aws-sdk";
-import uuid from "uuid";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3 = new aws.S3({
+const s3Client = new S3Client({
   region: process.env.AWS_REGION_NAME,
-  accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 export const generateUploadUrl = async () => {
   const date = new Date();
-  const imageName = `${uuid}-${date.getTime()}.jpeg`;
+  const imageName = `vuelitos-${date.getTime()}.jpeg`;
 
-  return await s3.getSignedUrlPromise("putObject", {
-    Bucket: "vuelitos-images-bucket",
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME as string,
     Key: imageName,
-    Expires: 1000,
     ContentType: "image/jpeg",
   });
+
+  try {
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 1000 });
+    return signedUrl;
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    throw error;
+  }
 };
