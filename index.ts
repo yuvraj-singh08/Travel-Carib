@@ -27,7 +27,7 @@ app.use(
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("The server is working fine and running on port 8000"); // Replace with your desired response
+  res.send("The server is working fine and running on port 8000");
 });
 app.use("/user", userRoutes);
 app.use("/", queryRoutes);
@@ -35,7 +35,7 @@ app.use("/kiu", kiuRoutes);
 app.use("/flight", flightRoutes);
 app.use("/duffel", duffelRoutes);
 app.use("/admin", adminRoutes);
-app.use("/s3", storageRoutes);
+app.use("/bucket", storageRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
