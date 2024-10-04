@@ -43,6 +43,11 @@ import {
   updateUser,
   updatePrivacy,
   updateEmailSMTP,
+  createDeal,
+  getDeals,
+  getDealById,
+  updateDeal,
+  deleteDeal,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -97,5 +102,11 @@ router.get("/email/:id", getEmailSMTPById);
 router.post("/add-email-smtp", addEmailSMTP);
 router.post("/update-email-smtp", updateEmailSMTP);
 router.post("/delete-email-smtp", deleteEmailSMTP);
+
+router.get("/deals", getDeals);
+router.get("/deal/:id", getDealById);
+router.post("/add-deal", createDeal);
+router.post("/update-deal", updateDeal);
+router.post("/delete-deal", deleteDeal);
 
 export default router;
