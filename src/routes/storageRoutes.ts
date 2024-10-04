@@ -1,8 +1,8 @@
-import { Router, Response } from "express";
-import { handleFileUpload, uploadFile } from "../controllers/storageController";
+import { Router} from "express";
+import { getFileUploadUrl } from "../controllers/storageController";
 
 const router = Router();
 
-router.post("/upload", uploadFile, handleFileUpload);
+router.get("/get-url", getFileUploadUrl);
 
 export default router;
