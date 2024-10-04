@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
-import HttpError from "../utils/httperror";
+import bcrypt from "bcrypt";
 
 export const addFirewall = async (req: Request, res: Response) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
@@ -336,6 +336,8 @@ export const addUser = async (req: Request, res: Response) => {
     status,
   } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
     const user = await prisma.userManagement.create({
       data: {
@@ -344,7 +346,7 @@ export const addUser = async (req: Request, res: Response) => {
         email: email,
         contact: contact,
         address: address,
-        password: password,
+        password: hashedPassword,
         roleId: roleId,
         roleName: roleName,
         status: status,
@@ -424,6 +426,8 @@ export const updateUser = async (req: Request, res: Response) => {
     roleName,
   } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
     const updatedUser = await prisma.userManagement.update({
       where: {
@@ -432,7 +436,7 @@ export const updateUser = async (req: Request, res: Response) => {
       data: {
         email: email,
         address: address,
-        password: password,
+        password: hashedPassword,
         name: name,
         contact: contact,
         uniqueId: uniqueId,
