@@ -205,7 +205,7 @@ model Cookie {
   contactUsURL              String
 }
 
-model Email {
+model EmailSMTP {
   id              String @id @default(uuid()) @map("_id")
   mailDriver      String
   mailDriverHost  String

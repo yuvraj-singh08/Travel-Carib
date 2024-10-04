@@ -8,6 +8,7 @@ import {
   addTicket,
   addUser,
   addPrivacy,
+  addEmailSMTP,
   deleteCommision,
   deleteCookie,
   deleteFirewall,
@@ -16,6 +17,7 @@ import {
   deleteTicket,
   deleteUser,
   deletePrivacy,
+  deleteEmailSMTP,
   getCommission,
   getCommissionById,
   getCookieById,
@@ -23,6 +25,7 @@ import {
   getFirewall,
   getPrivacy,
   getRoles,
+  getEmailSMTP,
   getRolesById,
   getSocialById,
   getSocials,
@@ -30,6 +33,7 @@ import {
   getTickets,
   getUserById,
   getPrivacyById,
+  getEmailSMTPById,
   getUsers,
   updateCommision,
   updateCookie,
@@ -38,6 +42,7 @@ import {
   updateTicket,
   updateUser,
   updatePrivacy,
+  updateEmailSMTP,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -75,7 +80,7 @@ router.post("/add-cookie", addCookie);
 router.post("/update-cookie", updateCookie);
 router.post("/delete-cookie", deleteCookie);
 
-router.get("/privacy", getPrivacy);
+router.get("/privacies", getPrivacy);
 router.get("/privacy/:id", getPrivacyById);
 router.post("/add-privacy", addPrivacy);
 router.post("/update-privacy", updatePrivacy);
@@ -86,5 +91,11 @@ router.get("/social/:id", getSocialById);
 router.post("/add-social", addSocials);
 router.post("/update-social", updateSocial);
 router.post("/delete-social", deleteSocials);
+
+router.get("/emails", getEmailSMTP);
+router.get("/email/:id", getEmailSMTPById);
+router.post("/add-email-smtp", addEmailSMTP);
+router.post("/update-email-smtp", updateEmailSMTP);
+router.post("/delete-email-smtp", deleteEmailSMTP);
 
 export default router;
