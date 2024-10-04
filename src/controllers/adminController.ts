@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
-import HttpError from "../utils/httperror";
+import bcrypt from "bcrypt";
 
 export const addFirewall = async (req: Request, res: Response) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
@@ -336,6 +336,8 @@ export const addUser = async (req: Request, res: Response) => {
     status,
   } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
     const user = await prisma.userManagement.create({
       data: {
@@ -344,7 +346,7 @@ export const addUser = async (req: Request, res: Response) => {
         email: email,
         contact: contact,
         address: address,
-        password: password,
+        password: hashedPassword,
         roleId: roleId,
         roleName: roleName,
         status: status,
@@ -424,6 +426,8 @@ export const updateUser = async (req: Request, res: Response) => {
     roleName,
   } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
     const updatedUser = await prisma.userManagement.update({
       where: {
@@ -432,7 +436,7 @@ export const updateUser = async (req: Request, res: Response) => {
       data: {
         email: email,
         address: address,
-        password: password,
+        password: hashedPassword,
         name: name,
         contact: contact,
         uniqueId: uniqueId,
@@ -1009,6 +1013,138 @@ export const deletePrivacy = async (
   }
 };
 
+export const addTerms = async (req: AuthenticatedRequest, res: Response) => {
+  const { isEnabled, content } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.create({
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy added",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add privacy" });
+  }
+};
+
+export const getTerms = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const privacy = await prisma.termsAndCondition.findMany();
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const getTermById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const updateTerm = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id, isEnabled, content } = req.body;
+
+  try {
+    const updatedPrivacy = await prisma.termsAndCondition.update({
+      where: {
+        id: id,
+      },
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (updatedPrivacy) {
+      res.status(200).json({
+        message: "Privacy updated",
+        privacy: updatedPrivacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update privacy" });
+  }
+};
+
+export const deleteTerm = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete privacy" });
+  }
+};
+
 export const addEmailSMTP = async (req: Request, res: Response) => {
   const {
     mailDriver,
@@ -1160,5 +1296,137 @@ export const deleteEmailSMTP = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error while deleting:", error);
     res.status(500).json({ error: "Failed to delete email SMTP" });
+  }
+};
+
+export const createDeal = async (req: Request, res: Response) => {
+  try {
+    const deal = await prisma.deals.create({
+      data: req.body,
+    });
+    res.status(201).json(deal);
+  } catch (error) {
+    console.error("Error creating deal:", error);
+    res.status(500).json({ error: "Failed to create deal" });
+  }
+};
+
+export const getDeals = async (req: Request, res: Response) => {
+  try {
+    const deals = await prisma.deals.findMany();
+    res.status(200).json(deals);
+  } catch (error) {
+    console.error("Error fetching deals:", error);
+    res.status(500).json({ error: "Failed to fetch deals" });
+  }
+};
+
+export const getDealById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const deal = await prisma.deals.findUnique({
+      where: { id },
+    });
+    if (deal) {
+      res.status(200).json(deal);
+    } else {
+      res.status(404).json({ error: "Deal not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching deal:", error);
+    res.status(500).json({ error: "Failed to fetch deal" });
+  }
+};
+
+export const updateDeal = async (req: Request, res: Response) => {
+  const { id, ...data } = req.body;
+  try {
+    const deal = await prisma.deals.update({
+      where: { id },
+      data: data,
+    });
+    res.status(200).json(deal);
+  } catch (error) {
+    console.error("Error updating deal:", error);
+    res.status(500).json({ error: "Failed to update deal" });
+  }
+};
+
+export const deleteDeal = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  try {
+    const deal = await prisma.deals.delete({
+      where: { id },
+    });
+    res.status(200).json({ message: "Deal deleted", success: true });
+  } catch (error) {
+    console.error("Error deleting deal:", error);
+    res.status(500).json({ error: "Failed to delete deal" });
+  }
+};
+
+export const createPayment = async (req: Request, res: Response) => {
+  try {
+    const payment = await prisma.payment.create({
+      data: req.body,
+    });
+    res.status(201).json(payment);
+  } catch (error) {
+    console.error("Error creating payment:", error);
+    res.status(500).json({ error: "Failed to create payment" });
+  }
+};
+
+export const getPayments = async (req: Request, res: Response) => {
+  try {
+    const payments = await prisma.payment.findMany();
+    res.status(200).json(payments);
+  } catch (error) {
+    console.error("Error fetching payments:", error);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
+};
+
+export const getPaymentById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id },
+    });
+    if (payment) {
+      res.status(200).json(payment);
+    } else {
+      res.status(404).json({ error: "Payment not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching payment:", error);
+    res.status(500).json({ error: "Failed to fetch payment" });
+  }
+};
+
+export const updatePayment = async (req: Request, res: Response) => {
+  const { id, ...data } = req.body;
+  try {
+    const payment = await prisma.payment.update({
+      where: { id },
+      data: data,
+    });
+    res.status(200).json(payment);
+  } catch (error) {
+    console.error("Error updating payment:", error);
+    res.status(500).json({ error: "Failed to update payment" });
+  }
+};
+
+export const deletePayment = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  try {
+    const payment = await prisma.payment.delete({
+      where: { id },
+    });
+    res.status(200).json({ message: "Payment deleted", success: true });
+  } catch (error) {
+    console.error("Error deleting payment:", error);
+    res.status(500).json({ error: "Failed to delete payment" });
   }
 };

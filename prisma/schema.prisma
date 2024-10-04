@@ -238,3 +238,34 @@ model privacyPolicy {
   isEnabled Boolean
   content   Json[]
 }
+
+model termsAndCondition {
+  id        String  @id @default(uuid()) @map("_id")
+  isEnabled Boolean
+  content   Json[]
+}
+
+model deals {
+  id           String   @id @default(uuid()) @map("_id")
+  title        String
+  way          String
+  code         String
+  origin       String
+  discount     Boolean
+  discountType String
+  airlineCode  String
+  userLimit    String
+  FlightCode   String
+  expiryDate   DateTime
+  imageUrl     String
+  description  String
+}
+
+model payment {
+  id             String   @id @default(uuid()) @map("_id")
+  environment    String
+  publishableKey String
+  secret         String
+  webbookSecret  String
+  updatedAr      DateTime @updatedAt
+}

@@ -129,7 +129,7 @@ export const updateUserProfile = async (
   res: Response
 ) => {
   const userId = req.user?.id;
-
+  
   if (!userId) {
     return res
       .status(401)
