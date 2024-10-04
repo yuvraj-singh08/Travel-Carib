@@ -30,7 +30,7 @@ class AmadeusClient {
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
     try {
 
-      await new Promise(resolve => setTimeout(resolve, 2000 * (index)))
+      await new Promise(resolve => setTimeout(resolve, 1500 * (index)))
 
       // const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
       //   originDestinations: [
@@ -50,7 +50,7 @@ class AmadeusClient {
       // }));
 
       const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-        currencyCode: "INR",
+        currencyCode: "EUR",
         originDestinations: [
           {
             id: 1,

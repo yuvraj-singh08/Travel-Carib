@@ -7,6 +7,7 @@ export type FlightOfferSearchParams = {
     passengerType: string,
     maxLayovers: number,
     cabinClass: CabinClass,
+    filters?: FilterType
 }
 
 export type routeType = {
@@ -21,6 +22,7 @@ export type Offer = {
         payment_required_by: string | null;
         requires_instant_payment: boolean;
     };
+    stops: number;
     available_services: string | null;
     supported_passenger_identity_document_types: string[];
     passenger_identity_documents_required: boolean;
@@ -36,6 +38,8 @@ export type Offer = {
     total_amount: string;
     slices: Slice[];
     passengers: Passenger[];
+    departing_at: string,
+    arriving_at: string,
     conditions: {
         refund_before_departure: string | null;
         change_before_departure: string | null;
@@ -152,3 +156,10 @@ type Carrier = {
     name: string;
     id: string;
 };
+
+export type FilterType = {
+    MaxPrice?: number,
+    MinPrice?: number,
+    MaxDuration?: number,
+    MaxStops?: number
+}

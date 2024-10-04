@@ -1,5 +1,5 @@
 import { FlightOfferSearchParams } from "../../types/flightTypes";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, getPossibleRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -26,7 +26,7 @@ class FlightClient {
                         destination: params.destinationLocation
                     }
                 ],
-                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, params.maxLayovers))
+                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
             ]
             console.log(possibleRoutes);
 
@@ -96,8 +96,8 @@ class FlightClient {
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        ...amadeus[index2],
-                        ...duffel[index2]
+                        ...(amadeus?.[index2] || []),
+                        ...(duffel?.[index2] || [])
                     ])
                 })
                 const paired = combineAllRoutes(temp)
@@ -112,8 +112,11 @@ class FlightClient {
             })
 
             const normalizedResponse = normalizeResponse(temp)
+            //@ts-ignore
+            const filteredResponse = filterResponse(normalizedResponse, params.filters)
+            const sortedResponse = sortResponse(filteredResponse);
 
-            return normalizedResponse;
+            return sortedResponse;
         } catch (error) {
             throw (error);
         }

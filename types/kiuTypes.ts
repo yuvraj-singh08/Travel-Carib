@@ -6,6 +6,17 @@ export type FlightSearchParams = {
     Passengers: string,
 }
 
+export type PriceRequestBuilderParams = {
+    OriginLocation: string,
+    DestinationLocation: string,
+    DepartureDateTime: string,
+    ArrivalDateTime: string,
+    MarketingAirline: string,
+    FlightNumber: string,
+    ReturnDate?: string,
+    Passengers: string,
+}
+
 export type bookingClassType = {
     $: {
         ResBookDesigCode: string,
