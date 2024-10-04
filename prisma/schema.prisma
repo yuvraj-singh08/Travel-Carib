@@ -62,6 +62,25 @@ model User {
   cotraveler    Json[]
 }
 
+model Passenger {
+  id                 String @id @default(uuid()) @map("_id")
+  phone              String
+  email              String
+  firstName          String
+  surname            String
+  dob                String
+  nationality        String
+  gender             String
+  passportExpiryDate String
+  passportNumber     String
+  country            String
+  state              String
+  city               String
+  zipcode            String
+  address            String
+  identityCard       String
+}
+
 enum AirlineFeeType {
   PERCENT
   FIXED
@@ -246,17 +265,18 @@ model termsAndCondition {
 }
 
 model deals {
-  id           String   @id @default(uuid()) @map("_id")
+  id           String  @id @default(uuid()) @map("_id")
   title        String
   way          String
-  code         String
-  origin       String
-  discount     Boolean
+  code         String  @unique
+  origin       String?
+  discount     String
   discountType String
-  airlineCode  String
-  userLimit    String
-  FlightCode   String
-  expiryDate   DateTime
+  airlineCode  String?
+  userLimit    Int
+  used         Int
+  flightCode   String?
+  expiryDate   String
   imageUrl     String
   description  String
 }

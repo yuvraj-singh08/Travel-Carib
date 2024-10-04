@@ -53,6 +53,7 @@ import {
   getDealById,
   updateDeal,
   deleteDeal,
+  getDealByCode,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -110,6 +111,7 @@ router.post("/delete-email-smtp", deleteEmailSMTP);
 
 router.get("/deals", getDeals);
 router.get("/deal/:id", getDealById);
+router.get("/code-deal/:code", getDealByCode);
 router.post("/add-deal", createDeal);
 router.post("/update-deal", updateDeal);
 router.post("/delete-deal", deleteDeal);
