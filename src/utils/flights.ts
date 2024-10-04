@@ -1,6 +1,6 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { Offer, routeType } from "../../types/flightTypes";
+import { FilterType, Offer, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { getDifferenceInMinutes } from "./utils";
@@ -9,12 +9,16 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>) =>
     try {
         const parsedResponse = duffelResponse.data.offers.map((result) => {
             let responseId = "";
+            let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
+            let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             result.slices?.[0]?.segments?.forEach((segment) => {
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
             })
             return {
                 ...result,
                 responseId,
+                departing_at,
+                arriving_at,
                 cabin_class: duffelResponse.data.cabin_class
             }
         })
@@ -65,7 +69,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
             const arriving_at = segments?.[n - 1]?.arriving_at;
 
             return {
-                response,
+                responseId,
+                total_amount: result?.price?.total,
                 slices: [
                     {
                         origin: segments?.[0]?.origin,
@@ -74,7 +79,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
                         arriving_at,
                         segments: segments
                     }
-                ]
+                ],
             }
         })
 
@@ -186,6 +191,29 @@ export const parseAmadeusResponse = (amadeusResponse: any) => {
     }
 }
 
+export const filterResponse = (response: Offer[], filters: FilterType) => {
+    const filteredResponse: Offer[] = response.filter((route) => {
+        const minPriceFilter = filters?.MinPrice ? parseFloat(route.total_amount) >= filters.MinPrice : true
+        const maxPriceFilter = filters?.MaxPrice ? parseFloat(route.total_amount) <= filters.MaxPrice : true;
+        
+        //Max Duration
+        let maxDuration = filters.MaxDuration ? false : true;
+        const departing_at = route?.slices?.[0]?.segments?.[0]?.departing_at;
+        const arriving_at = route?.slices?.[route?.slices?.length - 1]?.segments?.[route?.slices?.[route?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+        const timeDiff = getDifferenceInMinutes(departing_at, arriving_at);
+        if (timeDiff / 60 <= filters.MaxDuration) {
+            maxDuration = true;
+        }
+
+        //Max Stops
+        const maxStops = route.stops <= filters.MaxStops
+        
+        return minPriceFilter && maxPriceFilter && maxDuration && maxStops;
+    });
+
+    return filteredResponse;
+}
+
 function filterRoutes(routes: Offer[]): Offer[] {
     const uniqueRoutes: Map<string, Offer> = new Map();
 
@@ -206,21 +234,33 @@ export function combineAllRoutes(routeArrays: Offer[][]): Offer[][] {
     const filteredRoutesPerSegment: Offer[][] = routeArrays.map(filterRoutes);
 
     // Initialize with the routes from the first leg (A -> B)
-    let result: Offer[][] = filteredRoutesPerSegment[0].map(route => [route]);
+    let result: (Offer)[][] = filteredRoutesPerSegment[0].map(route => [route]);
 
     // Now combine with each subsequent leg
     for (let i = 1; i < filteredRoutesPerSegment.length; i++) {
         const nextSegmentRoutes = filteredRoutesPerSegment[i];
-        const newResult: Offer[][] = [];
+        const newResult: (Offer)[][] = [];
 
         for (const currentRoute of result) {
             for (const nextRoute of nextSegmentRoutes) {
-                // Make sure that the destination of the last route in the current route matches the origin of the next route
-                const temp = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
-                const tempLength = temp?.length;
-                const differenceInMinutes = getDifferenceInMinutes(temp[tempLength - 1].departing_at, nextRoute?.slices?.[0]?.segments?.[0]?.departing_at)
+                if (nextRoute.total_amount === undefined) {
+                    console.log(nextRoute.total_amount);
+                }
+                // Ensure that the time difference is sufficient between current route and next route
+                const lastSegmentOfCurrentRoute = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
+                const lastSegmentLength = lastSegmentOfCurrentRoute?.length;
+                const differenceInMinutes = getDifferenceInMinutes(
+                    lastSegmentOfCurrentRoute?.[lastSegmentLength - 1].departing_at,
+                    nextRoute?.slices?.[0]?.segments?.[0]?.departing_at
+                );
+
+                // Check the time gap is more than the allowed transfer time
                 if (differenceInMinutes > (parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60'))) {
-                    newResult.push([...currentRoute, nextRoute]);
+                    // Sum the total_amount of the currentRoute and nextRoute
+                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0) + (parseFloat(nextRoute.total_amount) || 0);
+
+                    // Add the combined route with updated total_amount
+                    newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
                 }
             }
         }
@@ -244,13 +284,24 @@ export function combineAllRoutes(routeArrays: Offer[][]): Offer[][] {
 export const normalizeResponse = (response: Offer[][]) => {
     const result = response.map((offer) => {
         let slices = [];
+        let stops = 0;
         offer.forEach((route) => {
             slices.push(...(route.slices));
         })
+        slices.forEach((slice) => {
+            stops += slice?.segments?.length - 1 || 0;
+        })
+        if (slices?.length > 1) {
+            stops += 1
+        }
         return {
             origin: slices?.[0]?.origin,
             destination: slices?.[slices.length - 1]?.destination,
-            // total_amount: offer.reduce((total, route) => total + parseFloat(route.total_amount), 0),
+            departing_at: slices?.[0]?.departing_at,
+            arriving_at: slices?.[slices.length - 1]?.arriving_at,
+            stops,
+            // duration: offer[0].duration,
+            total_amount: offer.reduce((total, route) => total + parseFloat(route.total_amount), 0),
             // base_currency: offer[0].base_currency,
             // tax_currency: offer[0].tax_currency,
             slices
@@ -258,6 +309,10 @@ export const normalizeResponse = (response: Offer[][]) => {
     })
     return result;
 
+}
+
+export const sortResponse = (response: Offer[] | any) => {
+    return response.sort((a, b) => { return parseFloat(a.total_amount) - parseFloat(b.total_amount) })
 }
 
 export const combineResponses = (responses: any) => {

@@ -1,5 +1,5 @@
 import { create } from "xmlbuilder2";
-import { FlightSearchParams, KiuResponseType } from "../../types/kiuTypes";
+import { FlightSearchParams, KiuResponseType, PriceRequestBuilderParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 
 export const getDateString = (date: string) => {
@@ -108,32 +108,43 @@ export const buildFlightSearchRequest = (params: FlightSearchParams) => {
   return xml;
 }
 
-export const buildFlightPriceRequest = (params: FlightSearchParams) => {
+export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
   const xmlObj = {
-    KIU_AirAvailRQ: {
+    KIU_AirPriceRQ: {
       '@EchoToken': '1',
       '@Target': 'Production',
       '@Version': '3.0',
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',
-      '@DirectFlightsOnly': 'false',
-      '@MaxResponses': '10',
-      '@CombinedItineraries': 'false',
       POS: {
         Source: {
           '@AgentSine': process.env.AgentSine,
           '@TerminalID': process.env.TerminalID,
-          '@ISOCountry': process.env.ISOCountry
+          '@ISOCountry': process.env.ISOCountry,
+          '@ISOCurrency': process.env.ISOCurrency
         }
       },
-      OriginDestinationInformation: {
-        DepartureDateTime: params.DepartureDate,
-        OriginLocation: {
-          '@LocationCode': params.OriginLocation
-        },
-        DestinationLocation: {
-          '@LocationCode': params.DestinationLocation
+      AirItinerary: {
+        OriginDestinationOptions: {
+          OriginDestinationOption: {
+            FlightSegment: {
+              "@DepartureDateTime": params.DepartureDateTime,
+              "@ArrivalDateTime": params.ArrivalDateTime,
+              "@ResBookDesigCode": "Y",// Replace
+              "@FlightNumber": params.FlightNumber,
+              OriginLocation: {
+                '@LocationCode': params.OriginLocation
+              },
+              DestinationLocation: {
+                '@LocationCode': params.DestinationLocation
+              },
+              MarketingAirline: {
+                "@Code": params.MarketingAirline
+              }
+            }
+          }
         }
+
       },
       TravelPreferences: {
         '@MaxStopsQuantity': '4'
