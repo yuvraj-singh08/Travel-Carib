@@ -1013,6 +1013,138 @@ export const deletePrivacy = async (
   }
 };
 
+export const addTerms = async (req: AuthenticatedRequest, res: Response) => {
+  const { isEnabled, content } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.create({
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy added",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not created" });
+    }
+  } catch (error) {
+    console.log("Error while creating:", error);
+    res.status(500).json({ error: "Failed to add privacy" });
+  }
+};
+
+export const getTerms = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const privacy = await prisma.termsAndCondition.findMany();
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const getTermById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy fetched",
+        privacy: privacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch privacy" });
+  }
+};
+
+export const updateTerm = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id, isEnabled, content } = req.body;
+
+  try {
+    const updatedPrivacy = await prisma.termsAndCondition.update({
+      where: {
+        id: id,
+      },
+      data: {
+        isEnabled: isEnabled,
+        content: content,
+      },
+    });
+
+    if (updatedPrivacy) {
+      res.status(200).json({
+        message: "Privacy updated",
+        privacy: updatedPrivacy,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update privacy" });
+  }
+};
+
+export const deleteTerm = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.body;
+
+  try {
+    const privacy = await prisma.termsAndCondition.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (privacy) {
+      res.status(200).json({
+        message: "Privacy deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Privacy not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete privacy" });
+  }
+};
+
 export const addEmailSMTP = async (req: Request, res: Response) => {
   const {
     mailDriver,

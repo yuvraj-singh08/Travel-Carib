@@ -4,4 +4,5 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
   };
+  file?: any
 }

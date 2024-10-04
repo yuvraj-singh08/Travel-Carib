@@ -239,6 +239,12 @@ model privacyPolicy {
   content   Json[]
 }
 
+model termsAndCondition {
+  id        String  @id @default(uuid()) @map("_id")
+  isEnabled Boolean
+  content   Json[]
+}
+
 model deals {
   id           String   @id @default(uuid()) @map("_id")
   title        String

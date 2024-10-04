@@ -11,6 +11,7 @@ import flightRoutes from "./src/routes/flightRoutes";
 import duffelRoutes from "./src/routes/duffelRoutes";
 import userRoutes from "./src/routes/userRoutes";
 import adminRoutes from "./src/routes/adminRoutes";
+import storageRoutes from "./src/routes/storageRoutes";
 import { initMongo } from "./config/mongo";
 import { AuthenticatedRequest } from "./types/express";
 
@@ -34,6 +35,7 @@ app.use("/kiu", kiuRoutes);
 app.use("/flight", flightRoutes);
 app.use("/duffel", duffelRoutes);
 app.use("/admin", adminRoutes);
+app.use("/s3", storageRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
