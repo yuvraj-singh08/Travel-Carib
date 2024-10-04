@@ -9,6 +9,7 @@ import {
   addUser,
   addPrivacy,
   addEmailSMTP,
+  addTerms,
   deleteCommision,
   deleteCookie,
   deleteFirewall,
@@ -18,6 +19,7 @@ import {
   deleteUser,
   deletePrivacy,
   deleteEmailSMTP,
+  deleteTerm,
   getCommission,
   getCommissionById,
   getCookieById,
@@ -31,10 +33,12 @@ import {
   getSocials,
   getTicketById,
   getTickets,
+  getTerms,
   getUserById,
   getPrivacyById,
   getEmailSMTPById,
   getUsers,
+  getTermById,
   updateCommision,
   updateCookie,
   updateRoles,
@@ -43,6 +47,7 @@ import {
   updateUser,
   updatePrivacy,
   updateEmailSMTP,
+  updateTerm,
   createDeal,
   getDeals,
   getDealById,
@@ -108,5 +113,11 @@ router.get("/deal/:id", getDealById);
 router.post("/add-deal", createDeal);
 router.post("/update-deal", updateDeal);
 router.post("/delete-deal", deleteDeal);
+
+router.get("/terms", getTerms);
+router.get("/term/:id", getTermById);
+router.post("/add-term", addTerms);
+router.post("/update-term", updateTerm);
+router.post("/delete-term", deleteTerm);
 
 export default router;
