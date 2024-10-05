@@ -274,11 +274,13 @@ model deals {
   discountType String
   airlineCode  String?
   userLimit    Int
+  used         Int
   flightCode   String?
   expiryDate   DateTime
   imageUrl     String
   description  String
 }
+
 
 model payment {
   id             String   @id @default(uuid()) @map("_id")
