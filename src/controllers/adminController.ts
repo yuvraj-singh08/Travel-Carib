@@ -1440,3 +1440,34 @@ export const deletePayment = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to delete payment" });
   }
 };
+
+export const countTickets = async (req: Request, res: Response) => {
+  try {
+    const pendingTickets = await prisma.ticketManagement.count({
+      where: {
+        status: "PENDING",
+      },
+    });
+
+    const openTickets = await prisma.ticketManagement.count({
+      where: {
+        status: "OPEN",
+      },
+    });
+
+    const resolvedTickets = await prisma.ticketManagement.count({
+      where: {
+        status: "RESOLVE",
+      },
+    });
+
+    res.status(200).json({
+      pending: pendingTickets,
+      open: openTickets,
+      resolve: resolvedTickets,
+    });
+  } catch (error) {
+    console.error("Error counting tickets:", error);
+    res.status(500).json({ error: "Failed to count tickets" });
+  }
+};

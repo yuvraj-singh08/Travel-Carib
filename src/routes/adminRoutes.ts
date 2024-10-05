@@ -54,6 +54,7 @@ import {
   updateDeal,
   deleteDeal,
   getDealByCode,
+  countTickets,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -81,6 +82,7 @@ router.post("/delete-user", deleteUser);
 
 router.get("/tickets", getTickets);
 router.get("/ticket/:id", getTicketById);
+router.get("/count-tickets", countTickets);
 router.post("/add-ticket", addTicket);
 router.post("/update-ticket", updateTicket);
 router.post("/delete-ticket", deleteTicket);
