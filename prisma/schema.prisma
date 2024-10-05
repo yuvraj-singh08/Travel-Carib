@@ -274,7 +274,6 @@ model deals {
   discountType String
   airlineCode  String?
   userLimit    Int
-  used         Int
   flightCode   String?
   expiryDate   DateTime
   imageUrl     String
