@@ -276,7 +276,7 @@ model deals {
   userLimit    Int
   used         Int
   flightCode   String?
-  expiryDate   String
+  expiryDate   DateTime
   imageUrl     String
   description  String
 }
