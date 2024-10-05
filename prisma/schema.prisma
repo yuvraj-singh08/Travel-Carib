@@ -120,7 +120,7 @@ model Booking {
   baseFare       Json[]
   tax_fee_surges Json[]
   otherCharges   Json[]
-  discount       Json
+  discount       Json?
   totalAmount    String
   currency       String
 }
