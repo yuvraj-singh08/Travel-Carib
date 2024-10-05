@@ -13,6 +13,7 @@ import userRoutes from "./src/routes/userRoutes";
 import adminRoutes from "./src/routes/adminRoutes";
 import storageRoutes from "./src/routes/storageRoutes";
 import passengerRoutes from "./src/routes/passengerRoutes";
+import bookingRoutes from "./src/routes/bookingRoutes";
 import { AuthenticatedRequest } from "./types/express";
 
 const app = express();
@@ -37,6 +38,7 @@ app.use("/flight", flightRoutes);
 app.use("/duffel", duffelRoutes);
 app.use("/admin", adminRoutes);
 app.use("/bucket", storageRoutes);
+app.use("/book", bookingRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
