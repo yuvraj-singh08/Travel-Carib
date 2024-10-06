@@ -1,9 +1,10 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { FilterType, Offer, routeType } from "../../types/flightTypes";
+import { FilterType, Firewall, Offer, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { getDifferenceInMinutes } from "./utils";
+import moment from "moment";
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>) => {
     try {
@@ -195,20 +196,60 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
     const filteredResponse: Offer[] = response.filter((route) => {
         const minPriceFilter = filters?.MinPrice ? parseFloat(route.total_amount) >= filters.MinPrice : true
         const maxPriceFilter = filters?.MaxPrice ? parseFloat(route.total_amount) <= filters.MaxPrice : true;
-        
+
+        //Onward Duration
+        let MaxOnwardDuration = filters.MaxOnwardDuration ? false : true;
+        let MinOnwardDuration = filters.MinOnwardDuration ? false : true;
+        if (filters.MaxOnwardDuration) {
+            MaxOnwardDuration = true
+            route?.slices?.forEach((slice) => {
+                slice?.segments?.forEach((segment) => {
+                    if (moment.duration(segment.duration).asMinutes() > filters.MaxOnwardDuration) {
+                        MaxOnwardDuration = false;
+                    }
+                })
+            })
+        }
+
+        if (filters.MinOnwardDuration) {
+            MinOnwardDuration = true
+            route?.slices?.forEach((slice) => {
+                slice?.segments?.forEach((segment) => {
+                    if (moment.duration(segment.duration).asMinutes() < filters.MinOnwardDuration) {
+                        MinOnwardDuration = false;
+                    }
+                })
+            })
+        }
+
+        //Departure and Arrival Time
+        const departureTime = new Date(route.departing_at);
+        const arrivalTime = new Date(route.arriving_at);
+        const departureHour = departureTime.getHours();
+        const arrivalHour = arrivalTime.getHours();
+        let DepartureFilter = (filters.MaxDepartureTime && filters.MinDepartureTime) ? false : true;
+        let ArrivalFilter = (filters.MaxArrivalTime && filters.MinArrivalTime) ? false : true;
+        if (filters.MaxDepartureTime && filters.MinDepartureTime) {
+            DepartureFilter = (departureHour >= filters.MinDepartureTime && departureHour <= filters.MaxDepartureTime)
+        }
+        if (filters.MinArrivalTime && filters.MaxArrivalTime) {
+            ArrivalFilter = (arrivalHour >= filters.MinArrivalTime && arrivalHour <= filters.MaxArrivalTime)
+        }
+
+
         //Max Duration
         let maxDuration = filters.MaxDuration ? false : true;
         const departing_at = route?.slices?.[0]?.segments?.[0]?.departing_at;
         const arriving_at = route?.slices?.[route?.slices?.length - 1]?.segments?.[route?.slices?.[route?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
         const timeDiff = getDifferenceInMinutes(departing_at, arriving_at);
-        if (timeDiff / 60 <= filters.MaxDuration) {
+        if (filters.MaxDuration && timeDiff / 60 <= filters.MaxDuration) {
             maxDuration = true;
         }
 
         //Max Stops
-        const maxStops = route.stops <= filters.MaxStops
-        
-        return minPriceFilter && maxPriceFilter && maxDuration && maxStops;
+        const maxStops = filters.MaxStops ? route.stops <= filters.MaxStops : true
+
+        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter;
     });
 
     return filteredResponse;
