@@ -1,4 +1,5 @@
 import { FlightOfferSearchParams } from "../../types/flightTypes";
+import { prisma } from "../prismaClient";
 import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
@@ -25,9 +26,11 @@ class FlightClient {
                         origin: params.originLocation,
                         destination: params.destinationLocation
                     }
-                ],
-                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
+                ]
             ]
+            if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
+                possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
+            }
             console.log(possibleRoutes);
 
             //Duffel Request
@@ -48,6 +51,18 @@ class FlightClient {
                 })
             })
 
+            //Kiu Request
+            const kiuRequests = possibleRoutes.map((route) => {
+                return route.map((segment) => {
+                    return this.kiuClient.searchFlights({
+                        DepartureDate: params.departureDate,
+                        OriginLocation: segment.origin,
+                        DestinationLocation: segment.destination,
+                        Passengers: "1",
+                    })
+                })
+            })
+
             let index = 0;
             const amadeusRequests = possibleRoutes.map((route) => {
                 return route.map((segment) => {
@@ -61,7 +76,7 @@ class FlightClient {
                 })
             })
 
-            const [duffelResponse, amadeusResponse] = await Promise.all([
+            const [duffelResponse, amadeusResponse, parsedKiuResponse] = await Promise.all([
                 Promise.all(duffelRequests.map(async (request) => {
                     const result = await Promise.all(request);
                     return result;
@@ -69,7 +84,11 @@ class FlightClient {
                 Promise.all(amadeusRequests.map(async (request) => {
                     const result = await Promise.all(request);
                     return result;
-                }))
+                })),
+                Promise.all(kiuRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                })),
             ])
 
             const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {

@@ -161,5 +161,21 @@ export type FilterType = {
     MaxPrice?: number,
     MinPrice?: number,
     MaxDuration?: number,
-    MaxStops?: number
+    MaxStops?: number,
+    MaxOnwardDuration?: number,
+    MinOnwardDuration?: number,
+    MaxDepartureTime?: number, //In hours
+    MinDepartureTime?: number,
+    MaxArrivalTime?: number,
+    MinArrivalTime?: number,
+    SelfTransferAllowed?: boolean,
+}
+
+export type Firewall = {
+    title: string,
+    supplier: string,
+    code: string,
+    flightNumber: string,
+    from: string,
+    to: string,
 }

@@ -319,7 +319,7 @@ export const parseKiuResposne = (data: any) => {
 
     let slices = [], segments = [], response = [], responseId = "";
 
-    combinedRoute.forEach((option) => {
+    combinedRoute?.forEach((option) => {
 
       option?.FlightSegment?.forEach((route) => {
 

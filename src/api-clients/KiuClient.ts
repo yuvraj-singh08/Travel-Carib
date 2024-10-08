@@ -32,9 +32,9 @@ class KiuClient {
         request: requestXML
       })
       const parser = new xml2js.Parser();
-      // const jsonResponse = await parser.parseStringPromise(response.data);
-      // const parsedResponse = await parseFlightSearchResponse(jsonResponse);
-      return response.data;
+      const jsonResponse = await parser.parseStringPromise(response.data);
+      const parsedResponse = await parseKiuResposne(jsonResponse);
+      return parsedResponse
     } catch (error) {
       throw error;
     }
