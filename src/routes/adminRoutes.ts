@@ -55,6 +55,10 @@ import {
   deleteDeal,
   getDealByCode,
   countTickets,
+  getSearchManagement,
+  createSearchManagement,
+  deleteSearchManagement,
+  updateSearchManagement,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -123,5 +127,10 @@ router.get("/term/:id", getTermById);
 router.post("/add-term", addTerms);
 router.post("/update-term", updateTerm);
 router.post("/delete-term", deleteTerm);
+
+router.get("/search", getSearchManagement);
+router.post("/add-search", createSearchManagement);
+router.post("/update-search", updateSearchManagement);
+router.post("/delete-search", deleteSearchManagement);
 
 export default router;

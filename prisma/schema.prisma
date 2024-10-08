@@ -265,10 +265,10 @@ model termsAndCondition {
 }
 
 model deals {
-  id           String  @id @default(uuid()) @map("_id")
+  id           String   @id @default(uuid()) @map("_id")
   title        String
   way          String
-  code         String  @unique
+  code         String   @unique
   origin       String?
   discount     String
   discountType String
@@ -281,7 +281,6 @@ model deals {
   description  String
 }
 
-
 model payment {
   id             String   @id @default(uuid()) @map("_id")
   environment    String
@@ -289,4 +288,30 @@ model payment {
   secret         String
   webbookSecret  String
   updatedAr      DateTime @updatedAt
+}
+
+enum RuleType {
+  CREATE_COMBINATION
+  COMING_SOON
+}
+
+model SearchManagement {
+  id                    String         @id @default(uuid()) @map("_id")
+  ruleTitle             String
+  gdsNdcSupplier        FlightSupplier
+  ruleType              RuleType
+  journeyType           RouteType
+  fromOriginAirport     String
+  toDestinationsAirport String
+  connectingAirports    String
+  airlinesIncluded      String
+  airlinesExcluded      String
+  flightExcluded        String
+  minConnectionTime     String
+  maxConnectionTime     String
+  status                Status
+  noteDescription       String
+  priority              Int
+  fareCodesExcluded     String
+  lastUpdate            DateTime       @updatedAt
 }
