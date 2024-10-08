@@ -1471,3 +1471,57 @@ export const countTickets = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to count tickets" });
   }
 };
+
+export const createSearchManagement = async (req: Request, res: Response) => {
+  try {
+    const newEntry = await prisma.searchManagement.create({
+      data: req.body,
+    });
+    res.status(201).json(newEntry);
+  } catch (error) {
+    console.error("Error creating SearchManagement entry:", error);
+    res.status(500).json({ error: "Failed to create SearchManagement entry" });
+  }
+};
+
+// Read/Search SearchManagement entries
+export const getSearchManagement = async (req: Request, res: Response) => {
+  try {
+    const entries = await prisma.searchManagement.findMany();
+    res.status(200).json(entries);
+  } catch (error) {
+    console.error("Error fetching SearchManagement entries:", error);
+    res.status(500).json({ error: "Failed to fetch SearchManagement entries" });
+  }
+};
+
+// Update an existing SearchManagement entry
+export const updateSearchManagement = async (req: Request, res: Response) => {
+  const { id, ...data } = req.body;
+  try {
+    const updatedEntry = await prisma.searchManagement.update({
+      where: { id },
+      data: data,
+    });
+    res.status(200).json(updatedEntry);
+  } catch (error) {
+    console.error("Error updating SearchManagement entry:", error);
+    res.status(500).json({ error: "Failed to update SearchManagement entry" });
+  }
+};
+
+// Delete a SearchManagement entry
+export const deleteSearchManagement = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  try {
+    await prisma.searchManagement.delete({
+      where: { id },
+    });
+    res
+      .status(200)
+      .json({ message: "SearchManagement entry deleted", success: true });
+  } catch (error) {
+    console.error("Error deleting SearchManagement entry:", error);
+    res.status(500).json({ error: "Failed to delete SearchManagement entry" });
+  }
+};
