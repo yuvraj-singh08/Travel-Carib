@@ -210,6 +210,8 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     role,
   } = req.body;
 
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
   try {
     const updatedUser = await prisma.user.update({
       where: {
@@ -229,7 +231,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         pincode: pincode,
         avatarSrc: avatarSrc,
         passportDetails: passportDetails,
-        password: password,
+        password: hashedPassword,
         cotraveler: coTraveler,
       },
     });
