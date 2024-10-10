@@ -5,6 +5,7 @@ import {
   getUserById,
   // updateUser,
   deleteUser,
+  delUser,
   registerUser,
   loginUser,
   getSupport,
@@ -39,7 +40,8 @@ router.get("/", getAllUsers);
 router.get("/:id", authenticateToken, getUserById);
 
 // router.put('/:id', authenticateToken, updateUser);
-router.delete("/:id", authenticateToken, deleteUser);
+router.post("/delete-user", authenticateToken, deleteUser);
+router.post("/del-user", delUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
 router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
