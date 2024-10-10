@@ -207,6 +207,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     password,
     passportDetails,
     coTraveler,
+    frequentlyFlyer,
     role,
   } = req.body;
 
@@ -233,6 +234,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         gender: gender,
         pincode: pincode,
         avatarSrc: avatarSrc,
+        frequentlyFlyer: frequentlyFlyer,
         passportDetails: passportDetails,
         password: hashedPassword!,
         coTraveler: coTraveler,
