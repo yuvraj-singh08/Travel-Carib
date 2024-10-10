@@ -65,6 +65,7 @@ model User {
   password        String?
   passportDetails Json?
   coTraveler      Json[]
+  frequentlyFlyer Json?
 }
 
 model Passenger {
