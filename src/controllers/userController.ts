@@ -17,14 +17,13 @@ export const registerUser = async (req: Request, res: Response) => {
     firstName,
     lastName,
     mobileNumber,
-    passportNo,
     dob,
     lastBooking,
     country,
     gender,
     pincode,
     avatarSrc,
-    passportImage,
+    passportDetails,
     coTraveler,
     role,
   } = req.body;
@@ -39,7 +38,6 @@ export const registerUser = async (req: Request, res: Response) => {
         firstname: firstName,
         lastname: lastName,
         mobileNumber: mobileNumber,
-        passportNo: passportNo,
         dob: dob,
         role: role,
         lastBooking: lastBooking,
@@ -47,7 +45,7 @@ export const registerUser = async (req: Request, res: Response) => {
         gender: gender,
         pincode: pincode,
         avatarSrc: avatarSrc,
-        passportImage: passportImage,
+        passportDetails: passportDetails,
         cotraveler: coTraveler,
       },
     });
@@ -107,22 +105,29 @@ export const getAllUsers = async (req: Request, res: Response) => {
 };
 
 // Get a user by ID
-export const getUserById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: id,
+        id: userId,
       },
     });
     if (user) {
-      res.json(user);
+      return res.json(user);
     } else {
-      res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Failed to fetch user" });
+    return res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
@@ -178,56 +183,61 @@ export const updateUserProfile = async (
 };
 
 // Update a user
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   const {
-    id,
-    firstname,
-    lastname,
+    firstName,
+    lastName,
     mobileNumber,
     email,
     address,
     dob,
-    passportNo,
     lastBooking,
     country,
     gender,
     pincode,
     avatarSrc,
-    passportImage,
     password,
-    cotraveler,
+    passportDetails,
+    coTraveler,
     role,
   } = req.body;
 
   try {
     const updatedUser = await prisma.user.update({
       where: {
-        id: id,
+        id: userId,
       },
       data: {
-        firstname: firstname,
-        lastname: lastname,
+        firstname: firstName,
+        lastname: lastName,
         mobileNumber: mobileNumber,
         email: email,
         address: address,
         dob: dob,
         role: role,
-        passportNo: passportNo,
         lastBooking: lastBooking,
         country: country,
         gender: gender,
         pincode: pincode,
         avatarSrc: avatarSrc,
-        passportImage: passportImage,
+        passportDetails: passportDetails,
         password: password,
-        cotraveler: cotraveler,
+        cotraveler: coTraveler,
       },
     });
 
-    res.status(200).json({ message: "User updated", updatedUser: updatedUser });
+    return res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);
-    res.status(500).json({ error: "Failed to update user" });
+    return res.status(500).json({ error: "Failed to update user" });
   }
 };
 

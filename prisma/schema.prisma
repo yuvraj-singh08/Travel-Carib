@@ -49,23 +49,22 @@ model CoTraveler {
 // api /auth/sign-up /auth/login
 // /user-profile update api 
 model User {
-  id            String   @id @default(uuid()) @map("_id")
-  firstname     String
-  lastname      String
-  mobileNumber  String?
-  email         String   @unique
-  role          UserRole @default(USER)
-  address       String?
-  dob           String?
-  passportNo    String?
-  lastBooking   String?
-  country       String?
-  gender        String?
-  pincode       String?
-  avatarSrc     String?
-  passportImage String?
-  password      String?
-  cotraveler    Json[]
+  id              String   @id @default(uuid()) @map("_id")
+  firstname       String
+  lastname        String
+  mobileNumber    String?
+  email           String   @unique
+  role            UserRole @default(USER)
+  address         String?
+  dob             String?
+  lastBooking     String?
+  country         String?
+  gender          String?
+  pincode         String?
+  avatarSrc       String?
+  password        String?
+  passportDetails Json?
+  cotraveler      Json[]
 }
 
 model Passenger {
@@ -265,10 +264,10 @@ model termsAndCondition {
 }
 
 model deals {
-  id           String   @id @default(uuid()) @map("_id")
+  id           String  @id @default(uuid()) @map("_id")
   title        String
   way          String
-  code         String   @unique
+  code         String  @unique
   origin       String?
   discount     String
   discountType String

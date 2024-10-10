@@ -10,6 +10,7 @@ import {
   getSupport,
   updateSupport,
   deleteSupport,
+  updateUser,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -28,8 +29,9 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 
 // Protected Routes
-router.get("/profile", authenticateToken, updateUserProfile);
-router.post("/profile", authenticateToken, updateUserProfile);
+router.get("/profile", authenticateToken, getUserById);
+router.post("/profile", authenticateToken, updateUser);
+router.post("/allprofile", authenticateToken, updateUser);
 router.post("/traveller", authenticateToken, addCoTraveller);
 router.post("/passport", authenticateToken, UpdatePassportDetail);
 router.post("/flyer", authenticateToken, AddFrequentFlyer);
