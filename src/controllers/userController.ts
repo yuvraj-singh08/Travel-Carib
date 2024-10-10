@@ -26,6 +26,7 @@ export const registerUser = async (req: Request, res: Response) => {
     avatarSrc,
     passportImage,
     coTraveler,
+    role,
   } = req.body;
 
   try {
@@ -40,6 +41,7 @@ export const registerUser = async (req: Request, res: Response) => {
         mobileNumber: mobileNumber,
         passportNo: passportNo,
         dob: dob,
+        role: role,
         lastBooking: lastBooking,
         country: country,
         gender: gender,
@@ -129,7 +131,7 @@ export const updateUserProfile = async (
   res: Response
 ) => {
   const userId = req.user?.id;
-  
+
   if (!userId) {
     return res
       .status(401)
@@ -142,10 +144,11 @@ export const updateUserProfile = async (
     gender,
     dateOfBirth,
     address,
-    profilePhoto,
+    avatarSrc,
     firstName,
     lastName,
     pincode,
+    role,
   } = req.body;
 
   try {
@@ -159,7 +162,8 @@ export const updateUserProfile = async (
         gender,
         dob: dateOfBirth,
         address,
-        avatarSrc: profilePhoto,
+        role,
+        avatarSrc,
         firstname: firstName,
         lastname: lastName,
         pincode,
@@ -192,6 +196,7 @@ export const updateUser = async (req: Request, res: Response) => {
     passportImage,
     password,
     cotraveler,
+    role,
   } = req.body;
 
   try {
@@ -206,6 +211,7 @@ export const updateUser = async (req: Request, res: Response) => {
         email: email,
         address: address,
         dob: dob,
+        role: role,
         passportNo: passportNo,
         lastBooking: lastBooking,
         country: country,

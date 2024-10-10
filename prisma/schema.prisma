@@ -13,6 +13,11 @@ enum RouteType {
   MULTIWAY
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 enum FlightType {
   ECONOMY
   PREMIUM_ECONOMY
@@ -44,11 +49,12 @@ model CoTraveler {
 // api /auth/sign-up /auth/login
 // /user-profile update api 
 model User {
-  id            String  @id @default(uuid()) @map("_id")
+  id            String   @id @default(uuid()) @map("_id")
   firstname     String
   lastname      String
   mobileNumber  String?
-  email         String  @unique
+  email         String   @unique
+  role          UserRole @default(USER)
   address       String?
   dob           String?
   passportNo    String?
@@ -176,12 +182,6 @@ model commissionManagement {
   commissionFees  String
   feeType         AirlineFeeType
   updateTime      DateTime       @updatedAt
-}
-
-enum UserRole {
-  ADMIN
-  MANAGER
-  EMPLOYEE
 }
 
 enum Status {
