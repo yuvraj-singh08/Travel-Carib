@@ -64,7 +64,7 @@ model User {
   avatarSrc       String?
   password        String?
   passportDetails Json?
-  cotraveler      Json[]
+  coTraveler      Json[]
 }
 
 model Passenger {

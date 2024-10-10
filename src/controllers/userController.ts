@@ -46,7 +46,7 @@ export const registerUser = async (req: Request, res: Response) => {
         pincode: pincode,
         avatarSrc: avatarSrc,
         passportDetails: passportDetails,
-        cotraveler: coTraveler,
+        coTraveler: coTraveler,
       },
     });
 
@@ -210,7 +210,10 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     role,
   } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  let hashedPassword: string | undefined;
+  if (password) {
+    hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  }
 
   try {
     const updatedUser = await prisma.user.update({
@@ -231,8 +234,8 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
         pincode: pincode,
         avatarSrc: avatarSrc,
         passportDetails: passportDetails,
-        password: hashedPassword,
-        cotraveler: coTraveler,
+        password: hashedPassword!,
+        coTraveler: coTraveler,
       },
     });
 
