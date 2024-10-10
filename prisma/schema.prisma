@@ -56,7 +56,7 @@ model User {
   email         String   @unique
   role          UserRole @default(USER)
   address       String?
-  dob           String?
+  dob           DateTime?
   passportNo    String?
   lastBooking   String?
   country       String?
