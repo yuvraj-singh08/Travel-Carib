@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
-import { Offer } from "../../types/flightTypes";
 
 export const addFirewall = async (req: Request, res: Response) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
@@ -1372,6 +1371,127 @@ export const deleteDeal = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting deal:", error);
     res.status(500).json({ error: "Failed to delete deal" });
+  }
+};
+
+export const addCommissionType = async (req: Request, res: Response) => {
+  const { type } = req.body;
+
+  try {
+    const commissionType = await prisma.commissionType.create({
+      data: {
+        type: type,
+      },
+    });
+
+    if (commissionType) {
+      res.status(200).json({
+        message: "CommissionType created",
+        commissionType: commissionType,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "CommissionType not created" });
+    }
+  } catch (error) {
+    console.error("Error while creating:", error);
+    res.status(500).json({ error: "Failed to create CommissionType", success: false });
+  }
+};
+
+export const getCommissionTypes = async (req: Request, res: Response) => {
+  try {
+    const commissionTypes = await prisma.commissionType.findMany();
+
+    if (commissionTypes) {
+      res.status(200).json({
+        message: "CommissionTypes fetched",
+        commissionTypes: commissionTypes,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "CommissionTypes not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch CommissionTypes" });
+  }
+};
+
+export const getCommissionTypeById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const commissionType = await prisma.commissionType.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (commissionType) {
+      res.status(200).json({
+        message: "CommissionType fetched",
+        commissionType: commissionType,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "CommissionType not found" });
+    }
+  } catch (error) {
+    console.error("Error while fetching:", error);
+    res.status(500).json({ error: "Failed to fetch CommissionType" });
+  }
+};
+
+export const updateCommissionType = async (req: Request, res: Response) => {
+  const { id, type } = req.body;
+
+  try {
+    const updatedCommissionType = await prisma.commissionType.update({
+      where: {
+        id: id,
+      },
+      data: {
+        type: type,
+      },
+    });
+
+    if (updatedCommissionType) {
+      res.status(200).json({
+        message: "CommissionType updated",
+        commissionType: updatedCommissionType,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "CommissionType not updated" });
+    }
+  } catch (error) {
+    console.error("Error while updating:", error);
+    res.status(500).json({ error: "Failed to update CommissionType" });
+  }
+};
+
+export const deleteCommissionType = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const commissionType = await prisma.commissionType.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (commissionType) {
+      res.status(200).json({
+        message: "CommissionType deleted",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "CommissionType not deleted" });
+    }
+  } catch (error) {
+    console.error("Error while deleting:", error);
+    res.status(500).json({ error: "Failed to delete CommissionType" });
   }
 };
 

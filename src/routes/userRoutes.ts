@@ -12,6 +12,8 @@ import {
   updateSupport,
   deleteSupport,
   updateUser,
+  deleteCoTraveller,
+  changePassword,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -32,8 +34,10 @@ router.post("/login", loginUser);
 // Protected Routes
 router.get("/profile", authenticateToken, getUserById);
 router.post("/profile", authenticateToken, updateUser);
+router.post("/update-password", authenticateToken, changePassword);
 router.post("/allprofile", authenticateToken, updateUser);
 router.post("/traveller", authenticateToken, addCoTraveller);
+router.post("/del-traveller", authenticateToken, deleteCoTraveller);
 router.post("/passport", authenticateToken, UpdatePassportDetail);
 router.post("/flyer", authenticateToken, AddFrequentFlyer);
 router.get("/", getAllUsers);

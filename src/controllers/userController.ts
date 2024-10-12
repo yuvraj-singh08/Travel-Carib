@@ -266,6 +266,34 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+export const deleteCoTraveller = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const id = req.user?.id;
+  const data = req.body;
+
+  if (!id) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: data,
+    });
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error deleting co-traveller:", error);
+    return res.status(500).json({ error: "Failed to delete co-traveller" });
+  }
+};
+
 export const delUser = async (req: Request, res: Response) => {
   const { id } = req.body;
 
@@ -280,6 +308,39 @@ export const delUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
+export const changePassword = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const id = req.user?.id;
+  const data = req.body;
+
+  if (!id) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
+  const hashed = await bcrypt.hash(data.password, SALT_ROUNDS);
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        ...data,
+        password: hashed,
+      },
+    });
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log("Error changing password:", error);
+    return res.status(500).json({ error: "Failed to change password" });
   }
 };
 

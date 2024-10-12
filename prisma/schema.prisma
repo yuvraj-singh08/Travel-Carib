@@ -168,15 +168,14 @@ model firewall {
   updateTime   DateTime       @default(now())
 }
 
-enum CommissionType {
-  AIRLINE
-  HOTEL
-  CAR_RENTAL
+model CommissionType {
+  id          String @id @default(uuid()) @map("_id")
+  type        String
 }
 
 model commissionManagement {
   id              String         @id @default(uuid()) @map("_id")
-  type            CommissionType
+  type            String
   commissionTitle String
   supplier        FlightSupplier
   commissionFees  String
