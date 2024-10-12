@@ -59,12 +59,23 @@ import {
   createSearchManagement,
   deleteSearchManagement,
   updateSearchManagement,
+  getCommissionTypes,
+  getCommissionTypeById,
+  addCommissionType,
+  updateCommissionType,
+  deleteCommissionType,
 } from "../controllers/adminController";
 
 const router = Router();
 router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
 router.post("/delete-firewall", deleteFirewall);
+
+router.get("/types", getCommissionTypes);
+router.get("/type/:id", getCommissionTypeById);
+router.post("/add-type", addCommissionType);
+router.post("/update-type", updateCommissionType);
+router.post("/delete-type", deleteCommissionType);
 
 router.get("/commission", getCommission);
 router.get("/commission/:id", getCommissionById);
