@@ -159,8 +159,8 @@ model BookPayment {
   paymentType String?
   status      UserStatus @default(PENDING)
   paymentDate DateTime   @default(now())
-  Booking     Booking?   @relation(fields: [bookingId], references: [id])
-  bookingId   String?
+  Booking     Booking    @relation(fields: [bookingId], references: [id])
+  bookingId   String
 }
 
 model passenger {

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../prismaClient";
 import { AuthenticatedRequest } from "../../types/express";
+import { deals } from "@prisma/client";
 
 export const addBooking = async (req: Request, res: Response) => {
   const data = req.body;
@@ -13,16 +14,22 @@ export const addBooking = async (req: Request, res: Response) => {
     const payment = await prisma.bookPayment.create({
       data: {
         bookingId: booking.id,
-        ...data,
-        paymentDate: new Date(),
+        totalAmount: data.totalAmount,
+        currency: data.currency,
+        paymentType: "",
       },
     });
 
-    const discount = await prisma.deals.findUnique({
-      where: {
-        code: data.discount?.code,
-      },
-    });
+    let discount;
+
+    const discountData = typeof booking.discount === 'string' ? JSON.parse(booking.discount) : booking.discount;
+    if (discountData?.code) {
+      discount = await prisma.deals.findUnique({
+        where: {
+          code: data.discount?.code,
+        },
+      });
+    }
 
     if (discount) {
       let used = discount.used + 1;
@@ -47,7 +54,8 @@ export const addBooking = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Booking confirmed",
-      booking: booking,
+      booking: booking.id,
+      payment: payment.id,
       success: true,
     });
   } catch (error) {
