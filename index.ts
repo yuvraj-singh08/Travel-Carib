@@ -1,4 +1,4 @@
-import express, { NextFunction, Response } from "express";
+import express, { Request, NextFunction, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
@@ -31,6 +31,29 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("The server is working fine and running on port 8000");
 });
+
+
+app.use(
+  express.json({
+      // Capture raw body only for Stripe and Coinbase webhook endpoints.
+      verify: function (
+          req: Request<any, any, any, any>,
+          res: Response<any, Record<string, any>>,
+          buf: Buffer,
+          encoding: string,
+      ) {
+          console.log('req.originalUrl', req.originalUrl);
+          // Check if the request is for Stripe or Coinbase webhook
+          if (
+              req.originalUrl === '/payment/stripe_webhook' ||
+              req.originalUrl === '/payment/coinbase_webhook'
+          ) {
+              (req as any).rawBody = buf; // Save the raw buffer for both Stripe and Coinbase
+          }
+      },
+  }),
+);
+
 app.use("/user", userRoutes);
 app.use("/passenger", passengerRoutes);
 app.use("/", queryRoutes);
