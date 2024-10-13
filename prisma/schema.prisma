@@ -134,7 +134,7 @@ model Booking {
   userId         String
 }
 
-model Payment {
+model BookPayment {
   id          String   @id @default(uuid()) @map("_id")
   amount      Float
   currency    String
