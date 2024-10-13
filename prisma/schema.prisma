@@ -154,11 +154,11 @@ enum UserStatus {
 
 model BookPayment {
   id          String     @id @default(uuid()) @map("_id")
-  amount      Float
-  currency    String
-  paymentType String
-  status      UserStatus
-  paymentDate DateTime
+  totalAmount Float
+  currency    String?
+  paymentType String?
+  status      UserStatus @default(PENDING)
+  paymentDate DateTime   @default(now())
   Booking     Booking?   @relation(fields: [bookingId], references: [id])
   bookingId   String?
 }
