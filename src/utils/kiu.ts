@@ -309,7 +309,7 @@ export const parseKiuResposne = (data: any) => {
     }
 
     let combinedRoute;
-    if (options.length === 1)
+    if (options?.length === 1)
       combinedRoute = getParsedOptions(options[0])
     else {
       combinedRoute = combineRoute(getParsedOptions(options[0]), getParsedOptions(options[1]));
@@ -369,8 +369,8 @@ export const parseKiuResposne = (data: any) => {
       response.push({
         responseId,
         slices,
-        total_amount: 26,
-        tax_amount: 26,
+        total_amount: 204,
+        tax_amount: 204,
         base_currency: "EUR",
         tax_currency: "EUR",
         cabinClass: "economy",
