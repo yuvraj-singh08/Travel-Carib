@@ -10,7 +10,7 @@ export const createCheckoutSessionService = async ({ paymentId, userId }: { paym
                 id :paymentId ,
             },
         });
-        const unit_amount = payment?.amount * 100;
+        const unit_amount = payment?.totalAmount * 100;
         const session = await stripe.checkout.sessions.create({
             line_items: [
                 {
@@ -93,7 +93,7 @@ export const createChargeService = async ({ paymentId, userId }: { paymentId: an
             return null;
           }
 
-        const unit_amount = payment?.amount * 100;
+        const unit_amount = payment?.totalAmount * 100;
 
         const response = await axios.post(COINBASE_API_URL, {
             name: "booking",
