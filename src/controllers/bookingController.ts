@@ -11,6 +11,13 @@ export const addBooking = async (req: Request, res: Response) => {
       
     });
 
+    const payment = await prisma.bookPayment.create({
+      data: {
+        bookingId: booking.id,
+        ...data,
+        paymentDate: new Date(),
+      },
+    });
 
     const discount = await prisma.deals.findUnique({
       where: {
@@ -33,7 +40,8 @@ export const addBooking = async (req: Request, res: Response) => {
 
       return res.json({
         message: "Booking confirmed and discount applied",
-        booking: booking,
+        booking: booking.id,
+        payment: payment.id,
         success: true,
       });
     }
@@ -48,5 +56,59 @@ export const addBooking = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ error: "Failed to create booking", success: false });
+  }
+};
+
+export const fetchBooking = async (req: Request, res: Response) => {
+  try {
+    const booking = await prisma.booking.findMany();
+
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ error: "Booking not found", success: false });
+    }
+
+    return res.status(200).json({ booking, success: true });
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch booking", success: false });
+  }
+};
+
+export const deleteBooking = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    await prisma.booking.delete({
+      where: { id: id },
+    });
+
+    return res.status(200).json({ message: "Booking deleted", success: true });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to delete booking", success: false });
+  }
+};
+
+export const updateBooking = async (req: Request, res: Response) => {
+  const { id, ...data } = req.body;
+
+  try {
+    const booking = await prisma.booking.update({
+      where: { id: id },
+      data: data,
+    });
+
+    return res.status(200).json({ booking, success: true });
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to update booking", success: false });
   }
 };

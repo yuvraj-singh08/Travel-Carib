@@ -45,16 +45,13 @@ model CoTraveler {
   phoneNumber String
 }
 
-//user model
-// api /auth/sign-up /auth/login
-// /user-profile update api 
 model User {
-  id              String    @id @default(uuid()) @map("_id")
+  id              String             @id @default(uuid()) @map("_id")
   firstname       String
   lastname        String
   mobileNumber    String?
-  email           String    @unique
-  role            UserRole  @default(USER)
+  email           String             @unique
+  role            UserRole           @default(USER)
   address         String?
   dob             String?
   lastBooking     String?
@@ -67,6 +64,7 @@ model User {
   coTraveler      Json[]
   frequentlyFlyer Json?
   booked          Booking[]
+  ticket          TicketManagement[]
 }
 
 model Passenger {
@@ -111,10 +109,21 @@ enum TicketStatus {
 model TicketManagement {
   id            String       @id @default(uuid()) @map("_id")
   subject       String
+  email         String
   requesterName String
   requestedOn   DateTime     @default(now())
   status        TicketStatus
   images        String[]
+  User          User?        @relation(fields: [userId], references: [id])
+  userId        String?
+}
+
+enum AdminStatus {
+  TICKETED
+  PENDING_TICKET
+  PENDING_PAYMENT
+  EXPIRED
+  FAILED_BOOKING
 }
 
 model Booking {
@@ -130,18 +139,25 @@ model Booking {
   discount       Json?
   totalAmount    Float
   currency       String
+  adminStatus    AdminStatus
   User           User          @relation(fields: [userId], references: [id])
   userId         String
 }
 
+enum UserStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model BookPayment {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String     @id @default(uuid()) @map("_id")
   amount      Float
   currency    String
   paymentType String
-  status      String
+  status      UserStatus
   paymentDate DateTime
-  Booking     Booking? @relation(fields: [bookingId], references: [id])
+  Booking     Booking?   @relation(fields: [bookingId], references: [id])
   bookingId   String?
 }
 
