@@ -118,10 +118,10 @@ model TicketManagement {
 }
 
 model Booking {
-  id             String @id @default(uuid()) @map("_id")
+  id             String        @id @default(uuid()) @map("_id")
   contactDetail  Json // email and phone number
   flightDetails  Json[]
-  payment        String // Payment id
+  payment        BookPayment[] // Payment id
   passenger      Json[] // passenger[] id reference
   address        Json
   baseFare       Json[]
@@ -130,7 +130,7 @@ model Booking {
   discount       Json?
   totalAmount    Float
   currency       String
-  User           User   @relation(fields: [userId], references: [id])
+  User           User          @relation(fields: [userId], references: [id])
   userId         String
 }
 
@@ -141,6 +141,8 @@ model BookPayment {
   paymentType String
   status      String
   paymentDate DateTime
+  Booking     Booking? @relation(fields: [bookingId], references: [id])
+  bookingId   String?
 }
 
 model passenger {
