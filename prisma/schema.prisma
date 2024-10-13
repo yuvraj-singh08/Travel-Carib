@@ -109,10 +109,12 @@ enum TicketStatus {
 model TicketManagement {
   id            String       @id @default(uuid()) @map("_id")
   subject       String
+  title         String
   email         String
   requesterName String
   requestedOn   DateTime     @default(now())
   status        TicketStatus
+  description   String
   images        String[]
   User          User?        @relation(fields: [userId], references: [id])
   userId        String?
@@ -260,16 +262,6 @@ model SocialSettings {
   id              String  @id @default(uuid()) @map("_id")
   socialsEnable   Boolean
   socialPlatforms Json[]
-}
-
-model UserSupport {
-  id          String @id @default(uuid()) @map("_id")
-  type        String
-  title       String
-  name        String
-  email       String
-  description String
-  imgUrl      String
 }
 
 model privacyPolicy {
