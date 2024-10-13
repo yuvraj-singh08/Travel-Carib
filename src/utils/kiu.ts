@@ -1,6 +1,7 @@
 import { create } from "xmlbuilder2";
 import { FlightSearchParams, KiuResponseType, PriceRequestBuilderParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
+import moment from "moment";
 
 export const getDateString = (date: string) => {
   const newDate = new Date(date);
@@ -333,9 +334,15 @@ export const parseKiuResposne = (data: any) => {
 
         responseId += `${route?.MarketingAirline[0]?.$?.CompanyShortName}${route?.$?.FlightNumber}`
 
+        // Convert date strings to Moment.js objects
+        const departureTime = moment(route?.$?.DepartureDateTime, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
+        const arrivalTime = moment(route?.$?.ArrivalDateTime, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
+
+
         segments.push({
           departing_at: route?.$?.DepartureDateTime,
           arriving_at: route?.$?.ArrivalDateTime,
+          duration: moment.duration(arrivalTime.diff(departureTime)),
           marketing_carrier: {
             iata_code: route?.MarketingAirline[0]?.$?.CompanyShortName
           },
@@ -353,14 +360,25 @@ export const parseKiuResposne = (data: any) => {
         segments
       })
       segments = [];
+      const sliceLength = slices.length;
+      const segmentLength = slices?.[sliceLength - 1]?.segments?.length;
+
+      const arrivalTime = moment(slices?.[sliceLength - 1]?.segments?.[segmentLength - 1].arriving_at, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
+      const departureTime = moment(slices?.[0]?.segments?.[0].departing_at, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
+
       response.push({
         responseId,
         slices,
-        total_amount: "Available Soon",
-        tax_amount: "Available Soon",
+        total_amount: 26,
+        tax_amount: 26,
         base_currency: "EUR",
         tax_currency: "EUR",
-        cabinClass: "economy"
+        cabinClass: "economy",
+        duration: moment.duration(arrivalTime.diff(departureTime)),
+        origin: slices?.[0]?.segments?.[0]?.origin,
+        destination: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.destination,
+        departing_at: slices?.[0]?.segments?.[0]?.departing_at,
+        arriving_at: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.arriving_at
       });
       slices = [];
       responseId = "";

@@ -7,6 +7,7 @@ export type FlightOfferSearchParams = {
     passengerType: string,
     maxLayovers: number,
     cabinClass: CabinClass,
+    returnDate?: string,
     filters?: FilterType
 }
 
