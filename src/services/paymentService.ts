@@ -1,4 +1,6 @@
+import axios from "axios";
 import { prisma } from "../prismaClient";
+import { COINBASE_API_URL } from "../utils/constants";
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSessionService = async ({ paymentId, userId }: { paymentId: any; userId: string }) => {
@@ -77,3 +79,69 @@ async function updatePaymentStatus(paymentIntent: any) {
         throw error;
     }
 }
+
+
+export const createChargeService = async ({ paymentId, userId }: { paymentId: any; userId: string }) => {
+    try {
+        const payment = await prisma.payment.findUnique({
+            where: {
+                id :paymentId ,
+            },
+        });
+        if (!payment) {
+            // console.error(`No payment found for invoice: ${invoice} and organizationId: ${organizationId}`);
+            return null;
+          }
+
+        const unit_amount = payment?.amount * 100;
+
+        const response = await axios.post(COINBASE_API_URL, {
+            name: "booking",
+            description: "Travel caribe payments",
+            pricing_type: "fixed_price",
+            local_price: {
+              amount: unit_amount,
+              currency: "USD"
+            },
+            metadata:  {
+                userId: userId,
+                paymentId :paymentId, // Add paymentId here
+            },
+            cancel_url:`${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=false`,
+            redirect_url: `${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=true`
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CC-Api-Key': process.env.COINBASE_API_KEY
+            }
+          });
+      
+          return response.data;
+       
+    } catch (error) {
+        console.error(`Error in fetching invoices`, error);
+        return [];
+    }
+};
+
+
+export const handleCoinbaseWebhookService = async (event: any) => {
+    // Handle the event based on its type
+    switch (event.type) {
+        case 'charge:confirmed':
+            // Call a function to update payment status to 'completed'
+            await updatePaymentStatus(event.data);
+            break;
+
+        case 'charge:failed':
+            console.error('Charge failed:', event.data);
+            break;
+
+        case 'charge:delayed':
+            console.log('Charge delayed:', event.data);
+            break;
+
+        default:
+            console.log(`Unhandled event type: ${event.type}`);
+    }
+};

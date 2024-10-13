@@ -14,6 +14,7 @@ import adminRoutes from "./src/routes/adminRoutes";
 import storageRoutes from "./src/routes/storageRoutes";
 import passengerRoutes from "./src/routes/passengerRoutes";
 import bookingRoutes from "./src/routes/bookingRoutes";
+import paymentRoutes from "./src/routes/paymentRoutes";
 import { AuthenticatedRequest } from "./types/express";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/duffel", duffelRoutes);
 app.use("/admin", adminRoutes);
 app.use("/bucket", storageRoutes);
 app.use("/book", bookingRoutes);
+app.use("/payment", paymentRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;

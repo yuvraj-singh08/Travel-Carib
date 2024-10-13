@@ -8,7 +8,9 @@ export const addBooking = async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.create({
       data: data,
+      
     });
+
 
     const discount = await prisma.deals.findUnique({
       where: {
