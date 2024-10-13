@@ -35,9 +35,11 @@ export const addBooking = async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ messgae: "Booking confirmed", booking: booking });
+    res
+      .status(200)
+      .json({ messgae: "Booking confirmed", booking: booking, success: true });
   } catch (error) {
     console.error("Error creating booking:", error);
-    res.status(500).json({ error: "Failed to create booking" });
+    res.status(500).json({ error: "Failed to create booking", success: false });
   }
 };
