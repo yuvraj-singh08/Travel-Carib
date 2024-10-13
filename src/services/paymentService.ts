@@ -5,7 +5,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSessionService = async ({ paymentId, userId }: { paymentId: any; userId: string }) => {
     try {
-        const payment = await prisma.payment.findUnique({
+        const payment = await prisma.bookPayment.findUnique({
             where: {
                 id :paymentId ,
             },
@@ -25,8 +25,8 @@ export const createCheckoutSessionService = async ({ paymentId, userId }: { paym
                 },
             ],
             mode: 'payment',
-            success_url: `${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=true`,
-            cancel_url: `${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=false`,
+            success_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=true`,
+            cancel_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=false`,
             client_reference_id: `${userId}`, // Add organizationId here
             payment_intent_data: {
                 metadata: {
@@ -83,7 +83,7 @@ async function updatePaymentStatus(paymentIntent: any) {
 
 export const createChargeService = async ({ paymentId, userId }: { paymentId: any; userId: string }) => {
     try {
-        const payment = await prisma.payment.findUnique({
+        const payment = await prisma.bookPayment.findUnique({
             where: {
                 id :paymentId ,
             },

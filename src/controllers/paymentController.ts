@@ -9,7 +9,7 @@ export const createCheckoutSession = async (req, res) => {
 
     try {
         //@ts-ignore
-        const userId = req.session.user.organizationId;
+        const userId = "1";
         const { paymentId } = req.body;
         const paymentUrl = await createCheckoutSessionService({ paymentId, userId});
         return res.status(200).send({ data: paymentUrl, success: true });
@@ -53,7 +53,7 @@ export const stripeWebhook = async (req, res) => {
 export const createCharge = async (req, res) => {
     try {
         //@ts-ignore
-        const userId = req.session.user.organizationId;
+        const userId = "1";
         const { paymentId } = req.body;
         const data = await createChargeService({ paymentId,userId });
         return res.status(200).send({ data, success: true });
