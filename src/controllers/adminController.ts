@@ -1331,7 +1331,8 @@ export const getDealById = async (req: Request, res: Response) => {
 
 export const getDealByCode = async (req: Request, res: Response) => {
   const { code } = req.params;
-
+  console.log(code);
+  
   try {
     const deal = await prisma.deals.findUnique({
       where: { code },
@@ -1395,7 +1396,9 @@ export const addCommissionType = async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error("Error while creating:", error);
-    res.status(500).json({ error: "Failed to create CommissionType", success: false });
+    res
+      .status(500)
+      .json({ error: "Failed to create CommissionType", success: false });
   }
 };
 
