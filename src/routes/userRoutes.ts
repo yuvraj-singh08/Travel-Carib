@@ -11,6 +11,7 @@ import {
   updateUser,
   deleteCoTraveller,
   changePassword,
+  socialAuthRegister,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -26,6 +27,7 @@ import {
 
 const router = Router();
 router.post("/register", registerUser);
+router.post("/social", socialAuthRegister);
 router.post("/login", loginUser);
 
 // Protected Routes

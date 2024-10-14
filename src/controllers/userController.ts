@@ -26,6 +26,7 @@ export const registerUser = async (req: Request, res: Response) => {
     passportDetails,
     coTraveler,
     role,
+    provider,
   } = req.body;
 
   try {
@@ -47,10 +48,31 @@ export const registerUser = async (req: Request, res: Response) => {
         avatarSrc: avatarSrc,
         passportDetails: passportDetails,
         coTraveler: coTraveler,
+        provider: provider,
       },
     });
 
     res.status(201).json({
+      message: "User created successfully",
+      user: response,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(500).json({ error: "Failed to create user", success: false });
+  }
+};
+
+//Social Auth register
+export const socialAuthRegister = async (req: Request, res: Response) => {
+  const data = req.body;
+  
+  try {
+    const response = await prisma.user.create({
+      data: data,
+    });
+    
+    res.status(200).json({
       message: "User created successfully",
       user: response,
       success: true,

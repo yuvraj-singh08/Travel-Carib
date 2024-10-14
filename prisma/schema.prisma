@@ -25,6 +25,12 @@ enum FlightType {
   FIRST
 }
 
+enum ProviderType {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+}
+
 model Flight {
   id            String     @id @default(uuid()) @map("_id")
   type          RouteType
@@ -64,6 +70,7 @@ model User {
   coTraveler      Json[]
   frequentlyFlyer Json?
   booked          Booking[]
+  provider        String
   ticket          TicketManagement[]
 }
 
