@@ -12,6 +12,7 @@ import {
   deleteCoTraveller,
   changePassword,
   socialAuthRegister,
+  resetPassword,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {

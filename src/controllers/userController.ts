@@ -28,10 +28,10 @@ export const registerUser = async (req: Request, res: Response) => {
     role,
     provider,
   } = req.body;
-
+  
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
+    
     const response = await prisma.user.create({
       data: {
         email: email,
@@ -99,7 +99,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     let isPasswordValid: Boolean;
-
+    
     if (password) {
       isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -116,6 +116,55 @@ export const loginUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error logging in user:", error);
     return res.status(500).json({ error: "Failed to login" });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, password, id } = req.query;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id as string,
+        email: email as string,
+      },
+    });
+
+    if (user !== null) {
+      const hashed = await bcrypt.hash(password as string, SALT_ROUNDS);
+      const updated = await prisma.user.update({
+        where: {
+          id: id as string,
+          email: email as string,
+        },
+        data: {
+          password: hashed,
+        },
+      });
+      
+      if (updated) {
+        return res.status(200).json({
+          message: "Password changed",
+          success: true,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update password",
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
