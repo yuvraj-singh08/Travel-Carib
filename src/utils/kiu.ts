@@ -358,10 +358,10 @@ export const parseKiuResposne = (data: any) => {
           departing_at: route?.$?.DepartureDateTime,
           arriving_at: route?.$?.ArrivalDateTime,
           duration: moment.duration(arrivalTime.diff(departureTime)),
-          marketing_carrier: {
+          operating_carrier: {
             iata_code: route?.MarketingAirline[0]?.$?.CompanyShortName
           },
-          marketing_carrier_flight_number: route?.$?.FlightNumber,
+          operating_carrier_flight_number: route?.$?.FlightNumber,
           origin: {
             iata_code: route?.DepartureAirport[0]?.$?.LocationCode
           },
