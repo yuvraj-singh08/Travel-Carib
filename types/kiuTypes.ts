@@ -15,6 +15,7 @@ export type PriceRequestBuilderParams = {
     FlightNumber: string,
     ReturnDate?: string,
     Passengers: string,
+    ResBookDesigCode: string
 }
 
 export type bookingClassType = {

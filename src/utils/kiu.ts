@@ -117,38 +117,45 @@ export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
       '@Version': '3.0',
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',
+      '@TimeStamp': new Date().toISOString(),  // Add TimeStamp here
       POS: {
         Source: {
           '@AgentSine': process.env.AgentSine,
           '@TerminalID': process.env.TerminalID,
           '@ISOCountry': process.env.ISOCountry,
-          '@ISOCurrency': process.env.ISOCurrency
+          '@ISOCurrency': process.env.ISOCurrency,
+          RequestorID: {
+            '@Type': '5' // Add RequestorID
+          },
+          BookingChannel: {
+            '@Type': '1' // Add BookingChannel
+          }
         }
       },
       AirItinerary: {
         OriginDestinationOptions: {
           OriginDestinationOption: {
             FlightSegment: {
-              "@DepartureDateTime": params.DepartureDateTime,
-              "@ArrivalDateTime": params.ArrivalDateTime,
-              "@ResBookDesigCode": "Y",// Replace
-              "@FlightNumber": params.FlightNumber,
-              OriginLocation: {
-                '@LocationCode': params.OriginLocation
+              '@DepartureDateTime': params.DepartureDateTime,
+              '@ArrivalDateTime': params.ArrivalDateTime,
+              '@ResBookDesigCode': params.ResBookDesigCode || 'Y', // Use param value or default
+              '@FlightNumber': params.FlightNumber,
+              DepartureAirport: {
+                '@LocationCode': params.OriginLocation // Change OriginLocation to DepartureAirport
               },
-              DestinationLocation: {
-                '@LocationCode': params.DestinationLocation
+              ArrivalAirport: {
+                '@LocationCode': params.DestinationLocation // Change DestinationLocation to ArrivalAirport
               },
               MarketingAirline: {
-                "@Code": params.MarketingAirline
+                '@Code': params.MarketingAirline
+              },
+              MarketingCabin: { // Add MarketingCabin with CabinType and RPH
+                '@CabinType': 'Economy', // Default value, can be parameterized
+                '@RPH': '1'
               }
             }
           }
         }
-
-      },
-      TravelPreferences: {
-        '@MaxStopsQuantity': '4'
       },
       TravelerInfoSummary: {
         AirTravelerAvail: {
@@ -159,11 +166,13 @@ export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
         }
       }
     }
-  }
+  };
+
   const doc = create(xmlObj);
   const xml = doc.end({ prettyPrint: true });
   return xml;
-}
+};
+
 
 // export const parseMultiFlightResponse = (jsonResponse: KiuResponseType) => {
 //   const segments = jsonResponse?.OriginDestinationInformation.map((route) => {
@@ -338,6 +347,12 @@ export const parseKiuResposne = (data: any) => {
         const departureTime = moment(route?.$?.DepartureDateTime, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
         const arrivalTime = moment(route?.$?.ArrivalDateTime, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
 
+        const bookingAvl = route?.BookingClassAvail?.map((data) => {
+          return {
+            code: data?.$?.ResBookDesigCode,
+            quantity: data?.$?.ResBookDesigQuantity
+          }
+        })
 
         segments.push({
           departing_at: route?.$?.DepartureDateTime,
@@ -352,7 +367,8 @@ export const parseKiuResposne = (data: any) => {
           },
           destination: {
             iata_code: route?.ArrivalAirport[0]?.$?.LocationCode
-          }
+          },
+          bookingAvl
         });
       });
 
