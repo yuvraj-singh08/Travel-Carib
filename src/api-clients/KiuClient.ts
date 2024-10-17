@@ -50,7 +50,7 @@ class KiuClient {
                   FlightNumber: segment?.marketing_carrier_flight_number,
                   Passengers: params.Passengers,
                   ResBookDesigCode: segment?.bookingAvl?.[0]?.code
-                });
+                }, segmentIndex);
 
                 const pi = priceResponse?.KIU_AirPriceRS?.PricedItineraries?.[0];
                 const py = pi?.PricedItinerary?.[0];
@@ -91,8 +91,9 @@ class KiuClient {
     }
   }
 
-  async searchPrice(params: PriceRequestBuilderParams) {
+  async searchPrice(params: PriceRequestBuilderParams, index: number) {
     try {
+      await new Promise(resolve => setTimeout(resolve, 100 * (index + 1)))
       const requestXML = buildFlightPriceRequest(params);
       const response = await this.axiosInstance.post('', {
         user: process.env.KIU_USER,
