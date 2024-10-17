@@ -95,6 +95,7 @@ class KiuClient {
   async searchPrice(params: PriceRequestBuilderParams) {
     try {
       const requestXML = buildFlightPriceRequest(params);
+      console.log("Price Request: ", requestXML);
       const response = await this.axiosInstance.post('', {
         user: process.env.KIU_USER,
         password: process.env.KIU_PASSWORD,
