@@ -64,40 +64,40 @@ class FlightClient {
             })
 
             let index = 0;
-            // const amadeusRequests = possibleRoutes.map((route) => {
-            //     return route.map((segment) => {
-            //         return this.amadeusClient.searchFlights({
-            //             departure: params.departureDate,
-            //             arrival: params.departureDate,
-            //             locationDeparture: segment.origin,
-            //             locationArrival: segment.destination,
-            //             adults: params.passengerType,
-            //         }, index++)
-            //     })
-            // })
-            // amadeusResponse,
-            const [duffelResponse ,parsedKiuResponse] = await Promise.all([
+            const amadeusRequests = possibleRoutes.map((route) => {
+                return route.map((segment) => {
+                    return this.amadeusClient.searchFlights({
+                        departure: params.departureDate,
+                        arrival: params.departureDate,
+                        locationDeparture: segment.origin,
+                        locationArrival: segment.destination,
+                        adults: params.passengerType,
+                    }, index++)
+                })
+            })
+
+            const [duffelResponse, amadeusResponse, parsedKiuResponse] = await Promise.all([
                 Promise.all(duffelRequests.map(async (request) => {
                     const result = await Promise.all(request);
                     return result;
                 })),
-                // Promise.all(amadeusRequests.map(async (request) => {
-                //     const result = await Promise.all(request);
-                //     return result;
-                // })),
+                Promise.all(amadeusRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                })),
                 Promise.all(kiuRequests.map(async (request) => {
                     const result = await Promise.all(request);
                     return result;
                 })),
             ])
 
-            // const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
-            //     const parsedPossibleRoutes = possibleRoute.map((response) => {
-            //         const parsedResponse = amadeusNewParser(response);
-            //         return parsedResponse;
-            //     })
-            //     return parsedPossibleRoutes
-            // })
+            const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
+                const parsedPossibleRoutes = possibleRoute.map((response) => {
+                    const parsedResponse = amadeusNewParser(response);
+                    return parsedResponse;
+                })
+                return parsedPossibleRoutes
+            })
 
             const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
                 const parsedPossibleRoutes = possibleRoutes.map((response) => {
@@ -111,12 +111,12 @@ class FlightClient {
 
             possibleRoutes.forEach((route, index) => {
                 const duffel = parsedDuffelResponse?.[index]
-                // const amadeus = parsedAmadeusResponse?.[index]
+                const amadeus = parsedAmadeusResponse?.[index]
                 const kiu = parsedKiuResponse?.[index]
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        // ...(amadeus?.[index2] || []),
+                        ...(amadeus?.[index2] || []),
                         ...(duffel?.[index2] || []),
                         ...(kiu?.[index2] || [])
                     ])

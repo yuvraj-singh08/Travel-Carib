@@ -32,7 +32,6 @@ class KiuClient {
         request: requestXML
       })
       const parser = new xml2js.Parser();
-      console.log("Kiu Response: ", response.data);
       const jsonResponse = await parser.parseStringPromise(response.data);
       const parsedResponse = await parseKiuResposne(jsonResponse);
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
@@ -51,7 +50,7 @@ class KiuClient {
                   FlightNumber: segment?.marketing_carrier_flight_number,
                   Passengers: params.Passengers,
                   ResBookDesigCode: segment?.bookingAvl?.[0]?.code
-                }, segmentIndex);
+                });
 
                 const pi = priceResponse?.KIU_AirPriceRS?.PricedItineraries?.[0];
                 const py = pi?.PricedItinerary?.[0];
@@ -92,9 +91,8 @@ class KiuClient {
     }
   }
 
-  async searchPrice(params: PriceRequestBuilderParams, index: number) {
+  async searchPrice(params: PriceRequestBuilderParams) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 100 * (index + 1)))
       const requestXML = buildFlightPriceRequest(params);
       const response = await this.axiosInstance.post('', {
         user: process.env.KIU_USER,
