@@ -32,6 +32,7 @@ class KiuClient {
         request: requestXML
       })
       const parser = new xml2js.Parser();
+      console.log("Kiu Response: ", response.data);
       const jsonResponse = await parser.parseStringPromise(response.data);
       const parsedResponse = await parseKiuResposne(jsonResponse);
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
