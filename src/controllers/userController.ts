@@ -26,11 +26,12 @@ export const registerUser = async (req: Request, res: Response) => {
     passportDetails,
     coTraveler,
     role,
+    provider,
   } = req.body;
-
+  
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
+    
     const response = await prisma.user.create({
       data: {
         email: email,
@@ -47,10 +48,31 @@ export const registerUser = async (req: Request, res: Response) => {
         avatarSrc: avatarSrc,
         passportDetails: passportDetails,
         coTraveler: coTraveler,
+        provider: provider,
       },
     });
 
     res.status(201).json({
+      message: "User created successfully",
+      user: response,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(500).json({ error: "Failed to create user", success: false });
+  }
+};
+
+//Social Auth register
+export const socialAuthRegister = async (req: Request, res: Response) => {
+  const data = req.body;
+
+  try {
+    const response = await prisma.user.create({
+      data: data,
+    });
+
+    res.status(200).json({
       message: "User created successfully",
       user: response,
       success: true,
@@ -76,10 +98,14 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid: Boolean;
+    
+    if (password) {
+      isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
     }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
@@ -90,6 +116,55 @@ export const loginUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error logging in user:", error);
     return res.status(500).json({ error: "Failed to login" });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, password, id } = req.query;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id as string,
+        email: email as string,
+      },
+    });
+
+    if (user !== null) {
+      const hashed = await bcrypt.hash(password as string, SALT_ROUNDS);
+      const updated = await prisma.user.update({
+        where: {
+          id: id as string,
+          email: email as string,
+        },
+        data: {
+          password: hashed,
+        },
+      });
+      
+      if (updated) {
+        return res.status(200).json({
+          message: "Password changed",
+          success: true,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update password",
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
@@ -341,104 +416,5 @@ export const changePassword = async (
   } catch (error) {
     console.log("Error changing password:", error);
     return res.status(500).json({ error: "Failed to change password" });
-  }
-};
-
-export const addSupport = async (req: Request, res: Response) => {
-  // const userId = req.user?.id;
-  const data = req.body;
-
-  try {
-    const support = await prisma.userSupport.create({
-      data: data,
-    });
-
-    return res.status(201).json({
-      message: "Support added successfully",
-      support: support,
-      success: true,
-    });
-  } catch (err) {
-    console.error("Error adding support:", err);
-    return res
-      .status(500)
-      .json({ message: "Error adding support", error: err, success: false });
-  }
-};
-
-export const getSupport = async (req: Request, res: Response) => {
-  try {
-    const support = await prisma.userSupport.findMany();
-    return res.json(support);
-  } catch (err) {
-    console.error("Error fetching support:", err);
-    return res
-      .status(500)
-      .json({ message: "Error fetching support", error: err });
-  }
-};
-
-export const getSupportById = async (req: Request, res: Response) => {
-  const { id } = req.body;
-  try {
-    const support = await prisma.userSupport.findUnique({
-      where: {
-        id: id,
-      },
-    });
-    if (support) {
-      return res.json(support);
-    } else {
-      return res.status(404).json({ message: "Support not found" });
-    }
-  } catch (err) {
-    console.error("Error fetching support:", err);
-    return res
-      .status(500)
-      .json({ message: "Error fetching support", error: err });
-  }
-};
-
-export const updateSupport = async (req: Request, res: Response) => {
-  const { id, type, title, name, email, description, imgUrl } = req.body;
-
-  try {
-    const updatedSupport = await prisma.userSupport.update({
-      where: {
-        id: id,
-      },
-      data: {
-        type: type,
-        title: title,
-        name: name,
-        email: email,
-        description: description,
-        imgUrl: imgUrl,
-      },
-    });
-    return res.status(200).json({ message: "Support updated", updatedSupport });
-  } catch (err) {
-    console.error("Error updating support:", err);
-    return res
-      .status(500)
-      .json({ message: "Error updating support", error: err });
-  }
-};
-
-export const deleteSupport = async (req: Request, res: Response) => {
-  const { id } = req.body;
-
-  try {
-    await prisma.userSupport.delete({
-      where: {
-        id: id,
-      },
-    });
-    return res.status(204).json({ message: "Support deleted" });
-  } catch (err) {
-    console.error("Error deleting support:", err);
-    return res
-      .status(500)
-      .json({ message: "Error deleting support", error: err });
   }
 };

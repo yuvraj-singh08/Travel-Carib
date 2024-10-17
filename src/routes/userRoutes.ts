@@ -8,12 +8,11 @@ import {
   delUser,
   registerUser,
   loginUser,
-  getSupport,
-  updateSupport,
-  deleteSupport,
   updateUser,
   deleteCoTraveller,
   changePassword,
+  socialAuthRegister,
+  resetPassword,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -29,6 +28,7 @@ import {
 
 const router = Router();
 router.post("/register", registerUser);
+router.post("/social", socialAuthRegister);
 router.post("/login", loginUser);
 
 // Protected Routes
@@ -49,10 +49,5 @@ router.post("/del-user", delUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
 router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
-
-router.get("/support", getSupport);
-router.post("/add-support", getSupport);
-router.post("/update-support", updateSupport);
-router.post("/delete-support", deleteSupport);
 
 export default router;

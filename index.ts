@@ -14,8 +14,11 @@ import adminRoutes from "./src/routes/adminRoutes";
 import storageRoutes from "./src/routes/storageRoutes";
 import passengerRoutes from "./src/routes/passengerRoutes";
 import bookingRoutes from "./src/routes/bookingRoutes";
+import resetRoute from "./src/routes/resetRoute";
 import paymentRoutes from "./src/routes/paymentRoutes";
 import { AuthenticatedRequest } from "./types/express";
+import { main } from "./mail/transporter";
+import { prisma } from "./src/prismaClient";
 
 const app = express();
 
@@ -63,7 +66,7 @@ app.use("/duffel", duffelRoutes);
 app.use("/admin", adminRoutes);
 app.use("/bucket", storageRoutes);
 app.use("/book", bookingRoutes);
-app.use("/payment", paymentRoutes);
+app.use("/reset", resetRoute);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
@@ -75,6 +78,34 @@ app.use(
     });
   }
 );
+
+app.post("/send-link", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (user !== null) {
+      const info = await main(email, user.id);
+      res.json({
+        success: true,
+        message: "Email sent",
+        data: info,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    res.json({
+      success: false,
+      message: e.message,
+    });
+  }
+});
+
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {

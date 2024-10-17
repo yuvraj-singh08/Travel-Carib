@@ -25,6 +25,12 @@ enum FlightType {
   FIRST
 }
 
+enum ProviderType {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+}
+
 model Flight {
   id            String     @id @default(uuid()) @map("_id")
   type          RouteType
@@ -64,6 +70,7 @@ model User {
   coTraveler      Json[]
   frequentlyFlyer Json?
   booked          Booking[]
+  provider        String
   ticket          TicketManagement[]
 }
 
@@ -109,10 +116,12 @@ enum TicketStatus {
 model TicketManagement {
   id            String       @id @default(uuid()) @map("_id")
   subject       String
+  title         String
   email         String
   requesterName String
   requestedOn   DateTime     @default(now())
   status        TicketStatus
+  description   String
   images        String[]
   User          User?        @relation(fields: [userId], references: [id])
   userId        String?
@@ -139,7 +148,7 @@ model Booking {
   discount       Json?
   totalAmount    Float
   currency       String
-  adminStatus    AdminStatus
+  adminStatus    AdminStatus   @default(PENDING_TICKET)
   User           User          @relation(fields: [userId], references: [id])
   userId         String
 }
@@ -152,13 +161,13 @@ enum UserStatus {
 
 model BookPayment {
   id          String     @id @default(uuid()) @map("_id")
-  amount      Float
-  currency    String
-  paymentType String
-  status      UserStatus
-  paymentDate DateTime
-  Booking     Booking?   @relation(fields: [bookingId], references: [id])
-  bookingId   String?
+  totalAmount Float
+  currency    String?
+  paymentType String?
+  status      UserStatus @default(PENDING)
+  paymentDate DateTime   @default(now())
+  Booking     Booking    @relation(fields: [bookingId], references: [id])
+  bookingId   String
 }
 
 model passenger {
@@ -260,16 +269,6 @@ model SocialSettings {
   id              String  @id @default(uuid()) @map("_id")
   socialsEnable   Boolean
   socialPlatforms Json[]
-}
-
-model UserSupport {
-  id          String @id @default(uuid()) @map("_id")
-  type        String
-  title       String
-  name        String
-  email       String
-  description String
-  imgUrl      String
 }
 
 model privacyPolicy {
