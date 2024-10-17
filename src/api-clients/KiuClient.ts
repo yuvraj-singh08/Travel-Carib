@@ -34,7 +34,7 @@ class KiuClient {
       console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = await parseKiuResposne(jsonResponse);
+      const parsedResponse = parseKiuResposne(jsonResponse);
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
         let sliceSum = 0;
         const sliceResponse = await Promise.allSettled(
@@ -47,8 +47,8 @@ class KiuClient {
                   DestinationLocation: segment?.destination?.iata_code,
                   DepartureDateTime: segment?.departing_at,
                   ArrivalDateTime: segment?.arriving_at,
-                  MarketingAirline: segment?.marketing_carrier?.iata_code,
-                  FlightNumber: segment?.marketing_carrier_flight_number,
+                  MarketingAirline: segment?.operating_carrier?.iata_code,
+                  FlightNumber: segment?.operating_carrier_flight_number,
                   Passengers: params.Passengers,
                   ResBookDesigCode: segment?.bookingAvl?.[0]?.code
                 });
