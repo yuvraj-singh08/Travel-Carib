@@ -67,6 +67,7 @@ app.use("/admin", adminRoutes);
 app.use("/bucket", storageRoutes);
 app.use("/book", bookingRoutes);
 app.use("/reset", resetRoute);
+app.use("/payment", paymentRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const statusCode = err.statusCode || 500;
