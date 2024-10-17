@@ -9,6 +9,7 @@ export const addBooking = async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.create({
       data: data,
+      
     });
 
     const payment = await prisma.bookPayment.create({
