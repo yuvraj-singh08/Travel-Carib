@@ -110,6 +110,7 @@ export const buildFlightSearchRequest = (params: FlightSearchParams) => {
 }
 
 export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
+  console.log("Marketing Airline: ", params.MarketingAirline);
   const xmlObj = {
     KIU_AirPriceRQ: {
       '@EchoToken': '1',
