@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { prisma } from "../prismaClient";
 import { COINBASE_API_URL } from "../utils/constants";
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -90,7 +90,7 @@ export const createChargeService = async ({
   paymentId,
   userId,
 }: {
-  paymentId: any;
+  paymentId: string;
   userId: string;
 }) => {
   try {
@@ -99,42 +99,56 @@ export const createChargeService = async ({
         id: paymentId,
       },
     });
+
     if (!payment) {
-      // console.error(`No payment found for invoice: ${invoice} and organizationId: ${organizationId}`);
+      console.error(`No payment found for paymentId: ${paymentId}`);
       return null;
     }
 
-    const unit_amount = payment?.totalAmount * 100;
+    const unit_amount = payment.totalAmount; // Ensure the amount is an integer
 
-    const response = await axios.post(
-      COINBASE_API_URL,
-      {
-        name: "booking",
-        description: "Travel caribe payments",
-        pricing_type: "fixed_price",
-        local_price: {
-          amount: unit_amount,
-          currency: "USD",
-        },
-        metadata: {
-          userId: userId,
-          paymentId: paymentId, // Add paymentId here
-        },
-        cancel_url: `${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=false`,
-        redirect_url: `${process.env.ANALYTICS_FRONTEND_URL}/pages/account-settings/billing/?success=true`,
+    const payload = {
+      name: "booking",
+      description: "Travel caribe payments",
+      pricing_type: "fixed_price",
+      local_price: {
+        amount: unit_amount.toString(), // Convert to string as some APIs prefer it
+        currency: "USD",
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-CC-Api-Key": process.env.COINBASE_API_KEY,
-        },
-      }
+      metadata: {
+        userId: userId,
+        paymentId: paymentId,
+      },
+      cancel_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=false`,
+      redirect_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=true`,
+    };
+    
+    console.log(
+      "Payload being sent to Coinbase:",
+      JSON.stringify(payload, null, 2)
     );
 
+    const response = await axios.post(COINBASE_API_URL, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-CC-Api-Key": process.env.COINBASE_API_KEY!,
+      },
+    });
+
+    console.log("Successful response from Coinbase:", response.data);
     return response.data;
   } catch (error) {
-    console.error(`Error in fetching invoices`, error);
-    return [];
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      console.error("Axios error details:", {
+        message: axiosError.message,
+        code: axiosError.code,
+        response: axiosError.response?.data,
+      });
+    } else {
+      console.error("Non-Axios error:", error);
+    }
+    throw error; // Re-throw the error to be handled by the caller
   }
 };
 
