@@ -397,13 +397,16 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
         });
 
         if (searchManagement.length === 0) {
-            return [
-                [
-                    {
-                        origin, destination
-                    }
-                ]
-            ]
+            return {
+                possibleRoutes:  [
+                    [
+                        {
+                            origin, destination
+                        }
+                    ]
+                ],
+                searchManagement: "ff"
+            }
         }
 
         const formattedRoutes = [];
