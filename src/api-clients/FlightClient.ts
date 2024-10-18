@@ -118,7 +118,7 @@ class FlightClient {
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        // ...(amadeus?.[index2] || []),
+                        ...(amadeus?.[index2] || []),
                         ...(duffel?.[index2] || []),
                         ...(kiu?.[index2] || [])
                     ])

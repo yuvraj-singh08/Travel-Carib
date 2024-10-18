@@ -110,7 +110,7 @@ export const buildFlightSearchRequest = (params: FlightSearchParams) => {
 }
 
 export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
-  console.log("Marketing Airline: ", params.MarketingAirline);
+  // console.log("Marketing Airline: ", params.MarketingAirline);
   const xmlObj = {
     KIU_AirPriceRQ: {
       '@EchoToken': '1',
@@ -315,14 +315,14 @@ export const parseKiuResposne = (data: any) => {
     const n = data?.KIU_AirAvailRS?.OriginDestinationInformation?.length;
     const options = data?.KIU_AirAvailRS?.OriginDestinationInformation;
     const getParsedOptions = (data: any) => {
-      return data?.OriginDestinationOptions[0]?.OriginDestinationOption;
+      return data?.OriginDestinationOptions?.[0]?.OriginDestinationOption;
     }
 
     let combinedRoute;
     if (options?.length === 1)
-      combinedRoute = getParsedOptions(options[0])
+      combinedRoute = getParsedOptions(options?.[0])
     else {
-      combinedRoute = combineRoute(getParsedOptions(options[0]), getParsedOptions(options[1]));
+      combinedRoute = combineRoute(getParsedOptions(options?.[0]), getParsedOptions(options?.[1]));
       for (let i = 2; i < n; i++) {
         combinedRoute = combineRoute(combinedRoute, getParsedOptions(options[i]));
       }
