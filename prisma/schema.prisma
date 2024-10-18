@@ -323,7 +323,7 @@ model SearchManagement {
   journeyType           RouteType
   fromOriginAirport     String[]
   toDestinationsAirport String[]
-  connectingAirports    String[]
+  connectingAirports    Json
   airlinesIncluded      String
   airlinesExcluded      String
   flightExcluded        String

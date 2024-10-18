@@ -31,7 +31,7 @@ class KiuClient {
         password: process.env.KIU_PASSWORD,
         request: requestXML
       })
-      console.log("KIU response: ", response.data);
+      // console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
       const parsedResponse = parseKiuResposne(jsonResponse);
@@ -95,13 +95,13 @@ class KiuClient {
   async searchPrice(params: PriceRequestBuilderParams) {
     try {
       const requestXML = buildFlightPriceRequest(params);
-      console.log("Price Request: ", requestXML);
+      // console.log("Price Request: ", requestXML);
       const response = await this.axiosInstance.post('', {
         user: process.env.KIU_USER,
         password: process.env.KIU_PASSWORD,
         request: requestXML
       })
-      console.log("Price Response: ", response.data);
+      // console.log("Price Response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
       return jsonResponse

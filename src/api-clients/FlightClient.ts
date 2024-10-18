@@ -1,6 +1,6 @@
 import { FlightOfferSearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -20,17 +20,18 @@ class FlightClient {
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
             //Calculating Possible Routes
-            const possibleRoutes = [
-                [
-                    {
-                        origin: params.originLocation,
-                        destination: params.destinationLocation
-                    }
-                ]
-            ]
-            if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
-                possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
-            }
+            const possibleRoutes = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4);
+            // const possibleRoutes = [
+            //     [
+            //         {
+            //             origin: params.originLocation,
+            //             destination: params.destinationLocation
+            //         }
+            //     ]
+            // ]
+            // if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
+            //     possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
+            // }
             console.log(possibleRoutes);
 
             //Duffel Request

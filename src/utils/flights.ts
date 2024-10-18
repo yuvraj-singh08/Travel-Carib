@@ -5,6 +5,8 @@ import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { getDifferenceInMinutes } from "./utils";
 import moment from "moment";
+import { prisma } from "../prismaClient";
+import HttpError from "./httperror";
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>) => {
     try {
@@ -379,6 +381,62 @@ export const combineResponses = (responses: any) => {
     responseMap.forEach((value) => result.push(value));
     result.sort((a, b) => { return a.total_amount - b.total_amount })
     return result;
+}
+
+export const getSearchManagementRoutes = async (origin: string, destination: string, maxLayovers: number) => {
+    try {
+        const searchManagement = await prisma.searchManagement.findMany({
+            where: {
+                fromOriginAirport: {
+                    has: origin,
+                },
+                toDestinationsAirport: {
+                    has: destination
+                }
+            }
+        });
+
+        if (searchManagement.length === 0) {
+            return [
+                [
+                    {
+                        origin, destination
+                    }
+                ]
+            ]
+        }
+
+        const formattedRoutes = [];
+        searchManagement.forEach((route,routeIndex) => {
+            const possibleLayovers = route.connectingAirports as unknown as String[][]
+            const results = possibleLayovers.map((layovers, layoversIndex) => {
+                const possibleRoutes =  layovers.map((layover, index) => {
+                    if (index === 0) {
+                        return {
+                            origin,
+                            destination: layover
+                        }
+                    }
+                    else{
+                        return {
+                            origin: layovers[index - 1],
+                            destination: layover
+                        }
+                    }
+                })
+                possibleRoutes.push({
+                    origin: layovers[layovers.length - 1],
+                    destination
+                })
+                return possibleRoutes;
+            })
+            formattedRoutes.push(...results);
+        })
+
+        return formattedRoutes
+    } catch (error: any) {
+        throw new HttpError(error.message, 400);
+    }
 }
 
 export const getPossibleRoutes = (origin: string, destination: string, maxLayovers: number) => {
