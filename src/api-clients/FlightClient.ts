@@ -20,7 +20,7 @@ class FlightClient {
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
             //Calculating Possible Routes
-            const possibleRoutes = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4);
+            const searchManagement = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4);
             // const possibleRoutes = [
             //     [
             //         {
@@ -32,6 +32,7 @@ class FlightClient {
             // if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
             //     possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
             // }
+            const possibleRoutes = searchManagement.possibleRoutes
             console.log(possibleRoutes);
 
             //Duffel Request

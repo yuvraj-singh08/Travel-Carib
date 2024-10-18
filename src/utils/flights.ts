@@ -383,7 +383,7 @@ export const combineResponses = (responses: any) => {
     return result;
 }
 
-export const getSearchManagementRoutes = async (origin: string, destination: string, maxLayovers: number) => {
+export const getSearchManagementRoutes = async (origin: string, destination: string, maxLayovers: number): Promise<any> => {
     try {
         const searchManagement = await prisma.searchManagement.findMany({
             where: {
@@ -407,17 +407,17 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
         }
 
         const formattedRoutes = [];
-        searchManagement.forEach((route,routeIndex) => {
+        searchManagement.forEach((route, routeIndex) => {
             const possibleLayovers = route.connectingAirports as unknown as String[][]
             const results = possibleLayovers.map((layovers, layoversIndex) => {
-                const possibleRoutes =  layovers.map((layover, index) => {
+                const possibleRoutes = layovers.map((layover, index) => {
                     if (index === 0) {
                         return {
                             origin,
                             destination: layover
                         }
                     }
-                    else{
+                    else {
                         return {
                             origin: layovers[index - 1],
                             destination: layover
@@ -432,8 +432,10 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             })
             formattedRoutes.push(...results);
         })
-
-        return formattedRoutes
+        return  {
+            searchManagement,
+            possibleRoutes: [[{ origin, destination }], ...formattedRoutes],
+        }
     } catch (error: any) {
         throw new HttpError(error.message, 400);
     }
