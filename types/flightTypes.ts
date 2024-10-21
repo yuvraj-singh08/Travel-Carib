@@ -11,6 +11,20 @@ export type FlightOfferSearchParams = {
     filters?: FilterType
 }
 
+export type FlightLeg = {
+    originLocation: string,
+    destinationLocation: string,
+    departureDate: string,
+}
+
+export type MultiCitySearchParams = {
+    FlightDetails: FlightLeg[],
+    passengerType: string,
+    maxLayovers: number,
+    cabinClass: CabinClass,
+    filters?: FilterType
+}
+
 export type routeType = {
     origin: string,
     destination: string

@@ -36,7 +36,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
         const parsedResponse = amadeusResponse?.data?.map((result) => {
             let responseId = "";
             const segments = result?.itineraries?.[0]?.segments?.map((segment) => {
-                responseId += segment?.operating?.carrierCode + segment?.number
+                responseId += segment?.carrierCode + segment?.number
                 return {
                     departing_at: segment?.departure?.at,
                     arriving_at: segment?.arrival?.at,
@@ -328,8 +328,10 @@ export const normalizeResponse = (response: Offer[][]) => {
     const result = response.map((offer) => {
         let slices = [];
         let stops = 0;
+        let responseId = "";
         offer.forEach((route) => {
             slices.push(...(route.slices));
+            responseId += route?.responseId
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -342,6 +344,7 @@ export const normalizeResponse = (response: Offer[][]) => {
             destination: slices?.[slices.length - 1]?.destination,
             departing_at: slices?.[0]?.departing_at,
             arriving_at: slices?.[slices.length - 1]?.arriving_at,
+            responseId,
             stops,
             // duration: offer[0].duration,
             total_amount: offer.reduce((total, route) => total + parseFloat(route.total_amount), 0),
@@ -352,6 +355,20 @@ export const normalizeResponse = (response: Offer[][]) => {
     })
     return result;
 
+}
+
+export const normalizeMultiResponse = (response: any) => {
+    const result = response.map((offer) => {
+        let total_amount = 0;
+        offer.forEach((offer) => {
+            total_amount += parseFloat(offer.total_amount);
+        })
+        return {
+            total_amount,
+            itenaries: offer
+        }
+    })
+    return result;
 }
 
 export const sortResponse = (response: Offer[] | any) => {
@@ -398,7 +415,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
 
         if (searchManagement.length === 0) {
             return {
-                possibleRoutes:  [
+                possibleRoutes: [
                     [
                         {
                             origin, destination
@@ -435,7 +452,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             })
             formattedRoutes.push(...results);
         })
-        return  {
+        return {
             searchManagement,
             possibleRoutes: [[{ origin, destination }], ...formattedRoutes],
         }

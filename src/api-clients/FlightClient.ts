@@ -1,6 +1,6 @@
-import { FlightOfferSearchParams } from "../../types/flightTypes";
+import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -15,6 +15,34 @@ class FlightClient {
         this.duffelClient = new DuffelClient();
         this.amadeusClient = new AmadeusClient();
         this.kiuClient = new KiuClient();
+    }
+
+    async multiCityFlightSearch(params: MultiCitySearchParams) {
+        const requests = params.FlightDetails.map(async (data) => {
+            return await this.advanceFlightSearch({
+                originLocation: data.originLocation,
+                destinationLocation: data.destinationLocation,
+                departureDate: data.departureDate,
+                passengerType: params.passengerType,
+                maxLayovers: params.maxLayovers,
+                cabinClass: params.cabinClass,
+                filters: params.filters,
+            })
+        })
+
+        const response = await Promise.all(requests);
+
+        const combinedRoutes = combineAllRoutes(response);
+        const normalizedResponse = normalizeMultiResponse(combinedRoutes);
+        const sortedResponse = sortResponse(normalizedResponse);
+        const result = sortedResponse.filter((route, index) => {
+            if (index < 30) {
+                return true;
+            }
+            return false;
+        })
+
+        return result;
     }
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
@@ -140,7 +168,7 @@ class FlightClient {
             const sortedResponse = sortResponse(filteredResponse);
 
             return sortedResponse;
-            
+
         } catch (error) {
             throw (error);
         }

@@ -10,6 +10,7 @@ class FlightController {
     this.flightClient = new FlightClient();
     this.searchFlights = this.searchFlights.bind(this);
     this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
+    this.multiCitySearch = this.multiCitySearch.bind(this);
   }
 
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -69,6 +70,25 @@ class FlightController {
         originLocation,
         destinationLocation,
         departureDate,
+        passengerType,
+        maxLayovers,
+        cabinClass,
+        filters
+      })
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async multiCitySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { FlightDetails, passengerType, maxLayovers, cabinClass, filters } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
+        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
+      }
+      const response = await this.flightClient.multiCityFlightSearch({
+        FlightDetails,
         passengerType,
         maxLayovers,
         cabinClass,

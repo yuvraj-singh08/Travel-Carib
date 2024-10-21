@@ -31,7 +31,7 @@ class AmadeusClient {
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
     try {
 
-      await new Promise(resolve => setTimeout(resolve, 1500 * (index)))
+      await new Promise(resolve => setTimeout(resolve, 100 * (index)))
 
       // const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
       //   originDestinations: [
