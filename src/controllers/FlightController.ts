@@ -8,56 +8,8 @@ class FlightController {
 
   constructor() {
     this.flightClient = new FlightClient();
-    this.searchFlights = this.searchFlights.bind(this);
     this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
     this.multiCitySearch = this.multiCitySearch.bind(this);
-  }
-
-  async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections } = req.body;
-      if (!(originLocation !== undefined && destinationLocation !== undefined && departureDate !== undefined && maxLayovers !== undefined && passengerType !== undefined && cabinClass !== undefined))
-        throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
-      if (returnDate) {
-        const oneWay = await this.flightClient.flightSearch({
-          originLocation,
-          destinationLocation,
-          departureDate,
-          passengerType,
-          maxLayovers,
-          cabinClass
-        })
-        const returnFlight = await this.flightClient.flightSearch({
-          originLocation: destinationLocation,
-          destinationLocation: originLocation,
-          departureDate,
-          passengerType,
-          maxLayovers,
-          cabinClass
-        })
-        res.status(200).json(
-          oneWay.map((data, index): any => {
-            if (index <= (returnFlight.length - 1))
-              return {
-                outgoing: data,
-                incoming: returnFlight[index]
-              }
-          })
-        );
-        return;
-      }
-      const response = await this.flightClient.flightSearch({
-        originLocation,
-        destinationLocation,
-        departureDate,
-        passengerType,
-        maxLayovers,
-        cabinClass
-      })
-      res.status(200).json(response);
-    } catch (error: any) {
-      next(error);
-    }
   }
 
   async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {

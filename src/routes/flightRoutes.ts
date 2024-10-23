@@ -4,7 +4,6 @@ import FlightController from '../controllers/FlightController';
 const router = express.Router();
 const flightController = new FlightController();
 
-router.post('/search-flights', flightController.searchFlights);
 router.post('/search-flights-advance', flightController.advanceFlightSearch);
 router.post('/search-multi-city', flightController.multiCitySearch);
 router.post('/get-possible-routes', flightController.getPossibleRoutes);

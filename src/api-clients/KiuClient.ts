@@ -76,7 +76,7 @@ class KiuClient {
             };
           })
         );
-        parsedResponse[offerIndex].total_amount = sliceSum === 0 ? 999999 : sliceSum;
+        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum).toString();
         return {
           ...sliceResponse,
           sliceSum

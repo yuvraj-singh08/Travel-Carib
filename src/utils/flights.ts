@@ -7,36 +7,43 @@ import { getDifferenceInMinutes } from "./utils";
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
+import { FlightSupplier } from "@prisma/client";
 
-export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>) => {
+export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = []) => {
     try {
         const parsedResponse = duffelResponse.data.offers.map((result) => {
             let responseId = "";
+            let routeId = "";
             let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             result.slices?.[0]?.segments?.forEach((segment) => {
+                routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
             })
             return {
                 ...result,
+                routeId,
                 responseId,
                 departing_at,
                 arriving_at,
                 cabin_class: duffelResponse.data.cabin_class
             }
         })
-        return parsedResponse;
+        //@ts-ignore
+        return mainFirewall(parsedResponse, firewall);
     } catch (error) {
         throw error;
     }
 }
 
-export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
+export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = []) => {
     try {
         const parsedResponse = amadeusResponse?.data?.map((result) => {
             let responseId = "";
+            let routeId = "";
             const segments = result?.itineraries?.[0]?.segments?.map((segment) => {
                 responseId += segment?.carrierCode + segment?.number
+                routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
                 return {
                     departing_at: segment?.departure?.at,
                     arriving_at: segment?.arrival?.at,
@@ -73,6 +80,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
 
             return {
                 responseId,
+                routeId,
                 total_amount: result?.price?.total,
                 slices: [
                     {
@@ -85,8 +93,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
                 ],
             }
         })
-
-        return parsedResponse
+        //@ts-ignore
+        return mainFirewall(parsedResponse, firewall)
 
     } catch (error) {
         console.log("Error while parsing");
@@ -94,103 +102,24 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType) => {
     }
 }
 
-export const kiuNewPraser = (duffelResponse: DuffelResponse<OfferRequest>) => {
+
+export const mainFirewall = (response: Offer[], firewall: any = []): Offer[] => {
     try {
-
-    } catch (error) {
-
-    }
-}
-
-export const parseDuffelResponse = (duffelRespnose: DuffelResponse<OfferRequest>[]) => {
-    let parsedResponse = duffelRespnose[0].data.offers
-    duffelRespnose.forEach((data, index) => {
-        if (index === 0)
-            return
-        parsedResponse.push(...(data.data.offers))
-    })
-    parsedResponse = parsedResponse.map((response) => {
-        let responseId = ""
-        response.slices.forEach((slice) => {
-            let sliceId = "";
-            slice.segments.forEach((segment) => {
-                sliceId += `${segment?.marketing_carrier?.iata_code}${segment?.marketing_carrier_flight_number}`
-            })
-            responseId += sliceId
-        })
-        return { ...response, responseId }
-    })
-    return parsedResponse;
-}
-
-export const parseAmadeusResponse = (amadeusResponse: any) => {
-    try {
-        const response = amadeusResponse[0]?.data || []
-        const dictionaries = amadeusResponse[0]?.dictionaries || [];
-        amadeusResponse.forEach((data, index) => {
-            if (index === 0) {
-                return;
-            }
-            response.push(...(data?.data))
-            dictionaries.locations = { ...dictionaries?.locations, ...data?.dictionaries?.locations }
-            dictionaries.aircraft = { ...dictionaries?.aircraft, ...data?.dictionaries?.aircraft }
-            dictionaries.currencies = { ...dictionaries?.currencies, ...data?.dictionaries?.currencies }
-            dictionaries.carriers = { ...dictionaries?.carriers, ...data?.dictionaries?.carriers }
-        });
-
-        const parsedResponse = response.map((data, index) => {
-            let responseId = ""
-            const slices = data.itineraries.map((itinerary) => {
-                let sliceId = "";
-                const segments = itinerary?.segments?.map((segment) => {
-                    sliceId += `${segment?.carrierCode}${segment?.number}`
-                    return {
-                        origin: {
-                            iata_code: segment?.departure?.iataCode,
-                            iata_city_code: dictionaries?.locations[segment?.departure?.iataCode]?.cityCode,
-                            iata_country_code: dictionaries?.locations[segment?.departure?.iataCode]?.countryCode
-                        },
-                        destination: {
-                            iata_code: segment?.arrival?.iataCode,
-                            iata_city_code: dictionaries?.locations[segment?.arrival?.iataCode]?.cityCode,
-                            iata_country_code: dictionaries?.locations[segment?.arrival?.iataCode]?.countryCode
-                        },
-                        departing_at: segment?.departure?.at,
-                        arriving_at: segment?.arrival?.at,
-                        operating_carrier: {
-                            iata_code: segment?.carrierCode,
-                            name: dictionaries?.carriers[segment?.operating?.carrierCode] || "NA"
-                        },
-                        marketing_carrier: {
-                            iata_code: segment?.carrierCode
-                        },
-                        aircraft: {
-                            iata_code: segment?.aircraft?.code,
-                            name: dictionaries?.aircraft[segment?.aircraft?.code]
-                        },
-                        operating_carrier_flight_number: segment?.number,
-                        duration: segment?.duration
-                    }
-                })
-                responseId += sliceId;
-                return {
-                    duration: itinerary?.duration,
-                    segments: segments,
+        const filteredResponse = response.filter((route) => {
+            let flag = true;
+            firewall.forEach((firewall) => {
+                const routeId = route.routeId;
+                const firewallId = firewall.from + firewall.to;
+                if (routeId.includes(firewallId)) {
+                    flag = false;
                 }
             })
-            return {
-                total_amount: data?.price?.total,
-                tax_amount: data?.price?.total - data?.price?.base,
-                base_currency: data?.price?.currency,
-                tax_currency: data?.price?.currency,
-                slices: slices,
-                responseId: responseId
-            }
-            //Remaining: PricingOptions, travelerPricing
+            return flag;
         })
-        return parsedResponse;
-    } catch (error) {
-        console.log(error);
+        return filteredResponse;
+    } catch (error: any) {
+        console.log("Error in main firewall: ", error.message);
+        throw error;
     }
 }
 
@@ -329,9 +258,11 @@ export const normalizeResponse = (response: Offer[][]) => {
         let slices = [];
         let stops = 0;
         let responseId = "";
+        let routeId = "";
         offer.forEach((route) => {
             slices.push(...(route.slices));
             responseId += route?.responseId
+            routeId += route?.routeId
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -345,6 +276,7 @@ export const normalizeResponse = (response: Offer[][]) => {
             departing_at: slices?.[0]?.departing_at,
             arriving_at: slices?.[slices.length - 1]?.arriving_at,
             responseId,
+            routeId,
             stops,
             // duration: offer[0].duration,
             total_amount: offer.reduce((total, route) => total + parseFloat(route.total_amount), 0),
@@ -372,7 +304,7 @@ export const normalizeMultiResponse = (response: any) => {
 }
 
 export const sortResponse = (response: Offer[] | any) => {
-    return response.sort((a, b) => { return parseFloat(a.total_amount) - parseFloat(b.total_amount) })
+    return response?.sort((a, b) => { return parseFloat(a.total_amount) - parseFloat(b.total_amount) })
 }
 
 export const combineResponses = (responses: any) => {
@@ -400,7 +332,7 @@ export const combineResponses = (responses: any) => {
     return result;
 }
 
-export const getSearchManagementRoutes = async (origin: string, destination: string, maxLayovers: number): Promise<any> => {
+export const getSearchManagementRoutes = async (origin: string, destination: string, maxLayovers: number, firewall: any): Promise<any> => {
     try {
         const searchManagement = await prisma.searchManagement.findMany({
             where: {
@@ -411,19 +343,33 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
                     has: destination
                 }
             }
-        });
+        })
 
         if (searchManagement.length === 0) {
-            return {
-                possibleRoutes: [
-                    [
-                        {
-                            origin, destination
-                        }
-                    ]
-                ],
-                searchManagement: "ff"
-            }
+            const routeId = origin + destination;
+            let flag = true;
+            firewall.forEach((firewall) => {
+                const id = firewall.from + firewall.to
+                if (routeId.includes(id)) {
+                    flag = false;
+                }
+            })
+            if (flag)
+                return {
+                    possibleRoutes: [
+                        [
+                            {
+                                origin, destination
+                            }
+                        ]
+                    ],
+                    searchManagement: "ff"
+                }
+            else
+                return {
+                    possibleRoutes: [],
+                    searchManagement: "ff"
+                }
         }
 
         const formattedRoutes = [];
@@ -452,9 +398,24 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             })
             formattedRoutes.push(...results);
         })
+        const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
+        const filteredRoutes = possibleRoutes.filter((route) => {
+            let routeId = "";
+            let flag = true;
+            route.forEach((segment) => {
+                routeId += segment.origin + segment.destination + ",";
+            })
+            firewall.forEach((firewall) => {
+                const id = firewall.from + firewall.to
+                if (routeId.includes(id)) {
+                    flag = false;
+                }
+            })
+            return flag;
+        })
         return {
             searchManagement,
-            possibleRoutes: [[{ origin, destination }], ...formattedRoutes],
+            possibleRoutes: filteredRoutes
         }
     } catch (error: any) {
         throw new HttpError(error.message, 400);

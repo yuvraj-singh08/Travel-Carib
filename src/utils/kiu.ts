@@ -2,6 +2,7 @@ import { create } from "xmlbuilder2";
 import { FlightSearchParams, KiuResponseType, PriceRequestBuilderParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
+import { mainFirewall } from "./flights";
 
 export const getDateString = (date: string) => {
   const newDate = new Date(date);
@@ -306,7 +307,7 @@ export const combineRoute = (route1: any, route2: any) => {
   }
 }
 
-export const parseKiuResposne = (data: any) => {
+export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
   try {
     if (data?.Root?.Error !== undefined) {
       console.log("Error in KIU response: ", data.Root.Error);
@@ -328,7 +329,7 @@ export const parseKiuResposne = (data: any) => {
       }
     }
 
-    let slices = [], segments = [], response = [], responseId = "";
+    let slices = [], segments = [], response = [], responseId = "", routeId = "";
 
     combinedRoute?.forEach((option) => {
 
@@ -343,6 +344,7 @@ export const parseKiuResposne = (data: any) => {
         }
 
         responseId += `${route?.MarketingAirline[0]?.$?.CompanyShortName}${route?.$?.FlightNumber}`
+        routeId += route?.DepartureAirport?.[0]?.$?.LocationCode + route?.ArrivalAirport?.[0]?.$?.LocationCode + ','
 
         // Convert date strings to Moment.js objects
         const departureTime = moment(route?.$?.DepartureDateTime, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
@@ -385,6 +387,7 @@ export const parseKiuResposne = (data: any) => {
 
       response.push({
         responseId,
+        routeId,
         slices,
         total_amount: 204,
         tax_amount: 204,
@@ -399,9 +402,10 @@ export const parseKiuResposne = (data: any) => {
       });
       slices = [];
       responseId = "";
+      routeId = "";
     })
 
-    return response;
+    return mainFirewall(response, kiuFirewall);
   } catch (error) {
     console.log(error);
     return [];

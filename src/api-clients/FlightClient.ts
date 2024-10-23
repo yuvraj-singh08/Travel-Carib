@@ -1,6 +1,7 @@
+import { FlightSupplier } from "@prisma/client";
 import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, parseAmadeusResponse, parseDuffelResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, mainFirewall, normalizeMultiResponse, normalizeResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -48,7 +49,20 @@ class FlightClient {
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
             //Calculating Possible Routes
-            const searchManagement = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4);
+            const firewall = await prisma.firewall.findMany({})
+            const allFirewall = [], kiuFirewall = [], amadeusFirewall = [], duffelFirewall = [];
+            firewall.forEach((firewall) => {
+                if (firewall.supplier === FlightSupplier.DUFFEL) {
+                    duffelFirewall.push(firewall)
+                } else if (firewall.supplier === FlightSupplier.AMADEUS) {
+                    amadeusFirewall.push(firewall)
+                } else if (firewall.supplier === FlightSupplier.KIUSYS) {
+                    kiuFirewall.push(firewall)
+                } else if (firewall.supplier === FlightSupplier.ALL) {
+                    allFirewall.push(firewall)
+                }
+            })
+            const searchManagement = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4, allFirewall);
             // const possibleRoutes = [
             //     [
             //         {
@@ -61,10 +75,52 @@ class FlightClient {
             //     possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
             // }
             const possibleRoutes = searchManagement.possibleRoutes
+            const kiuPossibleRoutes = possibleRoutes.filter((route) => {
+                let flag = true;
+                let routeId = "";
+                route.forEach((route) => {
+                    routeId += route.origin + route.destination + ","
+                })
+                kiuFirewall.forEach((firewall) => {
+                    const id = firewall.from + firewall.to;
+                    if (routeId.includes(id)) {
+                        flag = false;
+                    }
+                })
+                return flag
+            })
+            const amaduesPossibleRoutes = possibleRoutes.filter((route) => {
+                let flag = true;
+                let routeId = "";
+                route.forEach((route) => {
+                    routeId += route.origin + route.destination + ","
+                })
+                amadeusFirewall.forEach((firewall) => {
+                    const id = firewall.from + firewall.to;
+                    if (routeId.includes(id)) {
+                        flag = false;
+                    }
+                })
+                return flag
+            })
+            const duffelPossibleRoutes = possibleRoutes.filter((route) => {
+                let flag = true;
+                let routeId = "";
+                route.forEach((route) => {
+                    routeId += route.origin + route.destination + ","
+                })
+                duffelFirewall.forEach((firewall) => {
+                    const id = firewall.from + firewall.to;
+                    if (routeId.includes(id)) {
+                        flag = false;
+                    }
+                })
+                return flag
+            })
             console.log(possibleRoutes);
 
             //Duffel Request
-            const duffelRequests = possibleRoutes.map((route) => {
+            const duffelRequests = duffelPossibleRoutes.map((route) => {
                 return route.map((segment) => {
                     return this.duffelClient.createOfferRequest({
                         passengers: [{ type: "adult" }],
@@ -82,7 +138,7 @@ class FlightClient {
             })
 
             //Kiu Request
-            const kiuRequests = possibleRoutes.map((route) => {
+            const kiuRequests = kiuPossibleRoutes.map((route) => {
                 return route.map((segment) => {
                     return this.kiuClient.searchFlights({
                         DepartureDate: params.departureDate,
@@ -94,7 +150,7 @@ class FlightClient {
             })
 
             let index = 0;
-            const amadeusRequests = possibleRoutes.map((route) => {
+            const amadeusRequests = amaduesPossibleRoutes.map((route) => {
                 return route.map((segment) => {
                     return this.amadeusClient.searchFlights({
                         departure: params.departureDate,
@@ -123,7 +179,7 @@ class FlightClient {
 
             const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
                 const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusNewParser(response);
+                    const parsedResponse = amadeusNewParser(response, amadeusFirewall);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes
@@ -131,7 +187,7 @@ class FlightClient {
 
             const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
                 const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelNewParser(response);
+                    const parsedResponse = duffelNewParser(response, duffelFirewall);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes
@@ -165,222 +221,20 @@ class FlightClient {
             const normalizedResponse = normalizeResponse(temp)
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
-            const sortedResponse = sortResponse(filteredResponse);
-
-            return sortedResponse;
-
-        } catch (error) {
-            throw (error);
-        }
-    }
-
-    async roundFlightSearch(params: FlightOfferSearchParams) {
-        try {
-            //Calculating Possible Routes
-            const possibleRoutes = [
-                [
-                    {
-                        origin: params.originLocation,
-                        destination: params.destinationLocation
-                    }
-                ]
-            ]
-            if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
-                possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
-            }
-            possibleRoutes.push([
-                {
-                    origin: params.destinationLocation,
-                    destination: params.originLocation
+            const firewallResponse = await mainFirewall(filteredResponse, allFirewall);
+            const sortedResponse = sortResponse(firewallResponse);
+            const result = sortedResponse.filter((route, index) => {
+                if (index < 60) {
+                    return true;
                 }
-            ])
-
-            if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
-                possibleRoutes.push(...getPossibleRoutes(params.destinationLocation, params.originLocation, 4))
-            }
-            console.log(possibleRoutes);
-
-            //Duffel Request
-            const duffelRequests = possibleRoutes.map((route) => {
-                return route.map((segment) => {
-                    return this.duffelClient.createOfferRequest({
-                        passengers: [{ type: "adult" }],
-                        cabin_class: params.cabinClass,
-                        max_connections: 2,
-                        slices: [
-                            {
-                                origin: segment.origin,
-                                destination: segment.destination,
-                                departure_date: params.departureDate,
-                            }
-                        ],
-                    })
-                })
+                return false;
             })
+            return result;
 
-            //Kiu Request
-            const kiuRequests = possibleRoutes.map((route) => {
-                return route.map((segment) => {
-                    return this.kiuClient.searchFlights({
-                        DepartureDate: params.departureDate,
-                        OriginLocation: segment.origin,
-                        DestinationLocation: segment.destination,
-                        Passengers: "1",
-                    })
-                })
-            })
-
-            let index = 0;
-            const amadeusRequests = possibleRoutes.map((route) => {
-                return route.map((segment) => {
-                    return this.amadeusClient.searchFlights({
-                        departure: params.departureDate,
-                        arrival: params.departureDate,
-                        locationDeparture: segment.origin,
-                        locationArrival: segment.destination,
-                        adults: params.passengerType,
-                    }, index++)
-                })
-            })
-
-            const [duffelResponse, amadeusResponse, parsedKiuResponse] = await Promise.all([
-                Promise.all(duffelRequests.map(async (request) => {
-                    const result = await Promise.all(request);
-                    return result;
-                })),
-                Promise.all(amadeusRequests.map(async (request) => {
-                    const result = await Promise.all(request);
-                    return result;
-                })),
-                Promise.all(kiuRequests.map(async (request) => {
-                    const result = await Promise.all(request);
-                    return result;
-                })),
-            ])
-
-            const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
-                const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusNewParser(response);
-                    return parsedResponse;
-                })
-                return parsedPossibleRoutes
-            })
-
-            const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
-                const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelNewParser(response);
-                    return parsedResponse;
-                })
-                return parsedPossibleRoutes
-            })
-
-            let combination: any = [];
-
-            possibleRoutes.forEach((route, index) => {
-                const duffel = parsedDuffelResponse?.[index]
-                const amadeus = parsedAmadeusResponse?.[index]
-                const temp = [];
-                route.forEach((data, index2) => {
-                    temp.push([
-                        ...(amadeus?.[index2] || []),
-                        ...(duffel?.[index2] || [])
-                    ])
-                })
-                const paired = combineAllRoutes(temp)
-                if (paired.length > 0)
-                    combination.push(paired)
-            })
-
-            let temp: any = []
-
-            combination.forEach((route) => {
-                temp.push(...route)
-            })
-
-            const normalizedResponse = normalizeResponse(temp)
-            //@ts-ignore
-            const filteredResponse = filterResponse(normalizedResponse, params.filters)
-            const sortedResponse = sortResponse(filteredResponse);
-
-            return sortedResponse;
         } catch (error) {
             throw (error);
         }
     }
-
-
-    async flightSearch(params: FlightOfferSearchParams) {
-        try {
-            const possibleRoutes = [
-                [
-                    {
-                        origin: params.originLocation,
-                        destination: params.destinationLocation
-                    }
-                ],
-                ...(getPossibleRoutes(params.originLocation, params.destinationLocation, params.maxLayovers))
-            ]
-            console.log(possibleRoutes)
-            const duffelRequests = possibleRoutes.map((route) => {
-                const slices = route.map((data) => {
-                    return {
-                        origin: data.origin,
-                        destination: data.destination,
-                        departure_date: params.departureDate,
-                    }
-                })
-                return this.duffelClient.createOfferRequest({
-                    slices,
-                    passengers: [{ type: "adult" }],
-                    cabin_class: params.cabinClass,
-                    max_connections: 2
-                })
-            })
-
-            const amadeusRequest = possibleRoutes.map((route, index) => {
-                const request = this.amadeusClient.multiCityFlightSearch({
-                    routeSegments: route,
-                    passengers: 2,
-                    departureDate: params.departureDate,
-                    index
-                })
-                return request
-            })
-
-            const kiuRequest = possibleRoutes.map((route) => {
-                const request = this.kiuClient.multiCitySearch({
-                    routeSegments: route,
-                    departureDate: params.departureDate,
-                    passengers: 1
-                })
-                return request
-            })
-            const [duffelResponse, amadeusResponse, kiuResponse] = await Promise.all([
-                Promise.all(duffelRequests),
-                Promise.all(amadeusRequest),
-                Promise.all(kiuRequest)
-            ])
-            let parsedAmadeusResponse = parseAmadeusResponse(amadeusResponse)?.map((data) => {
-                return { ...data, cabin_class: params.cabinClass }
-            })
-            const parsedDuffelResponse = parseDuffelResponse(duffelResponse)?.map((data) => {
-                return { ...data, cabin_class: params.cabinClass }
-            })
-            let parsedKiuResponse = [];
-
-            kiuResponse.forEach((response: any) => {
-                const parsedResponse = parseKiuResposne(response);
-                parsedKiuResponse = [...parsedKiuResponse, ...parsedResponse]
-            });
-            if (parsedAmadeusResponse === undefined) parsedAmadeusResponse = []
-
-            const combinedResponse = combineResponses([...parsedDuffelResponse, ...parsedAmadeusResponse, ...parsedKiuResponse])
-            return combinedResponse
-        } catch (error) {
-            throw (error);
-        }
-    }
-
 
 }
 

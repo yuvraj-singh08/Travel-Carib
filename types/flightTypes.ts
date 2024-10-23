@@ -65,6 +65,7 @@ export type Offer = {
     owner: Carrier;
     id: string;
     responseId: string;
+    routeId: string;
 };
 
 type Slice = {
@@ -104,6 +105,8 @@ type Segment = {
     destination: Location;
     origin: Location;
     id: string;
+    bookingAvl: any,
+    segmentPrice?: any
 };
 
 type SegmentPassenger = {
