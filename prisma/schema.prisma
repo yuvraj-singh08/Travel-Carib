@@ -72,6 +72,14 @@ model User {
   booked          Booking[]
   provider        String
   ticket          TicketManagement[]
+  watchlist       Watchlist[]
+}
+
+model Watchlist {
+  id            String @id @default(uuid()) @map("_id")
+  userId        String
+  flightDetails Json[]
+  user          User   @relation(fields: [userId], references: [id])
 }
 
 model Passenger {

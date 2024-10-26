@@ -28,10 +28,10 @@ export const registerUser = async (req: Request, res: Response) => {
     role,
     provider,
   } = req.body;
-  
+
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    
+
     const response = await prisma.user.create({
       data: {
         email: email,
@@ -99,7 +99,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     let isPasswordValid: Boolean;
-    
+
     if (password) {
       isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -141,7 +141,7 @@ export const resetPassword = async (req: Request, res: Response) => {
           password: hashed,
         },
       });
-      
+
       if (updated) {
         return res.status(200).json({
           message: "Password changed",
@@ -416,5 +416,87 @@ export const changePassword = async (
   } catch (error) {
     console.log("Error changing password:", error);
     return res.status(500).json({ error: "Failed to change password" });
+  }
+};
+
+// Create a new watchlist
+export const createWatchlist = async (req: Request, res: Response) => {
+  const { userId, flightDetails } = req.body;
+
+  try {
+    const newWatchlist = await prisma.watchlist.create({
+      data: {
+        userId,
+        flightDetails,
+      },
+    });
+    return res.status(201).json(newWatchlist);
+  } catch (error) {
+    console.error("Error creating watchlist:", error);
+    return res.status(500).json({ error: "Failed to create watchlist" });
+  }
+};
+
+// Get all watchlists
+export const getAllWatchlists = async (req: Request, res: Response) => {
+  try {
+    const watchlists = await prisma.watchlist.findMany();
+    return res.status(200).json(watchlists);
+  } catch (error) {
+    console.error("Error fetching watchlists:", error);
+    return res.status(500).json({ error: "Failed to fetch watchlists" });
+  }
+};
+
+// Get a watchlist by ID
+export const getWatchlistById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const watchlist = await prisma.watchlist.findUnique({
+      where: { id },
+    });
+
+    if (!watchlist) {
+      return res.status(404).json({ error: "Watchlist not found" });
+    }
+
+    return res.status(200).json(watchlist);
+  } catch (error) {
+    console.error("Error fetching watchlist:", error);
+    return res.status(500).json({ error: "Failed to fetch watchlist" });
+  }
+};
+
+// Update a watchlist by ID
+export const updateWatchlistById = async (req: Request, res: Response) => {
+  const { id, flightDetails } = req.body;
+
+  try {
+    const updatedWatchlist = await prisma.watchlist.update({
+      where: { id },
+      data: { flightDetails },
+    });
+
+    return res.status(200).json(updatedWatchlist);
+  } catch (error) {
+    console.error("Error updating watchlist:", error);
+    return res.status(500).json({ error: "Failed to update watchlist" });
+  }
+};
+
+// Delete a watchlist by ID
+export const deleteWatchlistById = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    await prisma.watchlist.delete({
+      where: { id },
+    });
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting watchlist:", error);
+    return res.status(500).json({ error: "Failed to delete watchlist" });
   }
 };

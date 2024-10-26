@@ -13,6 +13,11 @@ import {
   changePassword,
   socialAuthRegister,
   resetPassword,
+  getWatchlistById,
+  getAllWatchlists,
+  createWatchlist,
+  deleteWatchlistById,
+  updateWatchlistById,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -49,5 +54,11 @@ router.post("/del-user", delUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
 router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
+
+router.post("/add-watchlist", authenticateToken, createWatchlist);
+router.get("/watchlists", authenticateToken, getAllWatchlists);
+router.post("/watchlist/:id", authenticateToken, getWatchlistById);
+router.post("/update-watchlist", authenticateToken, updateWatchlistById);
+router.post("/delete-watchlist", authenticateToken, deleteWatchlistById);
 
 export default router;
