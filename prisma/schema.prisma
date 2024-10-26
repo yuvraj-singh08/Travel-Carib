@@ -321,8 +321,8 @@ model SearchManagement {
   gdsNdcSupplier        FlightSupplier
   ruleType              RuleType
   journeyType           RouteType
-  fromOriginAirport     String[]
-  toDestinationsAirport String[]
+  fromOriginAirport     String
+  toDestinationsAirport String
   connectingAirports    Json
   airlinesIncluded      String
   airlinesExcluded      String

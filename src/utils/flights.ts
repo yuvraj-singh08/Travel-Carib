@@ -336,12 +336,8 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
     try {
         const searchManagement = await prisma.searchManagement.findMany({
             where: {
-                fromOriginAirport: {
-                    has: origin,
-                },
-                toDestinationsAirport: {
-                    has: destination
-                }
+                fromOriginAirport: origin,
+                toDestinationsAirport: destination
             }
         })
 
