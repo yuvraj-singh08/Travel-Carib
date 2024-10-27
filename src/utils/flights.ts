@@ -54,7 +54,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                     operating_carrier_flight_number: segment?.number,
                     marketing_carrier_flight_number: segment?.number,
                     operating_carrier: {
-                        iata_code: segment?.operating?.carrierCode,
+                        iata_code: segment?.operating?.carrierCode || segment?.carrierCode,
                         name: amadeusResponse?.dictionaries?.carriers?.[segment?.operating?.carrierCode]
                     },
                     flight_number: segment?.aircraft?.code,
@@ -178,7 +178,7 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         }
 
         //Max Stops
-        const maxStops = filters.MaxStops ? route.stops <= filters.MaxStops : true
+        const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
 
         return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter;
     });
@@ -269,6 +269,9 @@ export const normalizeResponse = (response: Offer[][]) => {
         })
         if (slices?.length > 1) {
             stops += 1
+        }
+        if (stops === 0) {
+            console.log("Non Stop")
         }
         return {
             origin: slices?.[0]?.origin,

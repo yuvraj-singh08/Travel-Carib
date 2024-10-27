@@ -332,8 +332,8 @@ model SearchManagement {
   fromOriginAirport     String
   toDestinationsAirport String
   connectingAirports    Json
-  airlinesIncluded      String
-  airlinesExcluded      String
+  airlinesIncluded      String[]
+  airlinesExcluded      String[]
   flightExcluded        String
   minConnectionTime     String
   maxConnectionTime     String
