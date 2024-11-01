@@ -81,6 +81,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             return {
                 responseId,
                 routeId,
+                departing_at: segments?.[0]?.departing_at,
+                arriving_at: segments?.[segments?.length - 1]?.arriving_at,
                 total_amount: result?.price?.total,
                 slices: [
                     {
@@ -227,7 +229,7 @@ export function combineAllRoutes(routeArrays: Offer[][]): Offer[][] {
                 );
 
                 // Check the time gap is more than the allowed transfer time
-                if (differenceInMinutes > (parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60'))) {
+                if (differenceInMinutes > (parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60')) && differenceInMinutes < 1440) {
                     // Sum the total_amount of the currentRoute and nextRoute
                     const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0) + (parseFloat(nextRoute.total_amount) || 0);
 
@@ -269,9 +271,6 @@ export const normalizeResponse = (response: Offer[][]) => {
         })
         if (slices?.length > 1) {
             stops += 1
-        }
-        if (stops === 0) {
-            console.log("Non Stop")
         }
         return {
             origin: slices?.[0]?.origin,

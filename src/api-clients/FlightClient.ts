@@ -62,18 +62,7 @@ class FlightClient {
                     allFirewall.push(firewall)
                 }
             })
-            const searchManagement = await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4, allFirewall);
-            // const possibleRoutes = [
-            //     [
-            //         {
-            //             origin: params.originLocation,
-            //             destination: params.destinationLocation
-            //         }
-            //     ]
-            // ]
-            // if (params.filters?.SelfTransferAllowed === true || params.filters?.SelfTransferAllowed === undefined) {
-            //     possibleRoutes.push(...getPossibleRoutes(params.originLocation, params.destinationLocation, 4))
-            // }
+            const searchManagement = params.filters.SelfTransferAllowed === undefined || params.filters.SelfTransferAllowed ? await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4, allFirewall) : { possibleRoutes: [[{ origin: params.originLocation, destination: params.destinationLocation }]], searchManagement: "ff" }
             const possibleRoutes = searchManagement.possibleRoutes
             const kiuPossibleRoutes = possibleRoutes.filter((route) => {
                 let flag = true;
