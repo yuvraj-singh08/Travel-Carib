@@ -70,6 +70,7 @@ app.use("/reset", resetRoute);
 app.use("/payment", paymentRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    console.log(err);
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
