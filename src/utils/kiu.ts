@@ -3,6 +3,7 @@ import { FlightSearchParams, KiuResponseType, PriceRequestBuilderParams } from "
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
 import { mainFirewall } from "./flights";
+import { GDS } from "../../constants/cabinClass";
 
 export const getDateString = (date: string) => {
   const newDate = new Date(date);
@@ -388,6 +389,7 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
       response.push({
         responseId,
         routeId,
+        sourceId: GDS.kiu,
         slices,
         total_amount: 204,
         tax_amount: 204,

@@ -52,13 +52,20 @@ class FlightClient {
             const firewall = await prisma.firewall.findMany({})
             const allFirewall = [], kiuFirewall = [], amadeusFirewall = [], duffelFirewall = [];
             firewall.forEach((firewall) => {
-                if (firewall.supplier === FlightSupplier.DUFFEL) {
+                //@ts-ignore
+                if (firewall.supplier === FlightSupplier.DUFFEL || firewall.supplier === FlightSupplier.ALL) {
                     duffelFirewall.push(firewall)
-                } else if (firewall.supplier === FlightSupplier.AMADEUS) {
+                }
+                //@ts-ignore
+                else if (firewall.supplier === FlightSupplier.AMADEUS || firewall.supplier === FlightSupplier.ALL) {
                     amadeusFirewall.push(firewall)
-                } else if (firewall.supplier === FlightSupplier.KIUSYS) {
+                }
+                //@ts-ignore
+                else if (firewall.supplier === FlightSupplier.KIUSYS || firewall.supplier === FlightSupplier.ALL) {
                     kiuFirewall.push(firewall)
-                } else if (firewall.supplier === FlightSupplier.ALL) {
+                }
+                //@ts-ignore
+                else if (firewall.supplier === FlightSupplier.ALL) {
                     allFirewall.push(firewall)
                 }
             })
@@ -134,6 +141,7 @@ class FlightClient {
                         OriginLocation: segment.origin,
                         DestinationLocation: segment.destination,
                         Passengers: "1",
+                        CabinClass: params.cabinClass,
                     })
                 })
             })

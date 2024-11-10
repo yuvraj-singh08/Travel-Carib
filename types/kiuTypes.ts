@@ -3,6 +3,7 @@ export type FlightSearchParams = {
     DestinationLocation: string,
     DepartureDate: string,
     ReturnDate?: string,
+    CabinClass:string,
     Passengers: string,
 }
 

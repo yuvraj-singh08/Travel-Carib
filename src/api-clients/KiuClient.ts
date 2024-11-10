@@ -3,6 +3,7 @@ import { buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlight
 import xml2js from 'xml2js';
 import { FlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
+import { kiuClasses } from '../../constants/cabinClass';
 
 class KiuClient {
   private endpoint: string;
@@ -35,6 +36,7 @@ class KiuClient {
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
       const parsedResponse = parseKiuResposne(jsonResponse);
+      const cabinClass = kiuClasses[params.CabinClass];
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
         let sliceSum = 0;
         const sliceResponse = await Promise.allSettled(
@@ -42,6 +44,17 @@ class KiuClient {
             let segmentSum = 0
             const segmentResponse = await Promise.allSettled(
               slice?.segments?.map(async (segment, segmentIndex) => {
+                let flag = false;
+                let code = null;
+                segment?.bookingAvl?.forEach((bookingAvl) => {
+                  if (cabinClass.includes(bookingAvl.code)) {
+                    flag = true;
+                    code = bookingAvl.code;
+                  }
+                })
+                if (!flag) {
+                  return null;
+                }
                 const priceResponse = await this.searchPrice({
                   OriginLocation: segment?.origin?.iata_code,
                   DestinationLocation: segment?.destination?.iata_code,
@@ -50,7 +63,7 @@ class KiuClient {
                   MarketingAirline: segment?.operating_carrier?.iata_code,
                   FlightNumber: segment?.operating_carrier_flight_number,
                   Passengers: params.Passengers,
-                  ResBookDesigCode: segment?.bookingAvl?.[0]?.code
+                  ResBookDesigCode: code
                 });
 
                 const pi = priceResponse?.KIU_AirPriceRS?.PricedItineraries?.[0];

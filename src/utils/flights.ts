@@ -8,6 +8,7 @@ import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
 import { FlightSupplier } from "@prisma/client";
+import { GDS } from "../../constants/cabinClass";
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = []) => {
     try {
@@ -19,11 +20,41 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
             result.slices?.[0]?.segments?.forEach((segment) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
+                let flag = true;
+                for (let i = 0; i < firewall.length; i++) {
+                    if (firewall[i].from === segment?.destination?.iata_code && firewall[i].to === segment?.destination?.iata_code) {
+                        if (!firewall[i].code) {
+                            flag = false;
+                            break;
+                        }
+                        else if (segment?.operating_carrier?.iata_code === firewall[i]?.code) {
+                            if (!firewall[i].flightNumber) {
+                                flag = false;
+                                break;
+                            }
+                            else if (firewall[i].flightNumber === (segment?.operating_carrier_flight_number || segment?.marketing_carrier_flight_number)) {
+                                flag = false;
+                                break;
+                            }
+                        }
+                    }
+                    else if (!firewall[i]?.from && segment?.operating_carrier?.iata_code === firewall[i]?.code) {
+                        if (!firewall[i].flightNumber) {
+                            flag = false;
+                            break;
+                        }
+                        else if (firewall[i].flightNumber === (segment?.operating_carrier_flight_number || segment?.marketing_carrier_flight_number)) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
             })
             return {
                 ...result,
                 routeId,
                 responseId,
+                sourceId: GDS.duffel,
                 departing_at,
                 arriving_at,
                 cabin_class: duffelResponse.data.cabin_class
@@ -44,6 +75,38 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             const segments = result?.itineraries?.[0]?.segments?.map((segment) => {
                 responseId += segment?.carrierCode + segment?.number
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
+                let flag = true;
+                for (let i = 0; i < firewall.length; i++) {
+                    if (firewall[i].from === segment?.departure?.iataCode && firewall[i].to === segment?.arrival?.iataCode) {
+                        if (!firewall[i].code) {
+                            flag = false;
+                            break;
+                        }
+                        else if (segment?.operating?.carrierCode === firewall[i]?.code) {
+                            if (!firewall[i].flightNumber) {
+                                flag = false;
+                                break;
+                            }
+                            else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+                                flag = false;
+                                break;
+                            }
+                        }
+                    }
+                    else if (!firewall[i]?.from && segment?.operating?.carrierCode === firewall[i]?.code) {
+                        if (!firewall[i].flightNumber) {
+                            flag = false;
+                            break;
+                        }
+                        else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
+                if (!flag) {
+                    return null;
+                }
                 return {
                     departing_at: segment?.departure?.at,
                     arriving_at: segment?.arrival?.at,
@@ -81,6 +144,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             return {
                 responseId,
                 routeId,
+                sourceId: GDS.amadeus,
                 departing_at: segments?.[0]?.departing_at,
                 arriving_at: segments?.[segments?.length - 1]?.arriving_at,
                 total_amount: result?.price?.total,
