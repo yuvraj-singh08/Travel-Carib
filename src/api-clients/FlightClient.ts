@@ -1,7 +1,7 @@
 import { FlightSupplier } from "@prisma/client";
 import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, mainFirewall, normalizeMultiResponse, normalizeResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -79,7 +79,7 @@ class FlightClient {
                 })
                 kiuFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id)) {
+                    if (routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -93,7 +93,7 @@ class FlightClient {
                 })
                 amadeusFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id)) {
+                    if (routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -107,7 +107,7 @@ class FlightClient {
                 })
                 duffelFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id)) {
+                    if (routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -142,7 +142,7 @@ class FlightClient {
                         DestinationLocation: segment.destination,
                         Passengers: "1",
                         CabinClass: params.cabinClass,
-                    })
+                    }, kiuFirewall)
                 })
             })
 
@@ -218,8 +218,7 @@ class FlightClient {
             const normalizedResponse = normalizeResponse(temp)
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
-            const firewallResponse = await mainFirewall(filteredResponse, allFirewall);
-            const sortedResponse = sortResponse(firewallResponse);
+            const sortedResponse = sortResponse(filteredResponse);
             const result = sortedResponse.filter((route, index) => {
                 if (index < 60) {
                     return true;

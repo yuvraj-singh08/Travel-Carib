@@ -60,8 +60,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 cabin_class: duffelResponse.data.cabin_class
             }
         })
-        //@ts-ignore
-        return mainFirewall(parsedResponse, firewall);
+        return parsedResponse
     } catch (error) {
         throw error;
     }
@@ -159,8 +158,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                 ],
             }
         })
-        //@ts-ignore
-        return mainFirewall(parsedResponse, firewall)
+        return parsedResponse
 
     } catch (error) {
         console.log("Error while parsing");
@@ -169,25 +167,25 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
 }
 
 
-export const mainFirewall = (response: Offer[], firewall: any = []): Offer[] => {
-    try {
-        const filteredResponse = response.filter((route) => {
-            let flag = true;
-            firewall.forEach((firewall) => {
-                const routeId = route.routeId;
-                const firewallId = firewall.from + firewall.to;
-                if (routeId.includes(firewallId)) {
-                    flag = false;
-                }
-            })
-            return flag;
-        })
-        return filteredResponse;
-    } catch (error: any) {
-        console.log("Error in main firewall: ", error.message);
-        throw error;
-    }
-}
+// export const mainFirewall = (response: Offer[], firewall: any = []): Offer[] => {
+//     try {
+//         const filteredResponse = response.filter((route) => {
+//             let flag = true;
+//             firewall.forEach((firewall) => {
+//                 const routeId = route.routeId;
+//                 const firewallId = firewall.from + firewall.to;
+//                 if (routeId.includes(firewallId)) {
+//                     flag = false;
+//                 }
+//             })
+//             return flag;
+//         })
+//         return filteredResponse;
+//     } catch (error: any) {
+//         console.log("Error in main firewall: ", error.message);
+//         throw error;
+//     }
+// }
 
 export const filterResponse = (response: Offer[], filters: FilterType) => {
     const filteredResponse: Offer[] = response.filter((route) => {

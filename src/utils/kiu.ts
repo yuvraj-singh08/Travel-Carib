@@ -2,7 +2,6 @@ import { create } from "xmlbuilder2";
 import { FlightSearchParams, KiuResponseType, PriceRequestBuilderParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
-import { mainFirewall } from "./flights";
 import { GDS } from "../../constants/cabinClass";
 
 export const getDateString = (date: string) => {
@@ -334,6 +333,7 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
 
     combinedRoute?.forEach((option) => {
 
+      let flag = true;
       option?.FlightSegment?.forEach((route) => {
 
         if (route?.selfTransfer === true) {
@@ -357,8 +357,7 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
             quantity: data?.$?.ResBookDesigQuantity
           }
         })
-
-        segments.push({
+        const segment = {
           departing_at: route?.$?.DepartureDateTime,
           arriving_at: route?.$?.ArrivalDateTime,
           duration: moment.duration(arrivalTime.diff(departureTime)),
@@ -373,7 +372,39 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
             iata_code: route?.ArrivalAirport?.[0]?.$?.LocationCode
           },
           bookingAvl
-        });
+        };
+
+        segments.push(segment);
+
+        for (let i = 0; i < kiuFirewall.length; i++) {
+          if (kiuFirewall[i].from === segment?.origin?.iata_code && kiuFirewall[i].to === segment?.destination?.iata_code) {
+            if (!kiuFirewall[i].code) {
+              flag = false;
+              break;
+            }
+            else if (segment?.operating_carrier?.iata_code === kiuFirewall[i]?.code) {
+              if (!kiuFirewall[i].flightNumber) {
+                flag = false;
+                break;
+              }
+              else if (kiuFirewall[i].flightNumber === (segment?.operating_carrier_flight_number)) {
+                flag = false;
+                break;
+              }
+            }
+          }
+          else if (!kiuFirewall[i]?.from && segment?.operating_carrier?.iata_code === kiuFirewall[i]?.code) {
+            if (!kiuFirewall[i].flightNumber) {
+              flag = false;
+              break;
+            }
+            else if (kiuFirewall[i].flightNumber === (segment?.operating_carrier_flight_number)) {
+              flag = false;
+              break;
+            }
+          }
+        }
+
       });
 
       slices.push({
@@ -386,28 +417,29 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
       const arrivalTime = moment(slices?.[sliceLength - 1]?.segments?.[segmentLength - 1].arriving_at, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
       const departureTime = moment(slices?.[0]?.segments?.[0].departing_at, 'YYYY-MM-DDTHH:mm:ss'); // Adjust the format based on your actual date string format
 
-      response.push({
-        responseId,
-        routeId,
-        sourceId: GDS.kiu,
-        slices,
-        total_amount: 204,
-        tax_amount: 204,
-        base_currency: "EUR",
-        tax_currency: "EUR",
-        cabinClass: "economy",
-        duration: moment.duration(arrivalTime.diff(departureTime)),
-        origin: slices?.[0]?.segments?.[0]?.origin,
-        destination: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.destination,
-        departing_at: slices?.[0]?.segments?.[0]?.departing_at,
-        arriving_at: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.arriving_at
-      });
+      if (flag)
+        response.push({
+          responseId,
+          routeId,
+          sourceId: GDS.kiu,
+          slices,
+          total_amount: 204,
+          tax_amount: 204,
+          base_currency: "EUR",
+          tax_currency: "EUR",
+          cabinClass: "economy",
+          duration: moment.duration(arrivalTime.diff(departureTime)),
+          origin: slices?.[0]?.segments?.[0]?.origin,
+          destination: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.destination,
+          departing_at: slices?.[0]?.segments?.[0]?.departing_at,
+          arriving_at: slices[sliceLength - 1]?.segments?.[segmentLength - 1]?.arriving_at
+        });
       slices = [];
       responseId = "";
       routeId = "";
     })
 
-    return mainFirewall(response, kiuFirewall);
+    return response
   } catch (error) {
     console.log(error);
     return [];

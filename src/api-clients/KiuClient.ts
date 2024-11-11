@@ -23,7 +23,7 @@ class KiuClient {
     this.searchFlights = this.searchFlights.bind(this);
   }
 
-  async searchFlights(params: FlightSearchParams): Promise<any> {
+  async searchFlights(params: FlightSearchParams, firewall: any): Promise<any> {
     try {
       const DepartureDate = getDateString(params.DepartureDate)
       const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate });
@@ -35,7 +35,7 @@ class KiuClient {
       // console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = parseKiuResposne(jsonResponse);
+      const parsedResponse = parseKiuResposne(jsonResponse, firewall);
       const cabinClass = kiuClasses[params.CabinClass];
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
         let sliceSum = 0;
