@@ -75,7 +75,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
         const parsedResponse = amadeusResponse?.data?.map((result) => {
             let responseId = "";
             let routeId = "";
-            const segments = result?.itineraries?.[0]?.segments?.map((segment) => {
+            let segments = [];
+            result?.itineraries?.[0]?.segments?.forEach((segment) => {
                 responseId += segment?.carrierCode + segment?.number
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
                 let flag = true;
@@ -107,10 +108,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                         }
                     }
                 }
-                if (!flag) {
-                    return null;
-                }
-                return {
+                segments.push({
                     departing_at: segment?.departure?.at,
                     arriving_at: segment?.arrival?.at,
                     aircraft: {
@@ -137,7 +135,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                     duration: segment?.duration
                     // departure_airport: segment?.departure?.airport?.code,
                     // arrival_airport: segment?.arrival?.airport?.code,
-                }
+                })
             })
 
             const n = result?.itineraries?.[0]?.segments?.length;
