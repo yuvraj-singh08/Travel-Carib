@@ -12,15 +12,16 @@ import { GDS } from "../../constants/cabinClass";
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = []) => {
     try {
-        const parsedResponse = duffelResponse.data.offers.map((result) => {
+        let response = []
+        duffelResponse.data.offers.forEach((result) => {
             let responseId = "";
             let routeId = "";
             let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
+            let flag = true;
             result.slices?.[0]?.segments?.forEach((segment) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
-                let flag = true;
                 for (let i = 0; i < firewall.length; i++) {
                     if (firewall[i].from === segment?.destination?.iata_code && firewall[i].to === segment?.destination?.iata_code) {
                         if (!firewall[i].code) {
@@ -50,17 +51,20 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                     }
                 }
             })
-            return {
-                ...result,
-                routeId,
-                responseId,
-                sourceId: GDS.duffel,
-                departing_at,
-                arriving_at,
-                cabin_class: duffelResponse.data.cabin_class
+
+            if (flag) {
+                response.push({
+                    ...result,
+                    routeId,
+                    responseId,
+                    sourceId: GDS.duffel,
+                    departing_at,
+                    arriving_at,
+                    cabin_class: duffelResponse.data.cabin_class
+                })
             }
         })
-        return parsedResponse
+        return response
     } catch (error) {
         throw error;
     }
@@ -81,7 +85,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                             flag = false;
                             break;
                         }
-                        else if (segment?.operating?.carrierCode === firewall[i]?.code) {
+                        else if ((segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
                             if (!firewall[i].flightNumber) {
                                 flag = false;
                                 break;
@@ -92,7 +96,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                             }
                         }
                     }
-                    else if (!firewall[i]?.from && segment?.operating?.carrierCode === firewall[i]?.code) {
+                    else if (!firewall[i]?.from && (segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
                         if (!firewall[i].flightNumber) {
                             flag = false;
                             break;
@@ -254,10 +258,10 @@ function filterRoutes(routes: Offer[]): Offer[] {
     const uniqueRoutes: Map<string, Offer> = new Map();
 
     for (const route of routes) {
-        const existingRoute = uniqueRoutes.get(route.responseId);
+        const existingRoute = uniqueRoutes.get(route?.responseId);
         // If no existing route or the new one is cheaper, update the map
-        if (!existingRoute || route.total_amount < existingRoute.total_amount) {
-            uniqueRoutes.set(route.responseId, route);
+        if (!existingRoute || route?.total_amount < existingRoute?.total_amount) {
+            uniqueRoutes.set(route?.responseId, route);
         }
     }
 
@@ -410,7 +414,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             let flag = true;
             firewall.forEach((firewall) => {
                 const id = firewall.from + firewall.to
-                if (routeId.includes(id)) {
+                if (id !== '' && routeId.includes(id) && !firewall.code) {
                     flag = false;
                 }
             })

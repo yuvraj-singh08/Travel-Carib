@@ -79,7 +79,7 @@ class FlightClient {
                 })
                 kiuFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -93,7 +93,7 @@ class FlightClient {
                 })
                 amadeusFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -107,7 +107,7 @@ class FlightClient {
                 })
                 duffelFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId.includes(id) && !firewall.code) {
                         flag = false;
                     }
                 })
