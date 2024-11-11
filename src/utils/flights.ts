@@ -72,14 +72,18 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
 
 export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = []) => {
     try {
-        const parsedResponse = amadeusResponse?.data?.map((result) => {
+        let parsedResponse = [];
+        amadeusResponse?.data?.forEach((result) => {
             let responseId = "";
             let routeId = "";
             let segments = [];
+            let flag = true;
             result?.itineraries?.[0]?.segments?.forEach((segment) => {
+                if(!flag){
+                    return;
+                }
                 responseId += segment?.carrierCode + segment?.number
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
-                let flag = true;
                 for (let i = 0; i < firewall.length; i++) {
                     if (firewall[i].from === segment?.departure?.iataCode && firewall[i].to === segment?.arrival?.iataCode) {
                         if (!firewall[i].code) {
@@ -142,22 +146,24 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             const departing_at = segments?.[0]?.departing_at;
             const arriving_at = segments?.[n - 1]?.arriving_at;
 
-            return {
-                responseId,
-                routeId,
-                sourceId: GDS.amadeus,
-                departing_at: segments?.[0]?.departing_at,
-                arriving_at: segments?.[segments?.length - 1]?.arriving_at,
-                total_amount: result?.price?.total,
-                slices: [
-                    {
-                        origin: segments?.[0]?.origin,
-                        destination: segments?.[n - 1]?.destination,
-                        departing_at,
-                        arriving_at,
-                        segments: segments
-                    }
-                ],
+            if (flag) {
+                parsedResponse.push({
+                    responseId,
+                    routeId,
+                    sourceId: GDS.amadeus,
+                    departing_at: segments?.[0]?.departing_at,
+                    arriving_at: segments?.[segments?.length - 1]?.arriving_at,
+                    total_amount: result?.price?.total,
+                    slices: [
+                        {
+                            origin: segments?.[0]?.origin,
+                            destination: segments?.[n - 1]?.destination,
+                            departing_at,
+                            arriving_at,
+                            segments: segments
+                        }
+                    ],
+                })
             }
         })
         return parsedResponse
