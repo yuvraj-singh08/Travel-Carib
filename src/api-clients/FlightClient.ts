@@ -57,15 +57,15 @@ class FlightClient {
                     duffelFirewall.push(firewall)
                 }
                 //@ts-ignore
-                else if (firewall.supplier === FlightSupplier.AMADEUS || firewall.supplier === FlightSupplier.ALL) {
+                if (firewall.supplier === FlightSupplier.AMADEUS || firewall.supplier === FlightSupplier.ALL) {
                     amadeusFirewall.push(firewall)
                 }
                 //@ts-ignore
-                else if (firewall.supplier === FlightSupplier.KIUSYS || firewall.supplier === FlightSupplier.ALL) {
+                if (firewall.supplier === FlightSupplier.KIUSYS || firewall.supplier === FlightSupplier.ALL) {
                     kiuFirewall.push(firewall)
                 }
                 //@ts-ignore
-                else if (firewall.supplier === FlightSupplier.ALL) {
+                if (firewall.supplier === FlightSupplier.ALL) {
                     allFirewall.push(firewall)
                 }
             })
