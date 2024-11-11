@@ -225,7 +225,7 @@ class FlightClient {
                 }
                 return false;
             })
-            return parsedAmadeusResponse;
+            return result;
 
         } catch (error) {
             throw (error);
