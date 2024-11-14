@@ -273,7 +273,7 @@ function filterRoutes(routes: Offer[]): Offer[] {
 }
 
 // Function to combine the filtered routes from each leg into full routes
-export function combineAllRoutes(routeArrays: Offer[][], args: { minTime?: number, maxTime?: number }): Offer[][] {
+export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: number, maxTime?: number }): Offer[][] {
     // Start by filtering each route array to eliminate duplicates within each segment
     const filteredRoutesPerSegment: Offer[][] = routeArrays.map(filterRoutes);
 
@@ -299,13 +299,18 @@ export function combineAllRoutes(routeArrays: Offer[][], args: { minTime?: numbe
                 );
 
                 // Check the time gap is more than the allowed transfer time
-                if (differenceInMinutes > (args?.minTime || parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60')) && differenceInMinutes < args?.maxTime || parseInt(process.env.MAX_TIME_DIFF) || 1440) {
+                const minTime = args?.minTime || parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60');
+                const maxTime = args?.maxTime || parseInt(process.env.MAX_TIME_DIFF || '1440');
+
+                if (differenceInMinutes > minTime && differenceInMinutes < maxTime) {
                     // Sum the total_amount of the currentRoute and nextRoute
-                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0) + (parseFloat(nextRoute.total_amount) || 0);
+                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0)
+                        + (parseFloat(nextRoute.total_amount) || 0);
 
                     // Add the combined route with updated total_amount
                     newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
                 }
+
             }
         }
 
