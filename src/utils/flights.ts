@@ -320,6 +320,53 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: stri
     return result;
 }
 
+export function combineMultiCityRoutes(routeArrays: Offer[][]): Offer[][] {
+    // Start by filtering each route array to eliminate duplicates within each segment
+    const filteredRoutesPerSegment: Offer[][] = routeArrays.map(filterRoutes);
+
+    // Initialize with the routes from the first leg (A -> B)
+    let result: (Offer)[][] = filteredRoutesPerSegment[0].map(route => [route]);
+
+    // Now combine with each subsequent leg
+    for (let i = 1; i < filteredRoutesPerSegment.length; i++) {
+        const nextSegmentRoutes = filteredRoutesPerSegment[i];
+        const newResult: (Offer)[][] = [];
+
+        for (const currentRoute of result) {
+            for (const nextRoute of nextSegmentRoutes) {
+                if (nextRoute.total_amount === undefined) {
+                    console.log(nextRoute.total_amount);
+                }
+                // Ensure that the time difference is sufficient between current route and next route
+                const lastSegmentOfCurrentRoute = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
+                const lastSegmentLength = lastSegmentOfCurrentRoute?.length;
+                const differenceInMinutes = getDifferenceInMinutes(
+                    lastSegmentOfCurrentRoute?.[lastSegmentLength - 1].departing_at,
+                    nextRoute?.slices?.[0]?.segments?.[0]?.departing_at
+                );
+
+                // Check the time gap is more than the allowed transfer time
+                const minTime = parseInt('240');
+
+                if (differenceInMinutes > minTime) {
+                    // Sum the total_amount of the currentRoute and nextRoute
+                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0)
+                        + (parseFloat(nextRoute.total_amount) || 0);
+
+                    // Add the combined route with updated total_amount
+                    newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
+                }
+
+            }
+        }
+
+        result = newResult;
+    }
+
+    return result;
+}
+
+
 // export const pairResponse = (response: any) => {
 //     let currentPair: any = [];
 //     const pair = response.map((combinedResponse, index) => {
@@ -414,7 +461,8 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
         const searchManagement = await prisma.searchManagement.findMany({
             where: {
                 fromOriginAirport: origin,
-                toDestinationsAirport: destination
+                toDestinationsAirport: destination,
+                status: 'ACTIVE'
             }
         })
 

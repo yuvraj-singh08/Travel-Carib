@@ -1,7 +1,7 @@
 import { FlightSupplier } from "@prisma/client";
 import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -33,7 +33,7 @@ class FlightClient {
 
         const response = await Promise.all(requests);
 
-        const combinedRoutes = combineAllRoutes(response);
+        const combinedRoutes = combineMultiCityRoutes(response);
         const normalizedResponse = normalizeMultiResponse(combinedRoutes);
         const sortedResponse = sortResponse(normalizedResponse);
         const result = sortedResponse.filter((route, index) => {
