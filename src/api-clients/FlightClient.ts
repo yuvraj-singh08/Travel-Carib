@@ -204,7 +204,7 @@ class FlightClient {
                         ...(kiu?.[index2] || [])
                     ])
                 })
-                const paired = combineAllRoutes(temp)
+                const paired = combineAllRoutes(temp, { maxTime: searchManagement?.searchManagement?.[0]?.maxConnectionTime, minTime: searchManagement?.searchManagement?.[0]?.minConnectionTime })
                 if (paired.length > 0)
                     combination.push(paired)
             })

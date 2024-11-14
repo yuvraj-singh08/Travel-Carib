@@ -273,7 +273,7 @@ function filterRoutes(routes: Offer[]): Offer[] {
 }
 
 // Function to combine the filtered routes from each leg into full routes
-export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: number, maxTime?: number }): Offer[][] {
+export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: string, maxTime?: string }): Offer[][] {
     // Start by filtering each route array to eliminate duplicates within each segment
     const filteredRoutesPerSegment: Offer[][] = routeArrays.map(filterRoutes);
 
@@ -299,8 +299,8 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: numb
                 );
 
                 // Check the time gap is more than the allowed transfer time
-                const minTime = args?.minTime || parseInt(process.env.SELF_TRANSFER_TIME_DIFF || '60');
-                const maxTime = args?.maxTime || parseInt(process.env.MAX_TIME_DIFF || '1440');
+                const minTime = parseInt(args?.minTime || process.env.SELF_TRANSFER_TIME_DIFF || '60');
+                const maxTime = parseInt(args?.maxTime || process.env.MAX_TIME_DIFF || '1440');
 
                 if (differenceInMinutes > minTime && differenceInMinutes < maxTime) {
                     // Sum the total_amount of the currentRoute and nextRoute
