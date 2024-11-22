@@ -254,7 +254,7 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
 
         //Preffered Airlines
         let prefferedAirlines = true;
-        filters.PrefferedAirlines.forEach((airline) => {
+        filters?.PrefferedAirlines?.forEach((airline) => {
             if (!route.responseId.includes(airline)) {
                 prefferedAirlines = false;
             }
