@@ -2,6 +2,7 @@ import Amadus from 'amadeus'
 import config from '../configs/config';
 import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { routeType } from '../../types/flightTypes';
+import { convertToPriceCalendar } from '../utils/flights';
 
 class AmadeusClient {
   private client: amadeusClientType;
@@ -29,12 +30,16 @@ class AmadeusClient {
   }
 
   async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string }): Promise<any> {
-    const response = await this.client.shopping.flightDates.get({
+    const payload = {
       origin: params.origin,
       destination: params.destination,
-      departureDate: `${params.date1}${params.date2 && `,${params.date2}`}`
-    })
-    return response.data;
+      departureDate: `${params.date1}${params.date2 ? `,${params.date2}` : ''}`
+    }
+    console.log("Payload: ", payload);
+    const response = await this.client.shopping.flightDates.get(payload)
+    const priceCalendar = convertToPriceCalendar(response.data);
+
+    return priceCalendar;
   }
 
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {

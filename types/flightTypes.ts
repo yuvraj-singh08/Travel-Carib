@@ -200,3 +200,23 @@ export type Firewall = {
     from: string,
     to: string,
 }
+
+export interface FlightDate {
+    type: string;
+    origin: string;
+    destination: string;
+    departureDate: string;
+    returnDate: string;
+    price: {
+        total: string;
+    };
+    links: {
+        flightDestinations: string;
+        flightOffers: string;
+    };
+}
+
+export interface PriceCalendar {
+    date: string;
+    minPrice: number;
+}

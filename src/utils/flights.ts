@@ -1,6 +1,6 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { FilterType, Firewall, Offer, routeType } from "../../types/flightTypes";
+import { FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { getDifferenceInMinutes } from "./utils";
@@ -255,7 +255,7 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         //Preffered Airlines
         let prefferedAirlines = true;
         filters.PrefferedAirlines.forEach((airline) => {
-            if(!route.responseId.includes(airline)){
+            if (!route.responseId.includes(airline)) {
                 prefferedAirlines = false;
             }
         })
@@ -702,4 +702,29 @@ export const getPossibleRoutes = (origin: string, destination: string, maxLayove
             }
         ]]
     }
+}
+
+export function convertToPriceCalendar(data: FlightDate[]): PriceCalendar[] {
+    const datePrices: Record<string, number[]> = {};
+
+    // Group prices by departureDate
+    data.forEach((flight) => {
+        const date = flight.departureDate;
+        const price = parseFloat(flight.price.total);
+
+        if (!datePrices[date]) {
+            datePrices[date] = [];
+        }
+        datePrices[date].push(price);
+    });
+
+    // Calculate minimum price for each date
+    const priceCalendar: PriceCalendar[] = Object.entries(datePrices).map(
+        ([date, prices]) => ({
+            date,
+            minPrice: Math.min(...prices),
+        })
+    );
+
+    return priceCalendar;
 }
