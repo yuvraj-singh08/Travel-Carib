@@ -10,7 +10,8 @@ class AmadusController {
         this.amadusClient = new AmadeusClient();
         this.citySearch = this.citySearch.bind(this);
         this.searchFlights = this.searchFlights.bind(this);
-        this.flightPrice=this.flightPrice.bind(this);
+        this.flightPrice = this.flightPrice.bind(this);
+        this.priceCalendar = this.priceCalendar.bind(this);
     }
 
     async citySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -24,10 +25,26 @@ class AmadusController {
         }
     }
 
+    async priceCalendar(req: Request, res: Response, next: NextFunction): Promise<any> {
+        try {
+            const { origin, destination, date1, date2 } = req.query;
+            if (!origin || !destination || !date1) {
+
+                res.status(400).json({ message: "Missing Required Fields" })
+                return;
+            }
+            const response = await this.amadusClient.priceCalendar({ origin, destination, date1, date2 });
+            res.status(200).json(response)
+        } catch (error) {
+            console.log(error);
+            next(error);
+        }
+    }
+
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const {departure, locationDeparture, locationArrival, adults} = req.body;
-            if(departure === undefined || locationArrival === undefined || locationDeparture === undefined){
+            const { departure, locationDeparture, locationArrival, adults } = req.body;
+            if (departure === undefined || locationArrival === undefined || locationDeparture === undefined) {
                 throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
             }
             const response = await this.amadusClient.searchFlights({ departure, locationDeparture, locationArrival, adults });
@@ -39,18 +56,18 @@ class AmadusController {
     }
     async flightPrice(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-          const { departure, locationDeparture, locationArrival, adults} = req.body;
-    
-          if (!departure || !locationDeparture || !locationArrival) {
-            throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
-          }
-    
-          const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival, adults });
-          res.status(200).json(response);
+            const { departure, locationDeparture, locationArrival, adults } = req.body;
+
+            if (!departure || !locationDeparture || !locationArrival) {
+                throw new Error("Missing required fields: departure, locationDeparture, locationArrival");
+            }
+
+            const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival, adults });
+            res.status(200).json(response);
         } catch (error) {
-          next(error);
+            next(error);
         }
-      }
+    }
 }
 
 export default AmadusController;

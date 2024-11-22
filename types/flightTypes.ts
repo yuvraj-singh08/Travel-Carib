@@ -189,6 +189,7 @@ export type FilterType = {
     MaxArrivalTime?: number,
     MinArrivalTime?: number,
     SelfTransferAllowed?: boolean,
+    PrefferedAirlines?: string[],
 }
 
 export type Firewall = {

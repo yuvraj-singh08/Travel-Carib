@@ -28,6 +28,15 @@ class AmadeusClient {
     }
   }
 
+  async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string }): Promise<any> {
+    const response = await this.client.shopping.flightDates.get({
+      origin: params.origin,
+      destination: params.destination,
+      departureDate: `${params.date1}${params.date2 && `,${params.date2}`}`
+    })
+    return response.data;
+  }
+
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
     try {
 

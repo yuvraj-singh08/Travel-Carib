@@ -252,7 +252,15 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         //Max Stops
         const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
 
-        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter;
+        //Preffered Airlines
+        let prefferedAirlines = true;
+        filters.PrefferedAirlines.forEach((airline) => {
+            if(!route.responseId.includes(airline)){
+                prefferedAirlines = false;
+            }
+        })
+
+        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines;
     });
 
     return filteredResponse;
