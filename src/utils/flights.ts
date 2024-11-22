@@ -426,10 +426,62 @@ export const normalizeMultiResponse = (response: any) => {
     })
     return result;
 }
+export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 'CHEAP') => {
+    let maxDuration = null, minDuration = null, maxPrice = null, minPrice = null, maxStops = null, minStops = null;
 
-export const sortResponse = (response: Offer[] | any) => {
-    return response?.sort((a, b) => { return parseFloat(a.total_amount) - parseFloat(b.total_amount) })
-}
+    response.forEach((offer: Offer) => {
+        const departingAt = offer?.slices?.[0]?.segments?.[0]?.departing_at;
+        const arrivingAt = offer?.slices?.[offer?.slices?.length - 1]?.segments?.[offer?.slices?.[offer?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+        const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
+
+        if (maxDuration === null || timeDiff > maxDuration) maxDuration = timeDiff;
+        if (minDuration === null || timeDiff < minDuration) minDuration = timeDiff;
+
+        const totalAmount = parseFloat(offer.total_amount);
+        if (maxPrice === null || totalAmount > maxPrice) maxPrice = totalAmount;
+        if (minPrice === null || totalAmount < minPrice) minPrice = totalAmount;
+
+        if (maxStops === null || offer.stops > maxStops) maxStops = offer.stops;
+        if (minStops === null || offer.stops < minStops) minStops = offer.stops;
+    });
+
+    return response.sort((a, b) => {
+        if (sortBy === "CHEAP") {
+            return parseFloat(a.total_amount) - parseFloat(b.total_amount);
+        } else if (sortBy === "FAST") {
+            const aDepartingAt = a?.slices?.[0]?.segments?.[0]?.departing_at;
+            const aArrivingAt = a?.slices?.[a?.slices?.length - 1]?.segments?.[a?.slices?.[a?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+            const bDepartingAt = b?.slices?.[0]?.segments?.[0]?.departing_at;
+            const bArrivingAt = b?.slices?.[b?.slices?.length - 1]?.segments?.[b?.slices?.[b?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+
+            const aTimeDiff = getDifferenceInMinutes(aDepartingAt, aArrivingAt);
+            const bTimeDiff = getDifferenceInMinutes(bDepartingAt, bArrivingAt);
+
+            return aTimeDiff - bTimeDiff;
+        } else if (sortBy === "BEST") {
+            const calculateScore = (offer: Offer) => {
+                const departingAt = offer?.slices?.[0]?.segments?.[0]?.departing_at;
+                const arrivingAt = offer?.slices?.[offer?.slices?.length - 1]?.segments?.[offer?.slices?.[offer?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+                const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
+
+                const durationScore = (maxDuration - timeDiff) / (maxDuration - minDuration || 1);
+                const priceScore = (maxPrice - parseFloat(offer.total_amount)) / (maxPrice - minPrice || 1);
+                const stopsScore = (maxStops - offer.stops) / (maxStops - minStops || 1);
+
+                // Adjust these weights as needed
+                const durationWeight = 0.4;
+                const priceWeight = 0.4;
+                const stopsWeight = 0.2;
+
+                return (durationScore * durationWeight) + (priceScore * priceWeight) + (stopsScore * stopsWeight);
+            };
+
+            return calculateScore(b) - calculateScore(a); // Descending order for "BEST"
+        }
+        return 0;
+    });
+};
+
 
 export const combineResponses = (responses: any) => {
     const responseMap = new Map();

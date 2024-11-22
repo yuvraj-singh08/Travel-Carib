@@ -8,6 +8,7 @@ export type FlightOfferSearchParams = {
     maxLayovers: number,
     cabinClass: CabinClass,
     returnDate?: string,
+    sortBy: 'BEST' | 'FAST' | 'CHEAP',
     filters?: FilterType
 }
 
@@ -20,6 +21,7 @@ export type FlightLeg = {
 export type MultiCitySearchParams = {
     FlightDetails: FlightLeg[],
     passengerType: string,
+    sortBy: 'BEST' | 'FAST' | 'CHEAP',
     maxLayovers: number,
     cabinClass: CabinClass,
     filters?: FilterType

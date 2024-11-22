@@ -28,6 +28,7 @@ class FlightClient {
                 maxLayovers: params.maxLayovers,
                 cabinClass: params.cabinClass,
                 filters: params.filters,
+                sortBy: params.sortBy
             })
         })
 
@@ -35,7 +36,7 @@ class FlightClient {
 
         const combinedRoutes = combineMultiCityRoutes(response);
         const normalizedResponse = normalizeMultiResponse(combinedRoutes);
-        const sortedResponse = sortResponse(normalizedResponse);
+        const sortedResponse = sortResponse(normalizedResponse, params.sortBy);
         const result = sortedResponse.filter((route, index) => {
             if (index < 30) {
                 return true;
@@ -218,7 +219,7 @@ class FlightClient {
             const normalizedResponse = normalizeResponse(temp)
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
-            const sortedResponse = sortResponse(filteredResponse);
+            const sortedResponse = sortResponse(filteredResponse, params.sortBy);
             const result = sortedResponse.filter((route, index) => {
                 if (index < 60) {
                     return true;
