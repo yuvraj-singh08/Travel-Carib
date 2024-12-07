@@ -23,25 +23,25 @@ export const addBooking = async (req: Request, res: Response) => {
     const payment = await prisma.bookPayment.create({
       data: {
         bookingId: booking.id,
-        totalAmount: data.totalAmount,
-        currency: data.currency,
+        totalAmount: data.pricing.totalRefund,
+        currency: "USD",
         paymentType: "",
       },
     });
-
+    
     let discount;
-
-    const discountData =
-      typeof booking.discount === "string"
-        ? JSON.parse(booking.discount)
-        : booking.discount;
-    if (discountData?.code) {
-      discount = await prisma.deals.findUnique({
-        where: {
-          code: data.discount?.code,
-        },
-      });
-    }
+    
+    // const discountData =
+    //   typeof booking.discount === "string"
+    //     ? JSON.parse(booking.discount)
+    //     : booking.discount;
+    // if (discountData?.code) {
+    //   discount = await prisma.deals.findUnique({
+    //     where: {
+    //       code: data.discount?.code,
+    //     },
+    //   });
+    // }
 
     if (discount) {
       let used = discount.used + 1;
