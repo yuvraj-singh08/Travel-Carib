@@ -1,15 +1,23 @@
 import { Request, Response } from "express";
 import { prisma } from "../prismaClient";
-import { AuthenticatedRequest } from "../../types/express";
-import { deals } from "@prisma/client";
+
+const adminStatus = {
+  TICKETED: "Confirmed",
+  PENDING_TICKET: "Pending",
+  PENDING_PAYMENT: "Pending",
+  EXPIRED: "Cancelled",
+  FAILED_BOOKING: "Cancelled",
+};
 
 export const addBooking = async (req: Request, res: Response) => {
   const data = req.body;
 
   try {
     const booking = await prisma.booking.create({
-      data: data,
-      
+      data: {
+        ...data,
+        adminStatus: adminStatus[data.adminStatus],
+      },
     });
 
     const payment = await prisma.bookPayment.create({
@@ -23,7 +31,10 @@ export const addBooking = async (req: Request, res: Response) => {
 
     let discount;
 
-    const discountData = typeof booking.discount === 'string' ? JSON.parse(booking.discount) : booking.discount;
+    const discountData =
+      typeof booking.discount === "string"
+        ? JSON.parse(booking.discount)
+        : booking.discount;
     if (discountData?.code) {
       discount = await prisma.deals.findUnique({
         where: {
@@ -109,7 +120,10 @@ export const updateBooking = async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.update({
       where: { id: id },
-      data: data,
+      data: {
+        ...data,
+        adminStatus: adminStatus[data.adminStatus],
+      },
     });
 
     return res.status(200).json({ booking, success: true });
