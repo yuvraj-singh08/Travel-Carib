@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../prismaClient";
+import { AuthenticatedRequest } from "../../types/express";
 
 const adminStatus = {
   TICKETED: "Confirmed",
@@ -9,7 +10,15 @@ const adminStatus = {
   FAILED_BOOKING: "Cancelled",
 };
 
-export const addBooking = async (req: Request, res: Response) => {
+export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   const data = req.body;
 
   try {
@@ -17,6 +26,7 @@ export const addBooking = async (req: Request, res: Response) => {
       data: {
         ...data,
         adminStatus: adminStatus[data.adminStatus],
+        userId: userId,
       },
     });
 
@@ -28,9 +38,9 @@ export const addBooking = async (req: Request, res: Response) => {
         paymentType: "",
       },
     });
-    
+
     let discount;
-    
+
     // const discountData =
     //   typeof booking.discount === "string"
     //     ? JSON.parse(booking.discount)
@@ -78,9 +88,24 @@ export const addBooking = async (req: Request, res: Response) => {
   }
 };
 
-export const fetchBooking = async (req: Request, res: Response) => {
+export const fetchBooking = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   try {
-    const booking = await prisma.booking.findMany();
+    const booking = await prisma.booking.findMany({
+      where: {
+        userId: userId,
+      },
+    });
 
     if (!booking) {
       return res
@@ -97,7 +122,18 @@ export const fetchBooking = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteBooking = async (req: Request, res: Response) => {
+export const deleteBooking = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   const { id } = req.body;
 
   try {
@@ -114,7 +150,18 @@ export const deleteBooking = async (req: Request, res: Response) => {
   }
 };
 
-export const updateBooking = async (req: Request, res: Response) => {
+export const updateBooking = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
   const { id, ...data } = req.body;
 
   try {
@@ -123,6 +170,7 @@ export const updateBooking = async (req: Request, res: Response) => {
       data: {
         ...data,
         adminStatus: adminStatus[data.adminStatus],
+        userId: userId,
       },
     });
 

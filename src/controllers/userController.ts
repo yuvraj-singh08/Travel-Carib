@@ -182,7 +182,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get a user by ID
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
-
+  
   if (!userId) {
     return res
       .status(401)

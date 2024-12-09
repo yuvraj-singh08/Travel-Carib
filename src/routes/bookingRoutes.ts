@@ -5,12 +5,13 @@ import {
   fetchBooking,
   updateBooking,
 } from "../controllers/bookingController";
+import { authenticateToken } from "../middleware/authmiddleware";
 
 const router = Router();
 
-router.get("/bookings", fetchBooking);
-router.post("/add-booking", addBooking);
-router.post("/update-booking", updateBooking);
-router.post("/delete-booking", deleteBooking);
+router.get("/bookings", authenticateToken, fetchBooking);
+router.post("/add-booking", authenticateToken, addBooking);
+router.post("/update-booking", authenticateToken, updateBooking);
+router.post("/delete-booking", authenticateToken, deleteBooking);
 
 export default router;
