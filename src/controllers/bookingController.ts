@@ -11,47 +11,44 @@ const adminStatus = {
 };
 
 export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user.id;
 
   if (!userId) {
     return res
-      .status(401)
-      .json({ error: "Unauthorized access, user ID missing" });
+      .status(403)
+      .json({ error: "Unauthorized access", success: false });
   }
-
+  
   const data = req.body;
-
+  data.userId = userId;
+  
   try {
     const booking = await prisma.booking.create({
-      data: {
-        ...data,
-        adminStatus: adminStatus[data.adminStatus],
-        userId: userId,
-      },
+      data: data,
     });
 
     const payment = await prisma.bookPayment.create({
       data: {
         bookingId: booking.id,
-        totalAmount: data.pricing.totalRefund,
-        currency: "USD",
+        totalAmount: data.totalAmount,
+        currency: data.currency,
         paymentType: "",
       },
     });
 
     let discount;
 
-    // const discountData =
-    //   typeof booking.discount === "string"
-    //     ? JSON.parse(booking.discount)
-    //     : booking.discount;
-    // if (discountData?.code) {
-    //   discount = await prisma.deals.findUnique({
-    //     where: {
-    //       code: data.discount?.code,
-    //     },
-    //   });
-    // }
+    const discountData =
+      typeof booking.discount === "string"
+        ? JSON.parse(booking.discount)
+        : booking.discount;
+    if (discountData?.code) {
+      discount = await prisma.deals.findUnique({
+        where: {
+          code: data.discount?.code,
+        },
+      });
+    }
 
     if (discount) {
       let used = discount.used + 1;
@@ -88,24 +85,9 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const fetchBooking = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "Unauthorized access, user ID missing" });
-  }
-
+export const fetchBooking = async (req: Request, res: Response) => {
   try {
-    const booking = await prisma.booking.findMany({
-      where: {
-        userId: userId,
-      },
-    });
+    const booking = await prisma.booking.findMany();
 
     if (!booking) {
       return res
@@ -122,18 +104,7 @@ export const fetchBooking = async (
   }
 };
 
-export const deleteBooking = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "Unauthorized access, user ID missing" });
-  }
-
+export const deleteBooking = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
@@ -150,28 +121,13 @@ export const deleteBooking = async (
   }
 };
 
-export const updateBooking = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "Unauthorized access, user ID missing" });
-  }
-
+export const updateBooking = async (req: Request, res: Response) => {
   const { id, ...data } = req.body;
 
   try {
     const booking = await prisma.booking.update({
       where: { id: id },
-      data: {
-        ...data,
-        adminStatus: adminStatus[data.adminStatus],
-        userId: userId,
-      },
+      data: data,
     });
 
     return res.status(200).json({ booking, success: true });

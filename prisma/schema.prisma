@@ -73,7 +73,6 @@ model User {
   provider        String
   ticket          TicketManagement[]
   watchlist       Watchlist[]
-  // booking2        Booking2[]
 }
 
 model Watchlist {
@@ -144,34 +143,34 @@ enum AdminStatus {
   FAILED_BOOKING
 }
 
-// model Booking {
-//   id             String        @id @default(uuid()) @map("_id")
-//   contactDetail  Json // email and phone number
-//   flightDetails  Json[]
-//   payment        BookPayment[] // Payment id
-//   passenger      Json[] // passenger[] id reference
-//   address        Json
-//   baseFare       Json[]
-//   tax_fee_surges Json[]
-//   otherCharges   Json[]
-//   discount       Json?
-//   totalAmount    Float
-//   currency       String
-//   adminStatus    AdminStatus   @default(PENDING_TICKET)
-//   User           User          @relation(fields: [userId], references: [id])
-//   userId         String
-// }
-
 model Booking {
-  id          String        @id @default(uuid()) @map("_id")
-  booking     Json?
-  departure   Json?
-  return      Json?
-  pricing     Json?
-  User        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String?
-  BookPayment BookPayment[]
+  id             String        @id @default(uuid()) @map("_id")
+  contactDetail  Json // email and phone number
+  flightDetails  Json[]
+  payment        BookPayment[] // Payment id
+  passenger      Json[] // passenger[] id reference
+  address        Json
+  baseFare       Json[]
+  tax_fee_surges Json[]
+  otherCharges   Json[]
+  discount       Json?
+  totalAmount    Float
+  currency       String
+  adminStatus    AdminStatus   @default(PENDING_TICKET)
+  User           User          @relation(fields: [userId], references: [id])
+  userId         String
 }
+
+// model Booking {
+//   id          String        @id @default(uuid()) @map("_id")
+//   booking     Json?
+//   departure   Json?
+//   return      Json?
+//   pricing     Json?
+//   User        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   userId      String?
+//   BookPayment BookPayment[]
+// }
 
 enum UserStatus {
   PENDING
