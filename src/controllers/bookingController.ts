@@ -18,10 +18,10 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
       .status(403)
       .json({ error: "Unauthorized access", success: false });
   }
-  
+
   const data = req.body;
   data.userId = userId;
-  
+
   try {
     const booking = await prisma.booking.create({
       data: data,
@@ -85,7 +85,18 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const fetchBooking = async (req: Request, res: Response) => {
+export const fetchBooking = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user.id;
+
+  if (!userId) {
+    return res
+      .status(403)
+      .json({ error: "Unauthorized access", success: false });
+  }
+
   try {
     const booking = await prisma.booking.findMany();
 
@@ -95,7 +106,78 @@ export const fetchBooking = async (req: Request, res: Response) => {
         .json({ error: "Booking not found", success: false });
     }
 
-    return res.status(200).json({ booking, success: true });
+    //     "booking": {
+    //       "from": "Chennai",
+    //       "to": "Jabalpur",
+    //       "status": "Completed",
+    //       "type": "Round Trip Flight",
+    //       "bookingId": "NF7A9EF25118309251"
+    //     },
+    //     "departure": {
+    //       "date": "Thu, 22 Aug",
+    //       "departureTime": "04:45 AM",
+    //       "arrivalTime": "11:45 AM",
+    //       "from": {
+    //         "code": "MAA",
+    //         "city": "Chennai",
+    //         "terminal": "Terminal 1"
+    //       },
+    //       "to": {
+    //         "code": "JLR",
+    //         "city": "Jabalpur"
+    //       },
+    //       "flightNumbers": [
+    //         "6E 5093",
+    //         "6E 791"
+    //       ],
+    //       "passenger": "Aditya kumar",
+    //       "pnr": "K37KMQ"
+    //     },
+    //     "return": {
+    //       "date": "Sun, 01 Sep",
+    //       "departureTime": "12:15 PM",
+    //       "arrivalTime": "07:10 PM",
+    //       "from": {
+    //         "code": "JLR",
+    //         "city": "Jabalpur"
+    //       },
+    //       "to": {
+    //         "code": "MAA",
+    //         "city": "Chennai",
+    //         "terminal": "Terminal 1"
+    //       },
+    //       "flightNumbers": [
+    //         "6E 792",
+    //         "6E 5048"
+    //       ],
+    //       "passenger": "Aditya kumar",
+    //       "pnr": "R37KMQ"
+    //     },
+    //     "pricing": {
+    //       "baseFare": {
+    //         "adult": {
+    //           "count": 1,
+    //           "price": 110
+    //         }
+    //       },
+    //       "taxes": {
+    //         "airlineTaxes": 17.3,
+    //         "serviceFee": 6
+    //       },
+    //       "otherServices": {
+    //         "charity": 5
+    //       },
+    //       "totalRefund": 139
+    //     },
+    //     "userId": null
+    //   }
+
+    const updatedbooking = booking.map((data) => ({
+      ...data,
+      adminStatus: adminStatus[data.adminStatus],
+    }));
+    
+    return res.status(200).json({ updatedbooking, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res

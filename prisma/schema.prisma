@@ -161,17 +161,6 @@ model Booking {
   userId         String
 }
 
-// model Booking {
-//   id          String        @id @default(uuid()) @map("_id")
-//   booking     Json?
-//   departure   Json?
-//   return      Json?
-//   pricing     Json?
-//   User        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   userId      String?
-//   BookPayment BookPayment[]
-// }
-
 enum UserStatus {
   PENDING
   COMPLETED
