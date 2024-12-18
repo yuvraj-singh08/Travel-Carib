@@ -343,3 +343,11 @@ model SearchManagement {
   fareCodesExcluded     String
   lastUpdate            DateTime       @updatedAt
 }
+
+model Blog {
+  id            String @id @default(uuid()) @map("_id")
+  mainImg       String
+  description   String
+  secondaryImg  String[]
+  secondaryDesc String
+}

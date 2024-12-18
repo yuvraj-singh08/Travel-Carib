@@ -64,6 +64,11 @@ import {
   addCommissionType,
   updateCommissionType,
   deleteCommissionType,
+  getBlogs,
+  getBlogById,
+  createBlog,
+  updateBlog,
+  deleteBlog,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -143,5 +148,11 @@ router.get("/search", getSearchManagement);
 router.post("/add-search", createSearchManagement);
 router.post("/update-search", updateSearchManagement);
 router.post("/delete-search", deleteSearchManagement);
+
+router.get("/blogs", getBlogs);
+router.get("/blog/:id", getBlogById);
+router.post("/add-blog", createBlog);
+router.post("/update-blog", updateBlog);
+router.post("/delete-blog", deleteBlog);
 
 export default router;

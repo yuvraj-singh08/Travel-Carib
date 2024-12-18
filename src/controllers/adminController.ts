@@ -4,7 +4,11 @@ import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
 import { handlePrismaError } from "../utils/prismaError";
 
-export const addFirewall = async (req: Request, res: Response, next: NextFunction) => {
+export const addFirewall = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { title, supplier, code, flightNumber, from, to } = req.body;
 
   try {
@@ -34,7 +38,11 @@ export const addFirewall = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const getFirewall = async (req: Request, res: Response, next: NextFunction) => {
+export const getFirewall = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const firewall = await prisma.firewall.findMany();
 
@@ -53,7 +61,11 @@ export const getFirewall = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const deleteFirewall = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteFirewall = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -77,7 +89,11 @@ export const deleteFirewall = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const addCommission = async (req: Request, res: Response, next: NextFunction) => {
+export const addCommission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
 
   try {
@@ -106,7 +122,11 @@ export const addCommission = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getCommission = async (req: Request, res: Response, next: NextFunction) => {
+export const getCommission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const commission = await prisma.commissionManagement.findMany();
 
@@ -125,7 +145,11 @@ export const getCommission = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getCommissionById = async (req: Request, res: Response, next: NextFunction) => {
+export const getCommissionById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
   try {
     const commission = await prisma.commissionManagement.findUnique({
@@ -144,7 +168,11 @@ export const getCommissionById = async (req: Request, res: Response, next: NextF
   }
 };
 
-export const updateCommision = async (req: Request, res: Response, next: NextFunction) => {
+export const updateCommision = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const data = req.body;
 
   try {
@@ -176,7 +204,11 @@ export const updateCommision = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const deleteCommision = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCommision = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -200,7 +232,11 @@ export const deleteCommision = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const addRoles = async (req: Request, res: Response, next: NextFunction) => {
+export const addRoles = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { name, description, permissionGroups } = req.body;
 
   try {
@@ -227,7 +263,11 @@ export const addRoles = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const getRoles = async (req: Request, res: Response, next: NextFunction) => {
+export const getRoles = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const roles = await prisma.role.findMany();
 
@@ -246,7 +286,11 @@ export const getRoles = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const getRolesById = async (req: Request, res: Response, next: NextFunction) => {
+export const getRolesById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
 
   try {
@@ -266,7 +310,11 @@ export const getRolesById = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const updateRoles = async (req: Request, res: Response, next: NextFunction) => {
+export const updateRoles = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, title, description, permissionGroups } = req.body;
 
   try {
@@ -296,7 +344,11 @@ export const updateRoles = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const deleteRoles = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteRoles = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
   console.log(id);
   try {
@@ -320,7 +372,11 @@ export const deleteRoles = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const addUser = async (req: Request, res: Response, next: NextFunction) => {
+export const addUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const {
     name,
     uniqueId,
@@ -365,7 +421,11 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const users = await prisma.userManagement.findMany();
 
@@ -384,7 +444,11 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
 
   try {
@@ -409,7 +473,11 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const {
     id,
     email,
@@ -458,7 +526,11 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -482,7 +554,11 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const addTicket = async (req: Request, res: Response, next: NextFunction) => {
+export const addTicket = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const data = req.body;
 
   try {
@@ -505,7 +581,11 @@ export const addTicket = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const getTickets = async (req: Request, res: Response, next: NextFunction) => {
+export const getTickets = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const tickets = await prisma.ticketManagement.findMany();
 
@@ -524,7 +604,11 @@ export const getTickets = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getTicketById = async (req: Request, res: Response, next: NextFunction) => {
+export const getTicketById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
 
   try {
@@ -549,7 +633,11 @@ export const getTicketById = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const updateTicket = async (req: Request, res: Response, next: NextFunction) => {
+export const updateTicket = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, ...data } = req.body;
 
   try {
@@ -575,7 +663,11 @@ export const updateTicket = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const deleteTicket = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteTicket = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -599,7 +691,11 @@ export const deleteTicket = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const addCookie = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addCookie = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const data = req.body;
 
   try {
@@ -622,7 +718,11 @@ export const addCookie = async (req: AuthenticatedRequest, res: Response, next: 
   }
 };
 
-export const getCookies = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getCookies = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const cookies = await prisma.cookie.findMany();
 
@@ -643,7 +743,8 @@ export const getCookies = async (req: AuthenticatedRequest, res: Response, next:
 
 export const getCookieById = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -671,7 +772,8 @@ export const getCookieById = async (
 
 export const updateCookie = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const {
     id,
@@ -721,7 +823,8 @@ export const updateCookie = async (
 
 export const deleteCookie = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -746,7 +849,11 @@ export const deleteCookie = async (
   }
 };
 
-export const addSocials = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addSocials = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { socialsEnable, socialPlatforms } = req.body;
 
   try {
@@ -772,7 +879,11 @@ export const addSocials = async (req: AuthenticatedRequest, res: Response, next:
   }
 };
 
-export const getSocials = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getSocials = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const socials = await prisma.socialSettings.findMany();
 
@@ -793,7 +904,8 @@ export const getSocials = async (req: AuthenticatedRequest, res: Response, next:
 
 export const getSocialById = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -821,7 +933,8 @@ export const getSocialById = async (
 
 export const updateSocial = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id, socialsEnable, socialPlatforms } = req.body;
 
@@ -853,7 +966,8 @@ export const updateSocial = async (
 
 export const deleteSocials = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -878,7 +992,11 @@ export const deleteSocials = async (
   }
 };
 
-export const addPrivacy = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addPrivacy = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { isEnabled, content } = req.body;
 
   try {
@@ -904,7 +1022,11 @@ export const addPrivacy = async (req: AuthenticatedRequest, res: Response, next:
   }
 };
 
-export const getPrivacy = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getPrivacy = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const privacy = await prisma.privacyPolicy.findMany();
 
@@ -925,7 +1047,8 @@ export const getPrivacy = async (req: AuthenticatedRequest, res: Response, next:
 
 export const getPrivacyById = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -953,7 +1076,8 @@ export const getPrivacyById = async (
 
 export const updatePrivacy = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id, isEnabled, content } = req.body;
 
@@ -985,7 +1109,8 @@ export const updatePrivacy = async (
 
 export const deletePrivacy = async (
   req: AuthenticatedRequest,
-  res: Response, next: NextFunction
+  res: Response,
+  next: NextFunction
 ) => {
   const { id } = req.body;
 
@@ -1010,7 +1135,11 @@ export const deletePrivacy = async (
   }
 };
 
-export const addTerms = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addTerms = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { isEnabled, content } = req.body;
 
   try {
@@ -1036,7 +1165,11 @@ export const addTerms = async (req: AuthenticatedRequest, res: Response, next: N
   }
 };
 
-export const getTerms = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getTerms = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const privacy = await prisma.termsAndCondition.findMany();
 
@@ -1055,7 +1188,11 @@ export const getTerms = async (req: AuthenticatedRequest, res: Response, next: N
   }
 };
 
-export const getTermById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getTermById = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -1080,7 +1217,11 @@ export const getTermById = async (req: AuthenticatedRequest, res: Response, next
   }
 };
 
-export const updateTerm = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateTerm = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, isEnabled, content } = req.body;
 
   try {
@@ -1109,7 +1250,11 @@ export const updateTerm = async (req: AuthenticatedRequest, res: Response, next:
   }
 };
 
-export const deleteTerm = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const deleteTerm = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -1133,7 +1278,11 @@ export const deleteTerm = async (req: AuthenticatedRequest, res: Response, next:
   }
 };
 
-export const addEmailSMTP = async (req: Request, res: Response, next: NextFunction) => {
+export const addEmailSMTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const {
     mailDriver,
     mailDriverHost,
@@ -1174,7 +1323,11 @@ export const addEmailSMTP = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const getEmailSMTP = async (req: Request, res: Response, next: NextFunction) => {
+export const getEmailSMTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const emailSMTP = await prisma.emailSMTP.findMany();
 
@@ -1193,7 +1346,11 @@ export const getEmailSMTP = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const getEmailSMTPById = async (req: Request, res: Response, next: NextFunction) => {
+export const getEmailSMTPById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -1218,7 +1375,11 @@ export const getEmailSMTPById = async (req: Request, res: Response, next: NextFu
   }
 };
 
-export const updateEmailSMTP = async (req: Request, res: Response, next: NextFunction) => {
+export const updateEmailSMTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const {
     id,
     mailDriver,
@@ -1263,7 +1424,11 @@ export const updateEmailSMTP = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const deleteEmailSMTP = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteEmailSMTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -1287,7 +1452,11 @@ export const deleteEmailSMTP = async (req: Request, res: Response, next: NextFun
   }
 };
 
-export const createDeal = async (req: Request, res: Response, next: NextFunction) => {
+export const createDeal = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const deal = await prisma.deals.create({
       data: req.body,
@@ -1299,7 +1468,11 @@ export const createDeal = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getDeals = async (req: Request, res: Response, next: NextFunction) => {
+export const getDeals = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const deals = await prisma.deals.findMany();
     res.status(200).json(deals);
@@ -1309,7 +1482,11 @@ export const getDeals = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-export const getDealById = async (req: Request, res: Response, next: NextFunction) => {
+export const getDealById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
   try {
     const deal = await prisma.deals.findUnique({
@@ -1326,7 +1503,11 @@ export const getDealById = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const getDealByCode = async (req: Request, res: Response, next: NextFunction) => {
+export const getDealByCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { code } = req.params;
   console.log(code);
 
@@ -1345,7 +1526,11 @@ export const getDealByCode = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const updateDeal = async (req: Request, res: Response, next: NextFunction) => {
+export const updateDeal = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, ...data } = req.body;
   try {
     const deal = await prisma.deals.update({
@@ -1359,7 +1544,11 @@ export const updateDeal = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const deleteDeal = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteDeal = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
   try {
     const deal = await prisma.deals.delete({
@@ -1372,7 +1561,11 @@ export const deleteDeal = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const addCommissionType = async (req: Request, res: Response, next: NextFunction) => {
+export const addCommissionType = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { type } = req.body;
 
   try {
@@ -1397,7 +1590,11 @@ export const addCommissionType = async (req: Request, res: Response, next: NextF
   }
 };
 
-export const getCommissionTypes = async (req: Request, res: Response, next: NextFunction) => {
+export const getCommissionTypes = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const commissionTypes = await prisma.commissionType.findMany();
 
@@ -1416,7 +1613,11 @@ export const getCommissionTypes = async (req: Request, res: Response, next: Next
   }
 };
 
-export const getCommissionTypeById = async (req: Request, res: Response, next: NextFunction) => {
+export const getCommissionTypeById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
 
   try {
@@ -1441,7 +1642,11 @@ export const getCommissionTypeById = async (req: Request, res: Response, next: N
   }
 };
 
-export const updateCommissionType = async (req: Request, res: Response, next: NextFunction) => {
+export const updateCommissionType = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, type } = req.body;
 
   try {
@@ -1469,7 +1674,11 @@ export const updateCommissionType = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const deleteCommissionType = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCommissionType = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -1493,7 +1702,11 @@ export const deleteCommissionType = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const createPayment = async (req: Request, res: Response, next: NextFunction) => {
+export const createPayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const payment = await prisma.payment.create({
       data: req.body,
@@ -1505,7 +1718,11 @@ export const createPayment = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getPayments = async (req: Request, res: Response, next: NextFunction) => {
+export const getPayments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const payments = await prisma.payment.findMany();
     res.status(200).json(payments);
@@ -1515,7 +1732,11 @@ export const getPayments = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const getPaymentById = async (req: Request, res: Response, next: NextFunction) => {
+export const getPaymentById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.params;
   try {
     const payment = await prisma.payment.findUnique({
@@ -1532,7 +1753,11 @@ export const getPaymentById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const updatePayment = async (req: Request, res: Response, next: NextFunction) => {
+export const updatePayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, ...data } = req.body;
   try {
     const payment = await prisma.payment.update({
@@ -1546,7 +1771,11 @@ export const updatePayment = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const deletePayment = async (req: Request, res: Response, next: NextFunction) => {
+export const deletePayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
   try {
     const payment = await prisma.payment.delete({
@@ -1559,7 +1788,11 @@ export const deletePayment = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const countTickets = async (req: Request, res: Response, next: NextFunction) => {
+export const countTickets = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const pendingTickets = await prisma.ticketManagement.count({
       where: {
@@ -1590,7 +1823,11 @@ export const countTickets = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const createSearchManagement = async (req: Request, res: Response, next: NextFunction) => {
+export const createSearchManagement = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const newEntry = await prisma.searchManagement.create({
       data: req.body,
@@ -1603,7 +1840,11 @@ export const createSearchManagement = async (req: Request, res: Response, next: 
 };
 
 // Read/Search SearchManagement entries
-export const getSearchManagement = async (req: Request, res: Response, next: NextFunction) => {
+export const getSearchManagement = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const entries = await prisma.searchManagement.findMany();
     res.status(200).json(entries);
@@ -1614,7 +1855,11 @@ export const getSearchManagement = async (req: Request, res: Response, next: Nex
 };
 
 // Update an existing SearchManagement entry
-export const updateSearchManagement = async (req: Request, res: Response, next: NextFunction) => {
+export const updateSearchManagement = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, ...data } = req.body;
   try {
     const updatedEntry = await prisma.searchManagement.update({
@@ -1629,7 +1874,11 @@ export const updateSearchManagement = async (req: Request, res: Response, next: 
 };
 
 // Delete a SearchManagement entry
-export const deleteSearchManagement = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteSearchManagement = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
   try {
     await prisma.searchManagement.delete({
@@ -1638,6 +1887,105 @@ export const deleteSearchManagement = async (req: Request, res: Response, next: 
     res
       .status(200)
       .json({ message: "SearchManagement entry deleted", success: true });
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+//blogs
+export const createBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { mainImg, description, secondaryImg, secondaryDesc } = req.body;
+
+    if (secondaryImg.length === 0 || secondaryImg.length > 4) {
+      res.status(400).json({ error: "Secondary description is required" });
+    }
+
+    const newEntry = await prisma.blog.create({
+      data: {
+        mainImg,
+        description,
+        secondaryImg,
+        secondaryDesc,
+      },
+    });
+
+    res.status(200).json(newEntry);
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getBlogs = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const entries = await prisma.blog.findMany();
+    res.status(200).json(entries);
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getBlogById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+  try {
+    const entry = await prisma.blog.findUnique({
+      where: { id },
+    });
+    if (entry) {
+      res.status(200).json(entry);
+    } else {
+      res.status(404).json({ error: "Blog not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const updateBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id, ...data } = req.body;
+  try {
+    const updatedEntry = await prisma.blog.update({
+      where: { id },
+      data: data,
+    });
+    res.status(200).json(updatedEntry);
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const deleteBlog = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.body;
+  try {
+    await prisma.blog.delete({
+      where: { id },
+    });
+    res.status(200).json({ message: "Blog deleted", success: true });
   } catch (error) {
     console.log(error);
     next(handlePrismaError(error));
