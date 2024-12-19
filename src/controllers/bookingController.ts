@@ -85,99 +85,101 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const fetchBooking = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const userId = req.user.id;
+export const fetchBooking = async (req: Request, res: Response) => {
+  // const userId = req.user.id;
 
-  if (!userId) {
-    return res
-      .status(403)
-      .json({ error: "Unauthorized access", success: false });
-  }
+  // if (!userId) {
+  //   return res
+  //     .status(403)
+  //     .json({ error: "Unauthorized access", success: false });
+  // }
 
   try {
-    const booking = await prisma.booking.findMany();
+    const bookings = await prisma.booking.findMany();
 
-    if (!booking) {
+    if (!bookings) {
       return res
         .status(404)
         .json({ error: "Booking not found", success: false });
     }
 
-    //     "booking": {
-    //       "from": "Chennai",
-    //       "to": "Jabalpur",
-    //       "status": "Completed",
-    //       "type": "Round Trip Flight",
-    //       "bookingId": "NF7A9EF25118309251"
-    //     },
-    //     "departure": {
-    //       "date": "Thu, 22 Aug",
-    //       "departureTime": "04:45 AM",
-    //       "arrivalTime": "11:45 AM",
-    //       "from": {
-    //         "code": "MAA",
-    //         "city": "Chennai",
-    //         "terminal": "Terminal 1"
-    //       },
-    //       "to": {
-    //         "code": "JLR",
-    //         "city": "Jabalpur"
-    //       },
-    //       "flightNumbers": [
-    //         "6E 5093",
-    //         "6E 791"
-    //       ],
-    //       "passenger": "Aditya kumar",
-    //       "pnr": "K37KMQ"
-    //     },
-    //     "return": {
-    //       "date": "Sun, 01 Sep",
-    //       "departureTime": "12:15 PM",
-    //       "arrivalTime": "07:10 PM",
-    //       "from": {
-    //         "code": "JLR",
-    //         "city": "Jabalpur"
-    //       },
-    //       "to": {
-    //         "code": "MAA",
-    //         "city": "Chennai",
-    //         "terminal": "Terminal 1"
-    //       },
-    //       "flightNumbers": [
-    //         "6E 792",
-    //         "6E 5048"
-    //       ],
-    //       "passenger": "Aditya kumar",
-    //       "pnr": "R37KMQ"
-    //     },
-    //     "pricing": {
-    //       "baseFare": {
-    //         "adult": {
-    //           "count": 1,
-    //           "price": 110
-    //         }
-    //       },
-    //       "taxes": {
-    //         "airlineTaxes": 17.3,
-    //         "serviceFee": 6
-    //       },
-    //       "otherServices": {
-    //         "charity": 5
-    //       },
-    //       "totalRefund": 139
-    //     },
-    //     "userId": null
-    //   }
+    const formattedBookings = bookings.map((booking: any) => {
+      const firstSegment = booking.flightDetails[0].slices[0].segments[0];
+      const secondSegment = booking.flightDetails[0].slices[0].segments[1];
 
-    const updatedbooking = booking.map((data) => ({
-      ...data,
-      adminStatus: adminStatus[data.adminStatus],
-    }));
-    
-    return res.status(200).json({ updatedbooking, success: true });
+      return {
+        booking: {
+          from: firstSegment.origin.iata_code,
+          to: secondSegment.destination.iata_code,
+          status: adminStatus[booking.adminStatus],
+          type: "One Way Flight",
+          bookingId: booking.flightDetails[0].responseId,
+        },
+        departure: {
+          date: new Date(firstSegment.departing_at).toLocaleDateString(
+            "en-US",
+            {
+              weekday: "short",
+              day: "2-digit",
+              month: "short",
+            }
+          ),
+          departureTime: new Date(firstSegment.departing_at).toLocaleTimeString(
+            "en-US",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }
+          ),
+          arrivalTime: new Date(firstSegment.arriving_at).toLocaleTimeString(
+            "en-US",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }
+          ),
+          from: {
+            code: firstSegment.origin.iata_code,
+            city: firstSegment.origin.iata_code,
+          },
+          to: {
+            code: booking.flightDetails[0].slices[0].segments[
+              booking.flightDetails[0].slices[0].segments.length - 1
+            ].destination.iata_code,
+            city: booking.flightDetails[0].slices[0].segments[
+              booking.flightDetails[0].slices[0].segments.length - 1
+            ].destination.iata_code,
+          },
+          flightNumbers: [
+            `${firstSegment.operating_carrier.iata_code} ${firstSegment.operating_carrier_flight_number}`,
+            `${secondSegment.operating_carrier.iata_code} ${secondSegment.operating_carrier_flight_number}`,
+          ],
+          passenger: `${booking.passenger[0].firstName} ${booking.passenger[0].surname}`,
+          pnr: booking.flightDetails[0].responseId.substring(0, 6),
+        },
+        pricing: {
+          baseFare: {
+            adult: {
+              count: 1,
+              price: booking.totalAmount,
+            },
+          },
+          taxes: {
+            airlineTaxes: 0,
+            serviceFee: 0,
+          },
+          otherServices: {
+            charity: 0,
+          },
+          totalRefund: booking.totalAmount,
+        },
+        userId: booking.userId,
+      };
+    });
+
+    return res.status(200).json({ bookings: formattedBookings, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res
