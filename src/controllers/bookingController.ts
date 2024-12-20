@@ -85,14 +85,17 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const fetchBooking = async (req: Request, res: Response) => {
-  // const userId = req.user.id;
+export const fetchBooking = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const userId = req.user.id;
 
-  // if (!userId) {
-  //   return res
-  //     .status(403)
-  //     .json({ error: "Unauthorized access", success: false });
-  // }
+  if (!userId) {
+    return res
+      .status(403)
+      .json({ error: "Unauthorized access", success: false });
+  }
 
   try {
     const bookings = await prisma.booking.findMany();
@@ -112,7 +115,7 @@ export const fetchBooking = async (req: Request, res: Response) => {
           from: firstSegment.origin.iata_code,
           to: secondSegment.destination.iata_code,
           status: adminStatus[booking.adminStatus],
-          type: "One Way Flight",
+          type: booking.flight_type,
           bookingId: booking.flightDetails[0].responseId,
         },
         departure: {
