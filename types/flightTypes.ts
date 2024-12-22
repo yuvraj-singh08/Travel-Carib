@@ -107,6 +107,8 @@ type Segment = {
     destination: Location;
     origin: Location;
     id: string;
+    checkedBaggage: number;
+    cabinBaggage: number;
     bookingAvl: any,
     segmentPrice?: any
 };
@@ -188,6 +190,8 @@ export type FilterType = {
     MinDepartureTime?: number,
     MaxArrivalTime?: number,
     MinArrivalTime?: number,
+    CabinBaggage?: number,
+    CheckedBaggage?: number,
     SelfTransferAllowed?: boolean,
     PrefferedAirlines?: string[],
 }

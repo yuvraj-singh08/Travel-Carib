@@ -371,7 +371,9 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
           destination: {
             iata_code: route?.ArrivalAirport?.[0]?.$?.LocationCode
           },
-          bookingAvl
+          bookingAvl,
+          cabinBaggage: 1,
+          checkedBaggage: 1,
         };
 
         segments.push(segment);

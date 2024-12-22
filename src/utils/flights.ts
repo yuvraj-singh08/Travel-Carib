@@ -19,7 +19,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
             let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             let flag = true;
-            result.slices?.[0]?.segments?.forEach((segment) => {
+            result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
                 for (let i = 0; i < firewall.length; i++) {
@@ -50,6 +50,24 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                         }
                     }
                 }
+
+                const baggages = segment?.passengers?.[0]?.baggages
+                //@ts-ignore
+                // if (segment?.passengers?.[0]?.baggages?.filter((baggage) => baggage.type === "checked")?.quantity == undefined) {
+                //     console.log(segment?.passengers?.[0]);
+                // }
+                //@ts-ignore
+                const cabinBaggageData = baggages?.filter((baggage) => baggage.type === "carry_on")
+                //@ts-ignore
+                const checkedBaggageData = baggages?.filter((baggage) => baggage.type === "checked")
+                //@ts-ignore
+                const checkedBaggage = checkedBaggageData?.quantity || 0;
+                //@ts-ignore
+                const cabinBaggage = cabinBaggageData?.quantity || 0;
+                //@ts-ignore
+                result.slices[0].segments[segmentIndex].checkedBaggage = checkedBaggage;
+                //@ts-ignore
+                result.slices[0].segments[segmentIndex].cabinBaggage = cabinBaggage;
             })
 
             if (flag) {
@@ -78,7 +96,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             let routeId = "";
             let segments = [];
             let flag = true;
-            result?.itineraries?.[0]?.segments?.forEach((segment) => {
+            result?.itineraries?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 if (!flag) {
                     return;
                 }
@@ -112,6 +130,9 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                         }
                     }
                 }
+                const checkedBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCheckedBags?.quantity || 0;
+                //@ts-ignore
+                const cabinBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCabinBags?.quantity || 0;
                 segments.push({
                     departing_at: segment?.departure?.at,
                     arriving_at: segment?.arrival?.at,
@@ -136,7 +157,9 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                         iata_city_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.cityCode,
                         iata_country_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.countryCode
                     },
-                    duration: segment?.duration
+                    duration: segment?.duration,
+                    checkedBaggage,
+                    cabinBaggage
                     // departure_airport: segment?.departure?.airport?.code,
                     // arrival_airport: segment?.arrival?.airport?.code,
                 })
@@ -200,6 +223,21 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         const minPriceFilter = filters?.MinPrice ? parseFloat(route.total_amount) >= filters.MinPrice : true
         const maxPriceFilter = filters?.MaxPrice ? parseFloat(route.total_amount) <= filters.MaxPrice : true;
 
+        //Checkin Baggage
+        let checkedBaggage = true;
+        let cabinBaggage = true;
+        route?.slices?.forEach((slice) => {
+            slice?.segments?.forEach((segment) => {
+                if (filters.CabinBaggage != undefined && segment?.cabinBaggage < filters.CabinBaggage) {
+                    cabinBaggage = false;
+                }
+                if (filters.CabinBaggage != undefined && segment?.checkedBaggage < filters.CheckedBaggage) {
+                    checkedBaggage = false;
+                }
+            })
+        })
+
+
         //Onward Duration
         let MaxOnwardDuration = filters.MaxOnwardDuration ? false : true;
         let MinOnwardDuration = filters.MinOnwardDuration ? false : true;
@@ -260,7 +298,8 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
             }
         })
 
-        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines;
+
+        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage;
     });
 
     return filteredResponse;
