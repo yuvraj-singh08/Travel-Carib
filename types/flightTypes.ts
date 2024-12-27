@@ -1,4 +1,5 @@
 import { CabinClass } from "@duffel/api/types"
+import { $Enums } from "@prisma/client"
 
 export type FlightOfferSearchParams = {
     originLocation: string,
@@ -39,6 +40,7 @@ export type Offer = {
         payment_required_by: string | null;
         requires_instant_payment: boolean;
     };
+    commissionAmount: number;
     stops: number;
     available_services: string | null;
     supported_passenger_identity_document_types: string[];
@@ -223,4 +225,14 @@ export interface FlightDate {
 export interface PriceCalendar {
     date: string;
     minPrice: number;
+}
+
+export type CommissionType = {
+    id: string;
+    supplier: $Enums.FlightSupplier;
+    updateTime: Date;
+    type: string;
+    commissionTitle: string;
+    commissionFees: string;
+    feeType: $Enums.AirlineFeeType;
 }

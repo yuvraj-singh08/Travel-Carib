@@ -50,7 +50,10 @@ class FlightClient {
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
             //Calculating Possible Routes
-            const firewall = await prisma.firewall.findMany({})
+            const [firewall, commission] = await Promise.all([
+                prisma.firewall.findMany({}),
+                prisma.commissionManagement.findMany()
+            ])
             const allFirewall = [], kiuFirewall = [], amadeusFirewall = [], duffelFirewall = [];
             firewall.forEach((firewall) => {
                 //@ts-ignore
@@ -70,6 +73,9 @@ class FlightClient {
                     allFirewall.push(firewall)
                 }
             })
+            const kiuCommission = commission.filter((c) => c.supplier === "KIUSYS")?.[0];
+            const amadeusCommission = commission.filter((c) => c.supplier === "AMADEUS")?.[0];
+            const duffelCommission = commission.filter((c) => c.supplier === "DUFFEL")?.[0];
             const searchManagement = params.filters.SelfTransferAllowed === undefined || params.filters.SelfTransferAllowed ? await getSearchManagementRoutes(params.originLocation, params.destinationLocation, 4, allFirewall) : { possibleRoutes: [[{ origin: params.originLocation, destination: params.destinationLocation }]], searchManagement: "ff" }
             const possibleRoutes = searchManagement.possibleRoutes
             const kiuPossibleRoutes = possibleRoutes.filter((route) => {
@@ -143,7 +149,7 @@ class FlightClient {
                         DestinationLocation: segment.destination,
                         Passengers: "1",
                         CabinClass: params.cabinClass,
-                    }, kiuFirewall)
+                    }, kiuFirewall, kiuCommission)
                 })
             })
 
@@ -177,7 +183,7 @@ class FlightClient {
 
             const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
                 const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusNewParser(response, amadeusFirewall);
+                    const parsedResponse = amadeusNewParser(response, amadeusFirewall,amadeusCommission);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes
@@ -185,7 +191,7 @@ class FlightClient {
 
             const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
                 const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelNewParser(response, duffelFirewall);
+                    const parsedResponse = duffelNewParser(response, duffelFirewall, duffelCommission);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes
@@ -216,7 +222,7 @@ class FlightClient {
                 temp.push(...route)
             })
 
-            const normalizedResponse = normalizeResponse(temp)
+            const normalizedResponse = normalizeResponse(temp, commission)
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);

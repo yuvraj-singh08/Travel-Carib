@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
 import { handlePrismaError } from "../utils/prismaError";
+import HttpError from "../utils/httperror";
 
 export const addFirewall = async (
   req: Request,
@@ -97,6 +98,16 @@ export const addCommission = async (
   const { type, commissionTitle, supplier, commissionFees, feeType } = req.body;
 
   try {
+    const existingCommissions = await prisma.commissionManagement.findMany();
+    let flag = true;
+    existingCommissions.forEach((commission) => {
+      if (commission.supplier === supplier || commission.supplier === "ALL" || supplier === "ALL") {
+        flag = false;
+      }
+    });
+    if (!flag) {
+      throw new HttpError("Invalid Request", 400);
+    }
     const commission = await prisma.commissionManagement.create({
       data: {
         type: type,
@@ -118,6 +129,9 @@ export const addCommission = async (
     }
   } catch (error) {
     console.log(error);
+    if(error instanceof HttpError) {
+      next(error);
+    }
     next(handlePrismaError(error));
   }
 };

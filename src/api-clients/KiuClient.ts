@@ -4,6 +4,7 @@ import xml2js from 'xml2js';
 import { FlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
+import { CommissionType } from '../../types/flightTypes';
 
 class KiuClient {
   private endpoint: string;
@@ -23,7 +24,7 @@ class KiuClient {
     this.searchFlights = this.searchFlights.bind(this);
   }
 
-  async searchFlights(params: FlightSearchParams, firewall: any): Promise<any> {
+  async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
     try {
       const DepartureDate = getDateString(params.DepartureDate)
       const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate });
@@ -89,7 +90,17 @@ class KiuClient {
             };
           })
         );
-        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum).toString();
+        let commissionAmount = 0;
+        if (commission) {
+          if (commission.feeType === 'FIXED') {
+            commissionAmount = parseFloat(commission.commissionFees);
+          }
+          else {
+            commissionAmount = (sliceSum * parseFloat(commission.commissionFees)) / 100.00;
+          }
+        }
+        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum+commissionAmount).toString();
+        parsedResponse[offerIndex].commissionAmount = commissionAmount;
         return {
           ...sliceResponse,
           sliceSum

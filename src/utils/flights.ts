@@ -1,6 +1,6 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
+import { CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { getDifferenceInMinutes } from "./utils";
@@ -10,7 +10,7 @@ import HttpError from "./httperror";
 import { FlightSupplier } from "@prisma/client";
 import { GDS } from "../../constants/cabinClass";
 
-export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = []) => {
+export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType) => {
     try {
         let response = []
         duffelResponse.data.offers.forEach((result) => {
@@ -69,10 +69,22 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 //@ts-ignore
                 result.slices[0].segments[segmentIndex].cabinBaggage = cabinBaggage;
             })
+            const totalAmount = parseFloat(result.total_amount);
+            let commissionAmount = 0;
+            if (commission) {
+                if (commission.feeType === 'FIXED') {
+                    commissionAmount = parseFloat(commission.commissionFees);
+                }
+                else {
+                    commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
+                }
+            }
 
             if (flag) {
                 response.push({
                     ...result,
+                    total_amount: totalAmount,
+                    commissionAmount,
                     routeId,
                     responseId,
                     sourceId: GDS.duffel,
@@ -88,7 +100,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
     }
 }
 
-export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = []) => {
+export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = [], commission: CommissionType) => {
     try {
         let parsedResponse = [];
         amadeusResponse?.data?.forEach((result) => {
@@ -170,13 +182,24 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
             const arriving_at = segments?.[n - 1]?.arriving_at;
 
             if (flag) {
+                const totalAmount = parseFloat(result?.price?.total);
+                let commissionAmount = 0;
+                if (commission) {
+                    if (commission.feeType === 'FIXED') {
+                        commissionAmount = parseFloat(commission.commissionFees);
+                    }
+                    else {
+                        commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
+                    }
+                }
                 parsedResponse.push({
                     responseId,
                     routeId,
                     sourceId: GDS.amadeus,
                     departing_at: segments?.[0]?.departing_at,
                     arriving_at: segments?.[segments?.length - 1]?.arriving_at,
-                    total_amount: result?.price?.total,
+                    total_amount: commissionAmount + totalAmount,
+                    commissionAmount,
                     slices: [
                         {
                             origin: segments?.[0]?.origin,
@@ -424,12 +447,13 @@ export function combineMultiCityRoutes(routeArrays: Offer[][]): Offer[][] {
 //     })
 // }
 
-export const normalizeResponse = (response: Offer[][]) => {
+export const normalizeResponse = (response: Offer[][], commission: CommissionType[]) => {
     const result = response.map((offer) => {
         let slices = [];
         let stops = 0;
         let responseId = "";
         let routeId = "";
+        const applicableCommission = commission.filter(c => c.supplier === "ALL")?.[0];
         offer.forEach((route) => {
             slices.push(...(route.slices));
             responseId += route?.responseId
@@ -441,16 +465,29 @@ export const normalizeResponse = (response: Offer[][]) => {
         if (slices?.length > 1) {
             stops += 1
         }
+        const totalAmount = offer.reduce((total, route) => total + parseFloat(route.total_amount), 0);
+        const totalCommission = offer.reduce((total, route) => total + (route.commissionAmount), 0);
+        let commissionAmount = 0;
+        if (applicableCommission) {
+            if (applicableCommission.feeType === 'FIXED') {
+                commissionAmount = parseFloat(applicableCommission.commissionFees);
+            }
+            else {
+                commissionAmount = (totalAmount * parseFloat(applicableCommission.commissionFees)) / 100.00;
+            }
+        }
+        const finalAmount = commissionAmount + totalAmount;
         return {
             origin: slices?.[0]?.origin,
             destination: slices?.[slices.length - 1]?.destination,
             departing_at: slices?.[0]?.departing_at,
             arriving_at: slices?.[slices.length - 1]?.arriving_at,
             responseId,
+            commissionAmount: commissionAmount || totalCommission,
             routeId,
             stops,
             // duration: offer[0].duration,
-            total_amount: offer.reduce((total, route) => total + parseFloat(route.total_amount), 0),
+            total_amount: finalAmount,
             // base_currency: offer[0].base_currency,
             // tax_currency: offer[0].tax_currency,
             slices
