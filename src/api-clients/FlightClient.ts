@@ -124,12 +124,13 @@ class FlightClient {
             console.log(possibleRoutes);
 
             const duffelPassengersArray = [], amadeusPassengersArray = [];
+            let travelerId = 1;
             for (let i = 0; i < params.passengers.adults; i++) {
                 duffelPassengersArray.push({
                     type: 'adult'
                 })
                 amadeusPassengersArray.push({
-                    id: i+1,
+                    id: travelerId++,
                     travelerType: "ADULT",
                     fareOptions: [
                         "STANDARD"
@@ -141,7 +142,7 @@ class FlightClient {
                     type: 'child'
                 })
                 amadeusPassengersArray.push({
-                    id: i+1,
+                    id: travelerId++,
                     travelerType: "ADULT",
                     fareOptions: [
                         "STANDARD"
@@ -152,13 +153,13 @@ class FlightClient {
                 duffelPassengersArray.push({
                     type: 'infant_without_seat'
                 })
-                amadeusPassengersArray.push({
-                    id: i+1,
-                    travelerType: "ADULT",
-                    fareOptions: [
-                        "STANDARD"
-                    ]
-                },)
+                // amadeusPassengersArray.push({
+                //     id: travelerId++,
+                //     travelerType: "ADULT",
+                //     fareOptions: [
+                //         "STANDARD"
+                //     ]
+                // },)
             }
 
             //Duffel Request
