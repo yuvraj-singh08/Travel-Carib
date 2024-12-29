@@ -27,13 +27,13 @@ class AmadusController {
 
     async priceCalendar(req: Request, res: Response, next: NextFunction): Promise<any> {
         try {
-            const { origin, destination, date1, date2 } = req.query;
+            const { origin, destination, date1, date2, oneWay } = req.query;
             if (!origin || !destination || !date1) {
 
                 res.status(400).json({ message: "Missing Required Fields" })
                 return;
             }
-            const response = await this.amadusClient.priceCalendar({ origin, destination, date1, date2 });
+            const response = await this.amadusClient.priceCalendar({ origin, destination, date1, date2, oneWay });
             res.status(200).json(response)
         } catch (error) {
             console.log(error);
