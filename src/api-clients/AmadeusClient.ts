@@ -29,7 +29,7 @@ class AmadeusClient {
     }
   }
 
-  async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string, oneWay?:boolean }): Promise<any> {
+  async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string, oneWay?: boolean }): Promise<any> {
     const payload = {
       origin: params.origin,
       destination: params.destination,
@@ -78,16 +78,7 @@ class AmadeusClient {
             }
           },
         ],
-        travelers: [
-          {
-            id: 1,
-            travelerType: "ADULT",
-            fareOptions: [
-              "STANDARD"
-            ]
-          },
-
-        ],
+        travelers: params.passengers,
         sources: [
           "GDS"
         ],

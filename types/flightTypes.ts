@@ -8,6 +8,11 @@ export type FlightOfferSearchParams = {
     passengerType: string,
     maxLayovers: number,
     cabinClass: CabinClass,
+    passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
     returnDate?: string,
     sortBy: 'BEST' | 'FAST' | 'CHEAP',
     filters?: FilterType
@@ -24,6 +29,11 @@ export type MultiCitySearchParams = {
     passengerType: string,
     sortBy: 'BEST' | 'FAST' | 'CHEAP',
     maxLayovers: number,
+    passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
     cabinClass: CabinClass,
     filters?: FilterType
 }

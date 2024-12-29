@@ -3,8 +3,12 @@ export type FlightSearchParams = {
     DestinationLocation: string,
     DepartureDate: string,
     ReturnDate?: string,
-    CabinClass:string,
-    Passengers: string,
+    CabinClass: string,
+    Passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
 }
 
 export type PriceRequestBuilderParams = {
@@ -15,7 +19,11 @@ export type PriceRequestBuilderParams = {
     MarketingAirline: string,
     FlightNumber: string,
     ReturnDate?: string,
-    Passengers: string,
+    Passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
     ResBookDesigCode: string
 }
 

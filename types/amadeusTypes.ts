@@ -7,6 +7,7 @@ export type FlightOfferSearchParams = {
     locationDeparture: string,
     locationArrival: string,
     adults: string,
+    passengers: any
 }
 
 export type multiCityFlightSearchParams = {

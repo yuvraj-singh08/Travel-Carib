@@ -14,13 +14,14 @@ class FlightController {
 
   async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { filters, originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
+      const { filters, originLocation, passengers, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
       if (!(originLocation !== undefined && destinationLocation !== undefined && departureDate !== undefined && maxLayovers !== undefined && passengerType !== undefined && cabinClass !== undefined))
         throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
 
       const response = await this.flightClient.advanceFlightSearch({
         originLocation,
         destinationLocation,
+        passengers,
         departureDate,
         passengerType,
         maxLayovers,
@@ -36,7 +37,7 @@ class FlightController {
 
   async multiCitySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { FlightDetails, passengerType, maxLayovers, cabinClass, filters, sortBy } = req.body;
+      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
       if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
         throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
       }
@@ -44,6 +45,7 @@ class FlightController {
         FlightDetails,
         passengerType,
         maxLayovers,
+        passengers,
         sortBy: sortBy || "BEST",
         cabinClass,
         filters
@@ -56,7 +58,7 @@ class FlightController {
 
   async roundFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { filters, originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
+      const { filters, originLocation, destinationLocation, passengers, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
       if (!(originLocation !== undefined && destinationLocation !== undefined && departureDate !== undefined && maxLayovers !== undefined && passengerType !== undefined && cabinClass !== undefined))
         throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
 
@@ -69,7 +71,8 @@ class FlightController {
         passengerType,
         maxLayovers,
         cabinClass,
-        filters
+        filters,
+        passengers
       })
       res.status(200).json(response);
     } catch (error) {

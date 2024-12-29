@@ -161,10 +161,16 @@ export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
       },
       TravelerInfoSummary: {
         AirTravelerAvail: {
-          PassengerTypeQuantity: {
-            '@Code': 'ADT',
-            '@Quantity': params.Passengers
-          }
+          PassengerTypeQuantity: [//  (ADT: Adult, CNN: Minor, INF: Infant)
+            {
+              '@Code': 'CNN',
+              '@Quantity': params.Passengers.children
+            },
+            {
+              '@Code': 'ADT',
+              '@Quantity': params.Passengers.adults
+            },
+          ]
         }
       }
     }

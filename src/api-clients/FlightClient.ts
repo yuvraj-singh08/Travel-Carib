@@ -28,6 +28,7 @@ class FlightClient {
                 maxLayovers: params.maxLayovers,
                 cabinClass: params.cabinClass,
                 filters: params.filters,
+                passengers: params.passengers,
                 sortBy: params.sortBy
             })
         })
@@ -122,11 +123,49 @@ class FlightClient {
             })
             console.log(possibleRoutes);
 
+            const duffelPassengersArray = [], amadeusPassengersArray = [];
+            for (let i = 0; i < params.passengers.adults; i++) {
+                duffelPassengersArray.push({
+                    type: 'adult'
+                })
+                amadeusPassengersArray.push({
+                    id: i+1,
+                    travelerType: "ADULT",
+                    fareOptions: [
+                        "STANDARD"
+                    ]
+                },)
+            }
+            for (let i = 0; i < params.passengers.children; i++) {
+                duffelPassengersArray.push({
+                    type: 'child'
+                })
+                amadeusPassengersArray.push({
+                    id: i+1,
+                    travelerType: "ADULT",
+                    fareOptions: [
+                        "STANDARD"
+                    ]
+                },)
+            }
+            for (let i = 0; i < params.passengers.infants; i++) {
+                duffelPassengersArray.push({
+                    type: 'infant_without_seat'
+                })
+                amadeusPassengersArray.push({
+                    id: i+1,
+                    travelerType: "ADULT",
+                    fareOptions: [
+                        "STANDARD"
+                    ]
+                },)
+            }
+
             //Duffel Request
             const duffelRequests = duffelPossibleRoutes.map((route) => {
                 return route.map((segment) => {
                     return this.duffelClient.createOfferRequest({
-                        passengers: [{ type: "adult" }],
+                        passengers: duffelPassengersArray,
                         cabin_class: params.cabinClass,
                         max_connections: 2,
                         slices: [
@@ -147,7 +186,7 @@ class FlightClient {
                         DepartureDate: params.departureDate,
                         OriginLocation: segment.origin,
                         DestinationLocation: segment.destination,
-                        Passengers: "1",
+                        Passengers: params.passengers,
                         CabinClass: params.cabinClass,
                     }, kiuFirewall, kiuCommission)
                 })
@@ -162,6 +201,7 @@ class FlightClient {
                         locationDeparture: segment.origin,
                         locationArrival: segment.destination,
                         adults: params.passengerType,
+                        passengers: amadeusPassengersArray,
                     }, index++)
                 })
             })
@@ -183,7 +223,7 @@ class FlightClient {
 
             const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
                 const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusNewParser(response, amadeusFirewall,amadeusCommission);
+                    const parsedResponse = amadeusNewParser(response, amadeusFirewall, amadeusCommission);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes

@@ -26,6 +26,7 @@ class KiuClient {
 
   async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
     try {
+      const invalidResponseIndexs = [];
       const DepartureDate = getDateString(params.DepartureDate)
       const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate });
       const response = await this.axiosInstance.post('', {
@@ -54,6 +55,7 @@ class KiuClient {
                   }
                 })
                 if (!flag) {
+                  invalidResponseIndexs.push(offerIndex);
                   return null;
                 }
                 const priceResponse = await this.searchPrice({
@@ -99,7 +101,7 @@ class KiuClient {
             commissionAmount = (sliceSum * parseFloat(commission.commissionFees)) / 100.00;
           }
         }
-        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum+commissionAmount).toString();
+        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum + commissionAmount).toString();
         parsedResponse[offerIndex].commissionAmount = commissionAmount;
         return {
           ...sliceResponse,
@@ -110,7 +112,9 @@ class KiuClient {
       // Execute all price requests concurrently
       const priceResponse = await Promise.allSettled(priceRequestPromises)
 
-      return parsedResponse
+      const filteredResponse = parsedResponse.filter((parsedResponse, index) => !invalidResponseIndexs.includes(index));
+
+      return filteredResponse
     } catch (error) {
       throw error;
     }
