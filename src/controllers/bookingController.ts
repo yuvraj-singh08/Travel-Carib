@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../prismaClient";
 import { AuthenticatedRequest } from "../../types/express";
+import { AdminStatus } from "@prisma/client";
 
 const adminStatus = {
   TICKETED: "Confirmed",
@@ -106,7 +107,28 @@ export const fetchBooking = async (
         .json({ error: "Booking not found", success: false });
     }
 
-    return res.status(200).json({ bookings, success: true });
+    const updatedData = bookings.map((booking) => {
+      let status = booking.adminStatus;
+
+      if (status === "PENDING_TICKET") {
+        status = adminStatus.PENDING_TICKET as AdminStatus;
+      } else if (status === "PENDING_PAYMENT") {
+        status = adminStatus.PENDING_PAYMENT as AdminStatus;
+      } else if (status === "EXPIRED") {
+        status = adminStatus.EXPIRED as AdminStatus;
+      } else if (status === "FAILED_BOOKING") {
+        status = adminStatus.FAILED_BOOKING as AdminStatus;
+      } else {
+        status = adminStatus.TICKETED as AdminStatus;
+      }
+
+      return {
+        ...booking,
+        adminStatus: status,
+      };
+    });
+    
+    return res.status(200).json({ updatedData, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res
