@@ -99,7 +99,11 @@ export const fetchBooking = async (
   }
 
   try {
-    const bookings = await prisma.booking.findMany();
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId: userId,
+      },
+    });
 
     if (!bookings) {
       return res
@@ -127,7 +131,7 @@ export const fetchBooking = async (
         adminStatus: status,
       };
     });
-    
+
     return res.status(200).json({ updatedData, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
