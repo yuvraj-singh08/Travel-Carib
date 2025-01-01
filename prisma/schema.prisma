@@ -146,7 +146,7 @@ enum AdminStatus {
 model Booking {
   id             String        @id @default(uuid()) @map("_id")
   contactDetail  Json // email and phone number
-  flightDetails  Json[]
+  flightDetails  String
   payment        BookPayment[] // Payment id
   passenger      Json[] // passenger[] id reference
   address        Json
