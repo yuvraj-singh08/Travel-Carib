@@ -160,6 +160,7 @@ model Booking {
   adminStatus    AdminStatus   @default(PENDING_TICKET)
   User           User          @relation(fields: [userId], references: [id])
   userId         String
+  createdAt      DateTime      @default(now())
 }
 
 enum UserStatus {
