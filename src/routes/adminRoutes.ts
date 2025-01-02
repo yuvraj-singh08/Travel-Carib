@@ -69,6 +69,9 @@ import {
   createBlog,
   updateBlog,
   deleteBlog,
+  fetchBooking,
+  updateBooking,
+  deleteBooking,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -154,5 +157,9 @@ router.get("/blog/:id", getBlogById);
 router.post("/add-blog", createBlog);
 router.post("/update-blog", updateBlog);
 router.post("/delete-blog", deleteBlog);
+
+router.get("/bookings", fetchBooking);
+router.post("/update-booking", updateBooking);
+router.post("/delete-booking", deleteBooking);
 
 export default router;

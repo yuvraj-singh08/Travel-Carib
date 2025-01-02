@@ -101,7 +101,11 @@ export const addCommission = async (
     const existingCommissions = await prisma.commissionManagement.findMany();
     let flag = true;
     existingCommissions.forEach((commission) => {
-      if (commission.supplier === supplier || commission.supplier === "ALL" || supplier === "ALL") {
+      if (
+        commission.supplier === supplier ||
+        commission.supplier === "ALL" ||
+        supplier === "ALL"
+      ) {
         flag = false;
       }
     });
@@ -129,7 +133,7 @@ export const addCommission = async (
     }
   } catch (error) {
     console.log(error);
-    if(error instanceof HttpError) {
+    if (error instanceof HttpError) {
       next(error);
     }
     next(handlePrismaError(error));
@@ -2003,5 +2007,59 @@ export const deleteBlog = async (
   } catch (error) {
     console.log(error);
     next(handlePrismaError(error));
+  }
+};
+
+export const fetchBooking = async (req: Request, res: Response) => {
+  try {
+    const bookings = await prisma.booking.findMany();
+
+    if (!bookings) {
+      return res
+        .status(404)
+        .json({ error: "Booking not found", success: false });
+    }
+
+    return res.status(200).json({ data: bookings, success: true });
+  } catch (error) {
+    console.error("Error fetching booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch booking", success: false });
+  }
+};
+
+export const deleteBooking = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  
+  try {
+    await prisma.booking.delete({
+      where: { id: id },
+    });
+
+    return res.status(200).json({ message: "Booking deleted", success: true });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to delete booking", success: false });
+  }
+};
+
+export const updateBooking = async (req: Request, res: Response) => {
+  const { id, ...data } = req.body;
+
+  try {
+    const booking = await prisma.booking.update({
+      where: { id: id },
+      data: data,
+    });
+
+    return res.status(200).json({ booking, success: true });
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to update booking", success: false });
   }
 };
