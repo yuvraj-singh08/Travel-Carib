@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { prisma } from "../prismaClient";
 import { AuthenticatedRequest } from "../../types/express";
 import { AdminStatus } from "@prisma/client";
+import HttpError from "../utils/httperror";
 
 const adminStatus = {
   TICKETED: "Confirmed",
@@ -85,6 +86,22 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
       .json({ error: "Failed to create booking", success: false });
   }
 };
+
+export const getPaymentDetails = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      throw new HttpError("Invalid Payment ID", 400);
+    }
+    const payment = await prisma.bookPayment.findFirst({ where: { id } })
+    if (!payment) {
+      throw new HttpError("Payment not found", 404);
+    }
+    res.status(200).json({ success: true, data: payment });
+  } catch (error) {
+    next(error);
+  }
+}
 
 export const fetchBooking = async (
   req: AuthenticatedRequest,
