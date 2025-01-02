@@ -87,13 +87,17 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const getPaymentDetails = async (req: Request, res: Response, next: NextFunction) => {
+export const getPaymentDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     if (!id) {
       throw new HttpError("Invalid Payment ID", 400);
     }
-    const payment = await prisma.bookPayment.findFirst({ where: { id } })
+    const payment = await prisma.bookPayment.findFirst({ where: { id } });
     if (!payment) {
       throw new HttpError("Payment not found", 404);
     }
@@ -101,7 +105,7 @@ export const getPaymentDetails = async (req: Request, res: Response, next: NextF
   } catch (error) {
     next(error);
   }
-}
+};
 
 export const fetchBooking = async (
   req: AuthenticatedRequest,
@@ -116,13 +120,12 @@ export const fetchBooking = async (
   }
 
   try {
-    // const bookings = await prisma.booking.findMany({
-    //   where: {
-    //     userId: userId,
-    //   },
-    // });
-    const bookings = await prisma.booking.findMany();
-
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId: userId,
+      },
+    });
+    
     if (!bookings) {
       return res
         .status(404)
