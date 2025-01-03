@@ -860,3 +860,22 @@ export function convertToPriceCalendar(data: FlightDate[]): PriceCalendar[] {
 
     return priceCalendar;
 }
+
+export const getAirlineCodes = (response) => {
+    try {
+        const airlines = [];
+        response.forEach((route) => {
+            route.slices.forEach((slice) => {
+                slice.segments.forEach((segment) => {
+                    if (!airlines.includes(segment.operating_carrier.iata_code)) {
+                        airlines.push(segment.operating_carrier.iata_code)
+                    }
+                })
+            })
+        })
+        return airlines;
+    } catch (error) {
+        console.error("Error Getting Airline Codes: ", error);
+        return [];
+    }
+}

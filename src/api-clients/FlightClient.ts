@@ -1,7 +1,7 @@
 import { FlightSupplier } from "@prisma/client";
 import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, filterResponse, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, filterResponse, getAirlineCodes, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -32,10 +32,19 @@ class FlightClient {
                 sortBy: params.sortBy
             })
         })
+        const airlinesDetails = [];
 
         const response = await Promise.all(requests);
+        const parsedResponse = response.map(res => {
+            res.airlinesDetails.forEach((airline) => {
+                if (!airlinesDetails.includes(airline)) {
+                    airlinesDetails.push(airline)
+                }
+            })
+            return res.flightData;
+        });
 
-        const combinedRoutes = combineMultiCityRoutes(response);
+        const combinedRoutes = combineMultiCityRoutes(parsedResponse);
         const normalizedResponse = normalizeMultiResponse(combinedRoutes);
         const sortedResponse = sortMultiCityResponse(normalizedResponse, params.sortBy);
         const result = sortedResponse.filter((route, index) => {
@@ -45,7 +54,7 @@ class FlightClient {
             return false;
         })
 
-        return result;
+        return { flightData: result, airlinesDetails };
     }
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
@@ -264,6 +273,7 @@ class FlightClient {
             })
 
             const normalizedResponse = normalizeResponse(temp, commission)
+            const airlinesDetails = getAirlineCodes(normalizedResponse);
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
@@ -273,7 +283,7 @@ class FlightClient {
                 }
                 return false;
             })
-            return result;
+            return { flightData: result, airlinesDetails };
 
         } catch (error) {
             throw (error);
