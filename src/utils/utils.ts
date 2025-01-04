@@ -1,3 +1,5 @@
+import { airlines } from "./airlines";
+
 export function getDifferenceInMinutes(time1: string, time2: string): number {
     // Convert the string times into Date objects
     const date1 = new Date(time1);
@@ -11,3 +13,14 @@ export function getDifferenceInMinutes(time1: string, time2: string): number {
 
     return diffInMinutes;
 }
+
+export const getAirlineNameByCode = (id: string): string | undefined => {
+    console.log(id);
+    const airline = airlines.find((airline) => airline.id === id);
+    return airline ? airline.name : undefined;
+  };
+  
+  export const getAirlineLogo = (id: string): string | undefined => {
+    const airline = airlines.find((airline) => airline.id === id);
+    return airline ? airline.logo : undefined;
+  };

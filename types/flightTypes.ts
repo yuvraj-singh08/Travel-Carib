@@ -246,3 +246,10 @@ export type CommissionType = {
     commissionFees: string;
     feeType: $Enums.AirlineFeeType;
 }
+
+export interface AirlineProvider {
+    id: string;
+    label: string;
+    src?: string;
+    iata_code?: string;
+  }

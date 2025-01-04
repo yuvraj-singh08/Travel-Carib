@@ -1,9 +1,9 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
+import { AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
-import { getDifferenceInMinutes } from "./utils";
+import { getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
@@ -314,10 +314,10 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
 
         //Preffered Airlines
-        let prefferedAirlines = true;
+        let prefferedAirlines = filters?.PrefferedAirlines?.length > 0 ? false : true;
         filters?.PrefferedAirlines?.forEach((airline) => {
-            if (!route.responseId.includes(airline)) {
-                prefferedAirlines = false;
+            if (route.responseId.includes(airline)) {
+                prefferedAirlines = true;
             }
         })
 
@@ -861,21 +861,30 @@ export function convertToPriceCalendar(data: FlightDate[]): PriceCalendar[] {
     return priceCalendar;
 }
 
-export const getAirlineCodes = (response) => {
+export const getAirlineCodes = (response): { airlines: string[], extendedData: AirlineProvider[] } => {
     try {
-        const airlines = [];
+        const airlines: string[] = [];
+        const extendedData: AirlineProvider[] = [];
         response.forEach((route) => {
             route.slices.forEach((slice) => {
                 slice.segments.forEach((segment) => {
                     if (!airlines.includes(segment.operating_carrier.iata_code)) {
-                        airlines.push(segment.operating_carrier.iata_code)
+                        const iata_code = segment.operating_carrier.iata_code
+                        airlines.push(iata_code)
+                        extendedData.push({
+                            id: iata_code,
+                            label: segment.operating_carrier.name ?? getAirlineNameByCode(iata_code) ?? iata_code ?? "",
+                            src: segment.operating_carrier.logo_symbol_url || getAirlineLogo(iata_code),
+                            iata_code: iata_code
+
+                        })
                     }
                 })
             })
         })
-        return airlines;
+        return { airlines, extendedData };
     } catch (error) {
         console.error("Error Getting Airline Codes: ", error);
-        return [];
+        return { airlines: [], extendedData: [] };
     }
 }

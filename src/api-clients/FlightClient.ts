@@ -1,5 +1,5 @@
 import { FlightSupplier } from "@prisma/client";
-import { FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
+import { AirlineProvider, FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
 import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, filterResponse, getAirlineCodes, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
@@ -32,13 +32,15 @@ class FlightClient {
                 sortBy: params.sortBy
             })
         })
-        const airlinesDetails = [];
+        const airlines = [];
+        const extendedData: AirlineProvider[] = [];
 
         const response = await Promise.all(requests);
         const parsedResponse = response.map(res => {
-            res.airlinesDetails.forEach((airline) => {
-                if (!airlinesDetails.includes(airline)) {
-                    airlinesDetails.push(airline)
+            res.airlinesDetails.airlines.forEach((airline, index) => {
+                if (!airlines.includes(airline)) {
+                    airlines.push(airline)
+                    extendedData.push(res.airlinesDetails.extendedData[index])
                 }
             })
             return res.flightData;
@@ -54,7 +56,7 @@ class FlightClient {
             return false;
         })
 
-        return { flightData: result, airlinesDetails };
+        return { flightData: result, airlinesDetails: { airlines, extendedData } };
     }
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
