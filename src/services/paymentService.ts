@@ -16,7 +16,7 @@ export const createCheckoutSessionService = async ({
         id: paymentId,
       },
     });
-    const unit_amount = payment?.totalAmount * 100;
+    const unit_amount = parseInt(`${(payment?.totalAmount * 100)}`);
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
