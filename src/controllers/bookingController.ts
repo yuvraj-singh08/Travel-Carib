@@ -118,42 +118,46 @@ export const fetchBooking = async (
       .status(403)
       .json({ error: "Unauthorized access", success: false });
   }
+  let whereClause = {};
+  if (!(req.user.role === "ADMIN")) {
+    whereClause = {
+      userId: userId,
+    }
+  }
 
   try {
     const bookings = await prisma.booking.findMany({
-      where: {
-        userId: userId,
-      },
+      where: whereClause
     });
-    
+
     if (!bookings) {
       return res
         .status(404)
         .json({ error: "Booking not found", success: false });
     }
 
-    const updatedData = bookings.map((booking) => {
-      let status = booking.adminStatus;
+    // const updatedData = bookings.map((booking) => {
+    //   let status = booking.adminStatus;
 
-      if (status === "PENDING_TICKET") {
-        status = adminStatus.PENDING_TICKET as AdminStatus;
-      } else if (status === "PENDING_PAYMENT") {
-        status = adminStatus.PENDING_PAYMENT as AdminStatus;
-      } else if (status === "EXPIRED") {
-        status = adminStatus.EXPIRED as AdminStatus;
-      } else if (status === "FAILED_BOOKING") {
-        status = adminStatus.FAILED_BOOKING as AdminStatus;
-      } else {
-        status = adminStatus.TICKETED as AdminStatus;
-      }
+    //   if (status === "PENDING_TICKET") {
+    //     status = adminStatus.PENDING_TICKET as AdminStatus;
+    //   } else if (status === "PENDING_PAYMENT") {
+    //     status = adminStatus.PENDING_PAYMENT as AdminStatus;
+    //   } else if (status === "EXPIRED") {
+    //     status = adminStatus.EXPIRED as AdminStatus;
+    //   } else if (status === "FAILED_BOOKING") {
+    //     status = adminStatus.FAILED_BOOKING as AdminStatus;
+    //   } else {
+    //     status = adminStatus.TICKETED as AdminStatus;
+    //   }
 
-      return {
-        ...booking,
-        adminStatus: status,
-      };
-    });
+    //   return {
+    //     ...booking,
+    //     adminStatus: status,
+    //   };
+    // });
 
-    return res.status(200).json({ data: updatedData, success: true });
+    return res.status(200).json({ data: bookings, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res
