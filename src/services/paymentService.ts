@@ -31,7 +31,7 @@ export const createCheckoutSessionService = async ({
         },
       ],
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=true`,
+      success_url: `${process.env.FRONTEND_URL}/dashboard`,
       cancel_url: `${process.env.FRONTEND_URL}/pages/account-settings/billing/?success=false`,
       client_reference_id: `${userId}`, // Add organizationId here
       payment_intent_data: {
