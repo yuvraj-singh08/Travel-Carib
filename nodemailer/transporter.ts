@@ -51,7 +51,7 @@ export async function sendOTP(email: string, id: string) {
         </head>
         <body>
             <h1>Verify using OTP:</h1>
-            <p>${data.otp}</p>
+            <h4>${data.otp}</h4>
         </body>
         </html>
     `,
