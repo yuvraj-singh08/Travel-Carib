@@ -18,6 +18,8 @@ import {
   createWatchlist,
   deleteWatchlistById,
   updateWatchlistById,
+  forgotPassword,
+  verifyOTP,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -35,6 +37,8 @@ const router = Router();
 router.post("/register", registerUser);
 router.post("/social", socialAuthRegister);
 router.post("/login", loginUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify", verifyOTP);
 
 // Protected Routes
 router.get("/profile", authenticateToken, getUserById);

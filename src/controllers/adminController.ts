@@ -1919,11 +1919,7 @@ export const createBlog = async (
 ) => {
   try {
     const { mainImg, description, secondaryImg, secondaryDesc } = req.body;
-
-    if (secondaryImg.length === 0 || secondaryImg.length > 4) {
-      res.status(400).json({ error: "Secondary description is required" });
-    }
-
+    
     const newEntry = await prisma.blog.create({
       data: {
         mainImg,
@@ -2031,7 +2027,7 @@ export const fetchBooking = async (req: Request, res: Response) => {
 
 export const deleteBooking = async (req: Request, res: Response) => {
   const { id } = req.body;
-  
+
   try {
     await prisma.booking.delete({
       where: { id: id },

@@ -73,6 +73,17 @@ model User {
   provider        String
   ticket          TicketManagement[]
   watchlist       Watchlist[]
+  otp             Otp[]
+}
+
+model Otp {
+  id     String  @id @default(uuid()) @map("_id")
+  email  String
+  otp    String
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  createdAt DateTime @default(now())
 }
 
 model Watchlist {
@@ -352,4 +363,7 @@ model Blog {
   description   String
   secondaryImg  String[]
   secondaryDesc String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

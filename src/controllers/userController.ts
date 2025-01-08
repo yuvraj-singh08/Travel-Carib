@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import User from "../../models/userModel";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
+import { sendOTP } from "../../nodemailer/transporter";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
@@ -60,6 +61,98 @@ export const registerUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error registering user:", error);
     res.status(500).json({ error: "Failed to create user", success: false });
+  }
+};
+
+//forgot-password
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    //send email
+    const messageId = await sendOTP(email, user.id);
+
+    if (!messageId) {
+      return res.status(500).json({
+        message: "Failed to send OTP",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      success: true,
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+//verify-otp
+export const verifyOTP = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const otpData = await prisma.otp.findFirst({
+      where: {
+        email: email,
+        otp: otp,
+      },
+    });
+
+    if (!otpData) {
+      return res.status(404).json({
+        message: "Invalid OTP",
+        success: false,
+      });
+    }
+
+    const deleteOTP = await prisma.otp.delete({
+      where: {
+        id: otpData.id,
+      },
+    });
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
+      success: true,
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
@@ -182,7 +275,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get a user by ID
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
-  
+
   if (!userId) {
     return res
       .status(401)
