@@ -3,6 +3,6 @@ import { resetPassword } from "../controllers/userController";
 
 const router = Router();
 
-router.get("/reset-password", resetPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

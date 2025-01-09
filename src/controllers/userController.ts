@@ -213,12 +213,11 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
-  const { email, password, id } = req.query;
-
+  const { email, password } = req.body;
+  
   try {
     const user = await prisma.user.findUnique({
       where: {
-        id: id as string,
         email: email as string,
       },
     });
@@ -227,7 +226,6 @@ export const resetPassword = async (req: Request, res: Response) => {
       const hashed = await bcrypt.hash(password as string, SALT_ROUNDS);
       const updated = await prisma.user.update({
         where: {
-          id: id as string,
           email: email as string,
         },
         data: {
