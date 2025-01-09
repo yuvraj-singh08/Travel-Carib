@@ -21,7 +21,7 @@ class FlightController {
       const response = await this.flightClient.advanceFlightSearch({
         originLocation,
         destinationLocation,
-        passengers,
+        passengers: passengers || { adults: 1, children: 0, infants: 0 },
         departureDate,
         passengerType,
         maxLayovers,
@@ -45,7 +45,7 @@ class FlightController {
         FlightDetails,
         passengerType,
         maxLayovers,
-        passengers,
+        passengers: passengers || { adults: 1, children: 0, infants: 0 },
         sortBy: sortBy || "BEST",
         cabinClass,
         filters

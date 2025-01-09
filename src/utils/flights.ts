@@ -506,10 +506,11 @@ export const normalizeMultiResponse = (response: any, cabinClass: string) => {
         })
         return {
             total_amount,
-            itenaries: offer
+            itenaries: offer,
+            cabinClass
         }
     })
-    return {...result, cabinClass};
+    return result;
 }
 export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 'CHEAP') => {
     let maxDuration = null, minDuration = null, maxPrice = null, minPrice = null, maxStops = null, minStops = null;
