@@ -447,7 +447,7 @@ export function combineMultiCityRoutes(routeArrays: Offer[][]): Offer[][] {
 //     })
 // }
 
-export const normalizeResponse = (response: Offer[][], commission: CommissionType[]) => {
+export const normalizeResponse = (response: Offer[][], commission: CommissionType[], cabinClass: string) => {
     const result = response.map((offer) => {
         let slices = [];
         let stops = 0;
@@ -490,14 +490,15 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             total_amount: finalAmount,
             // base_currency: offer[0].base_currency,
             // tax_currency: offer[0].tax_currency,
-            slices
+            slices,
+            cabinClass
         };
     })
     return result;
 
 }
 
-export const normalizeMultiResponse = (response: any) => {
+export const normalizeMultiResponse = (response: any, cabinClass: string) => {
     const result = response.map((offer) => {
         let total_amount = 0;
         offer.forEach((offer) => {
@@ -508,7 +509,7 @@ export const normalizeMultiResponse = (response: any) => {
             itenaries: offer
         }
     })
-    return result;
+    return {...result, cabinClass};
 }
 export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 'CHEAP') => {
     let maxDuration = null, minDuration = null, maxPrice = null, minPrice = null, maxStops = null, minStops = null;

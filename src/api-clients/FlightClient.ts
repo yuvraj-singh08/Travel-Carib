@@ -47,7 +47,7 @@ class FlightClient {
         });
 
         const combinedRoutes = combineMultiCityRoutes(parsedResponse);
-        const normalizedResponse = normalizeMultiResponse(combinedRoutes);
+        const normalizedResponse = normalizeMultiResponse(combinedRoutes, params.cabinClass);
         const sortedResponse = sortMultiCityResponse(normalizedResponse, params.sortBy);
         const result = sortedResponse.filter((route, index) => {
             if (index < 30) {
@@ -274,7 +274,7 @@ class FlightClient {
                 temp.push(...route)
             })
 
-            const normalizedResponse = normalizeResponse(temp, commission)
+            const normalizedResponse = normalizeResponse(temp, commission, params.cabinClass)
             const airlinesDetails = getAirlineCodes(normalizedResponse);
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters)
