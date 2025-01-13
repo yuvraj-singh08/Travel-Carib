@@ -262,10 +262,9 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
 
 
         //Onward Duration
-        let MaxOnwardDuration = filters.MaxOnwardDuration ? false : true;
-        let MinOnwardDuration = filters.MinOnwardDuration ? false : true;
+        let MaxOnwardDuration = true;
+        let MinOnwardDuration = true;
         if (filters.MaxOnwardDuration) {
-            MaxOnwardDuration = true
             route?.slices?.forEach((slice) => {
                 slice?.segments?.forEach((segment) => {
                     if (moment.duration(segment.duration).asMinutes() > filters.MaxOnwardDuration) {
@@ -276,7 +275,6 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
         }
 
         if (filters.MinOnwardDuration) {
-            MinOnwardDuration = true
             route?.slices?.forEach((slice) => {
                 slice?.segments?.forEach((segment) => {
                     if (moment.duration(segment.duration).asMinutes() < filters.MinOnwardDuration) {
