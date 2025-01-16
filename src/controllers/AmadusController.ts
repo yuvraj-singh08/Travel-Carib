@@ -12,6 +12,7 @@ class AmadusController {
         this.searchFlights = this.searchFlights.bind(this);
         this.flightPrice = this.flightPrice.bind(this);
         this.priceCalendar = this.priceCalendar.bind(this);
+        this.bookFlight = this.bookFlight.bind(this);
     }
 
     async citySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -63,6 +64,15 @@ class AmadusController {
             }
 
             const response = await this.amadusClient.flightPrice({ departure, locationDeparture, locationArrival, adults });
+            res.status(200).json(response);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async bookFlight(req: Request, res: Response, next: NextFunction) {
+        try {
+            const response = await this.amadusClient.bookingFlight();
             res.status(200).json(response);
         } catch (error) {
             next(error);

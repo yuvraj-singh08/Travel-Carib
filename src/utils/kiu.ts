@@ -416,7 +416,8 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
       });
 
       slices.push({
-        segments
+        segments,
+        sourceId: GDS.kiu
       })
       segments = [];
       const sliceLength = slices.length;

@@ -157,6 +157,14 @@ class KiuClient {
       throw error
     }
   }
+
+  async priceCalendar() {
+    try {
+      
+    } catch (error) {
+      
+    }
+  }
 }
 
 export type KiuClientInstance = InstanceType<typeof KiuClient>

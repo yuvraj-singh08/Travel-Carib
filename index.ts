@@ -17,6 +17,7 @@ import bookingRoutes from "./src/routes/bookingRoutes";
 import resetRoute from "./src/routes/resetRoute";
 import paymentRoutes from "./src/routes/paymentRoutes";
 import amadeusRoutes from './src/routes/amadeusRoutes';
+import offerRoutes from './src/routes/offer.routes';
 import { AuthenticatedRequest } from "./types/express";
 import { main } from "./mail/transporter";
 import { prisma } from "./src/prismaClient";
@@ -39,22 +40,22 @@ app.get("/", (req, res) => {
 
 app.use(
   express.json({
-      // Capture raw body only for Stripe and Coinbase webhook endpoints.
-      verify: function (
-          req: Request<any, any, any, any>,
-          res: Response<any, Record<string, any>>,
-          buf: Buffer,
-          encoding: string,
+    // Capture raw body only for Stripe and Coinbase webhook endpoints.
+    verify: function (
+      req: Request<any, any, any, any>,
+      res: Response<any, Record<string, any>>,
+      buf: Buffer,
+      encoding: string,
+    ) {
+      console.log('req.originalUrl', req.originalUrl);
+      // Check if the request is for Stripe or Coinbase webhook
+      if (
+        req.originalUrl === '/payment/stripe_webhook' ||
+        req.originalUrl === '/payment/coinbase_webhook'
       ) {
-          console.log('req.originalUrl', req.originalUrl);
-          // Check if the request is for Stripe or Coinbase webhook
-          if (
-              req.originalUrl === '/payment/stripe_webhook' ||
-              req.originalUrl === '/payment/coinbase_webhook'
-          ) {
-              (req as any).rawBody = buf; // Save the raw buffer for both Stripe and Coinbase
-          }
-      },
+        (req as any).rawBody = buf; // Save the raw buffer for both Stripe and Coinbase
+      }
+    },
   }),
 );
 
@@ -69,12 +70,13 @@ app.use("/bucket", storageRoutes);
 app.use("/book", bookingRoutes);
 app.use("/reset", resetRoute);
 app.use("/payment", paymentRoutes);
-app.use('/amadeus',amadeusRoutes);
+app.use('/offer', offerRoutes);
+app.use('/amadeus', amadeusRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     console.log(err);
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const statusCode = err.statusCode || err?.meta?.status || 500;
+    const message = err.message || err?.errors?.[0]?.message || "Internal Server Error";
 
     res.status(statusCode).json({
       success: false,

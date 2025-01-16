@@ -1,11 +1,13 @@
 import { FlightSupplier } from "@prisma/client";
-import { AirlineProvider, FlightOfferSearchParams, MultiCitySearchParams } from "../../types/flightTypes";
+import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
 import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, filterResponse, getAirlineCodes, getPossibleRoutes, getSearchManagementRoutes, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
+import { saveData } from "../services/OfferService";
+import customDateFormat from "../utils/utils";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
@@ -258,9 +260,9 @@ class FlightClient {
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        ...(amadeus?.[index2] || []),
+                        // ...(amadeus?.[index2] || []),
                         ...(duffel?.[index2] || []),
-                        ...(kiu?.[index2] || [])
+                        // ...(kiu?.[index2] || [])
                     ])
                 })
                 const paired = combineAllRoutes(temp, { maxTime: searchManagement?.searchManagement?.[0]?.maxConnectionTime, minTime: searchManagement?.searchManagement?.[0]?.minConnectionTime })
@@ -285,10 +287,46 @@ class FlightClient {
                 }
                 return false;
             })
-            return { flightData: result, airlinesDetails };
+            const savedData = await saveData(result);
+            return { flightData: savedData, airlinesDetails };
 
         } catch (error) {
             throw (error);
+        }
+    }
+
+    async bookKiuFlight() {
+
+    }
+
+    async bookAmadeusFlight() {
+
+    }
+
+    async bookDuffelFlight(slice: Slice, passengers: PassengerType[], contactDetails: ContactDetailsType, address: any, flight_type, userId: string) {
+        try {
+            const title: 'mr' = 'mr'
+            const gender: 'm' | 'f' = 'm'
+            const passengersData = passengers.map((passenger, index) => {
+                return {
+                    title,
+                    phone_number: contactDetails.phone,
+                    id: slice.passengers[index].id,
+                    given_name: passenger.firstName,
+                    gender: gender,
+                    family_name: passenger.surname,
+                    email: contactDetails.email,
+                    born_on: passenger.dob,
+                }
+            })
+            const response = await this.duffelClient.createOrder({
+                passengers: passengersData,
+                offerId: slice.offerId
+            })
+            return response.data.booking_reference;
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
     }
 

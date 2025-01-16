@@ -8,6 +8,7 @@ class DuffelController {
         this.duffelClient = new DuffelClient();
         this.searchFlights = this.searchFlights.bind(this);
         this.getFlightDetails = this.getFlightDetails.bind(this);
+        this.createOrder = this.createOrder.bind(this);
     }
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -22,8 +23,8 @@ class DuffelController {
                     }
                 ],
                 passengers: [{ type: "adult" }],
-                    cabin_class: "economy",
-                    max_connections: 2
+                cabin_class: "economy",
+                max_connections: 2
             })
             const response = await this.duffelClient.getOfferRequestById(offerRequest.data.id);
             res.status(200).json(response);
@@ -34,9 +35,19 @@ class DuffelController {
 
     async getFlightDetails(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const {id} = req.body;
+            const { id } = req.body;
             const flightDetails = await this.duffelClient.getFlightDetails(id);
             res.status(200).json(flightDetails);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async createOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { offerId, passengers } = req.body;
+            const order = await this.duffelClient.createOrder({ offerId, passengers });
+            res.status(200).json(order);
         } catch (error) {
             next(error);
         }

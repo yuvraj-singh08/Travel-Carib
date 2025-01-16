@@ -30,17 +30,22 @@ class AmadeusClient {
   }
 
   async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string, oneWay?: boolean }): Promise<any> {
-    const payload = {
-      origin: params.origin,
-      destination: params.destination,
-      departureDate: `${params.date1}${params.date2 ? `,${params.date2}` : ''}`,
-      oneWay: params.oneWay || false,
-    }
-    console.log("Payload: ", payload);
-    const response = await this.client.shopping.flightDates.get(payload)
-    // const priceCalendar = convertToPriceCalendar(response.data);
+    try {
+      const payload = {
+        origin: params.origin,
+        destination: params.destination,
+        departureDate: `${params.date1}${params.date2 ? `,${params.date2}` : ''}`,
+        oneWay: params.oneWay || false,
+      }
+      console.log("Payload: ", payload);
+      const response = await this.client.shopping.flightDates.get(payload)
+      // const priceCalendar = convertToPriceCalendar(response.data);
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
@@ -175,6 +180,55 @@ class AmadeusClient {
       );
 
       return flightPricingResponse.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async bookingFlight() {
+    try {
+      const response = await this.client.booking.flightOrders.post({
+        data: {
+          type: "flight-order",
+          // flightOffers: [pricingResponse.data.flightOffers[0]],
+          travelers: [
+            {
+              id: "1",
+              dateOfBirth: "1982-01-16",
+              name: {
+                firstName: "JORGE",
+                lastName: "GONZALES",
+              },
+              gender: "MALE",
+              contact: {
+                emailAddress: "jorge.gonzales833@telefonica.es",
+                phones: [
+                  {
+                    deviceType: "MOBILE",
+                    countryCallingCode: "34",
+                    number: "480080076",
+                  },
+                ],
+              },
+              documents: [
+                {
+                  documentType: "PASSPORT",
+                  birthPlace: "Madrid",
+                  issuanceLocation: "Madrid",
+                  issuanceDate: "2015-04-14",
+                  number: "00000000",
+                  expiryDate: "2025-04-14",
+                  issuanceCountry: "ES",
+                  validityCountry: "ES",
+                  nationality: "ES",
+                  holder: true,
+                },
+              ],
+            },
+          ],
+        },
+      });
+      return response;
     } catch (error) {
       throw error;
     }

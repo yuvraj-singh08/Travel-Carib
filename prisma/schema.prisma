@@ -367,3 +367,10 @@ model Blog {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Offer {
+  id        String   @id @default(uuid()) @map("_id")
+  data      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

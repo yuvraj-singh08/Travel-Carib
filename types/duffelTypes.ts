@@ -1,3 +1,5 @@
+import { CreateOrderPassenger } from "@duffel/api/types"
+
 type DuffelOfferRequest = {
     slices: [
         {
@@ -10,4 +12,9 @@ type DuffelOfferRequest = {
     cabin_class: string
     return_offers: string
     max_connections: string
+}
+
+export type DuffelCreateOrderParams = {
+    offerId: string
+    passengers: CreateOrderPassenger[]
 }

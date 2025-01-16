@@ -2,6 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import FlightClient, { FlightClientInstance } from '../api-clients/FlightClient';
 import { promises } from 'dns';
 import { getPossibleRoutes } from '../utils/flights';
+import HttpError from '../utils/httperror';
+import { getOffer } from '../services/OfferService';
+import { Offer } from '../../types/flightTypes';
+import { GDS } from '../../constants/cabinClass';
 
 class FlightController {
   private flightClient: FlightClientInstance;
@@ -10,6 +14,7 @@ class FlightController {
     this.flightClient = new FlightClient();
     this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
     this.multiCitySearch = this.multiCitySearch.bind(this);
+    this.BookFlight = this.BookFlight.bind(this);
   }
 
   async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -85,6 +90,45 @@ class FlightController {
       const { origin, destination, maxLayovers } = req.body;
       const possibleRoutes = getPossibleRoutes(origin, destination, maxLayovers);
       res.status(200).json(possibleRoutes);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async BookFlight(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { offerId, passengers, contactDetails, address, flight_type, userId } = req.body;
+      if (!offerId || !passengers || !contactDetails || !address || !flight_type || !userId) {
+        throw new HttpError("Missing required fields: offerId, passengers, contactDetails, address, flight_type, userId", 400);
+      }
+      const data = await getOffer(offerId);
+      if (!data) {
+        throw new HttpError("Offer not found", 404);
+      }
+      const offer = data.data as Offer;
+      const pnrs: string[] = [];
+      const promises = offer.slices.map(async (slice) => {
+        const provider = slice.sourceId;
+        switch (provider) {
+          case GDS.kiu:
+            //@ts-ignore
+            this.flightClient.bookKiuFlight(offer, passengers, contactDetails, address, flight_type, userId);
+            break;
+          case GDS.amadeus:
+            //@ts-ignores
+            this.flightClient.bookAmadeusFlight(offer, passengers, contactDetails, address, flight_type, userId);
+            break;
+          case GDS.duffel:
+            const pnr = await this.flightClient.bookDuffelFlight(slice, passengers, contactDetails, address, flight_type, userId);
+            pnrs.push(pnr);
+            break;
+          default:
+            throw new HttpError("Provider not found", 404);
+        }
+        return;
+      })
+      const response = await Promise.all(promises);
+      res.status(200).json(pnrs);
     } catch (error) {
       next(error);
     }

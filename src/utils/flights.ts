@@ -68,6 +68,12 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 result.slices[0].segments[segmentIndex].checkedBaggage = checkedBaggage;
                 //@ts-ignore
                 result.slices[0].segments[segmentIndex].cabinBaggage = cabinBaggage;
+                //@ts-ignore
+                result.slices[0].sourceId = GDS.duffel;
+                //@ts-ignore
+                result.slices[0].offerId = result.id;
+                //@ts-ignore
+                result.slices[0].passengers = result.passengers;
             })
             const totalAmount = parseFloat(result.total_amount);
             let commissionAmount = 0;
@@ -87,7 +93,6 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                     commissionAmount,
                     routeId,
                     responseId,
-                    sourceId: GDS.duffel,
                     departing_at,
                     arriving_at,
                     cabin_class: duffelResponse.data.cabin_class
@@ -206,7 +211,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                             destination: segments?.[n - 1]?.destination,
                             departing_at,
                             arriving_at,
-                            segments: segments
+                            segments: segments,
+                            sourceId: GDS.amadeus
                         }
                     ],
                 })

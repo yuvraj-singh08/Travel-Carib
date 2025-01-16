@@ -2,8 +2,9 @@ import express from 'express';
 import AmadeusController from '../controllers/AmadusController';
 
 const router = express.Router();
-const duffelController = new AmadeusController();
+const amadeusController = new AmadeusController();
 
-router.get('/priceCalendar', duffelController.priceCalendar);
+router.get('/priceCalendar', amadeusController.priceCalendar);
+router.post('/bookFlight', amadeusController.bookFlight);
 
 export default router;

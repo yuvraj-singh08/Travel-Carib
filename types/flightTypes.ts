@@ -79,10 +79,11 @@ export type Offer = {
     owner: Carrier;
     id: string;
     responseId: string;
+    sourceId: string;
     routeId: string;
 };
 
-type Slice = {
+export type Slice = {
     comparison_key: string;
     ngs_shelf: number;
     destination_type: string;
@@ -98,7 +99,12 @@ type Slice = {
     duration: string;
     destination: Location;
     origin: Location;
-    id: string;
+    offerId: string;
+    sourceId: string;
+    passengers: {
+        type: string;
+        id: string;
+    }
 };
 
 type Segment = {
@@ -252,4 +258,19 @@ export interface AirlineProvider {
     label: string;
     src?: string;
     iata_code?: string;
-  }
+}
+
+export interface PassengerType {
+    firstName: string;
+    surname: string;
+    gender: string;
+    nationality: string;
+    passportNumber: string;
+    passportExpiryDate: string;
+    dob: string;
+}
+
+export interface ContactDetailsType {
+    phone: string;
+    email: string;
+}
