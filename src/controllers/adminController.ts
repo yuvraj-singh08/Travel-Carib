@@ -2,8 +2,175 @@ import { NextFunction, Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { handlePrismaError } from "../utils/prismaError";
 import HttpError from "../utils/httperror";
+import { sendOTP } from "../../nodemailer/transporter";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
+const SALT_ROUNDS = 10;
+
+// Register User
+export const registerUser = async (req: Request, res: Response) => {
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    role,
+  } = req.body;
+  
+  try {
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const response = await prisma.admin.create({
+      data: {
+        email: email,
+        password: hashedPassword,
+        firstname: firstName,
+        lastname: lastName,
+        role: role,
+      },
+    });
+    
+    res.status(201).json({
+      message: "User created successfully",
+      user: response,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error registering user:", error);
+    res.status(500).json({ error: "Failed to create user", success: false });
+  }
+};
+
+//forgot-password
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.admin.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    //send email
+    const messageId = await sendOTP(email, user.id);
+
+    if (!messageId) {
+      return res.status(500).json({
+        message: "Failed to send OTP",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "OTP sent successfully",
+      success: true,
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+//verify-otp
+export const verifyOTP = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  try {
+    const user = await prisma.admin.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const otpData = await prisma.otp.findFirst({
+      where: {
+        email: email,
+        otp: otp,
+      },
+    });
+
+    if (!otpData) {
+      return res.status(404).json({
+        message: "Invalid OTP",
+        success: false,
+      });
+    }
+
+    const deleteOTP = await prisma.otp.delete({
+      where: {
+        id: otpData.id,
+      },
+    });
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
+      success: true,
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+// Login User
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await prisma.admin.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let isPasswordValid: Boolean;
+    
+    if (password) {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+    }
+
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    return res.json({ token, user });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    return res.status(500).json({ error: "Failed to login" });
+  }
+};
 
 export const addFirewall = async (
   req: Request,
@@ -1919,7 +2086,7 @@ export const createBlog = async (
 ) => {
   try {
     const { mainImg, description, secondaryImg, secondaryDesc } = req.body;
-    
+
     const newEntry = await prisma.blog.create({
       data: {
         mainImg,

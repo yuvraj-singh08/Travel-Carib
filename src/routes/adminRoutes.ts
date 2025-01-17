@@ -72,9 +72,18 @@ import {
   fetchBooking,
   updateBooking,
   deleteBooking,
+  registerUser,
+  loginUser,
+  forgotPassword,
+  verifyOTP,
 } from "../controllers/adminController";
 
 const router = Router();
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify", verifyOTP);
+
 router.get("/firewall", getFirewall);
 router.post("/add-firewall", addFirewall);
 router.post("/delete-firewall", deleteFirewall);
