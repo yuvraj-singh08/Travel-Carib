@@ -368,7 +368,7 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: stri
                 const lastSegmentOfCurrentRoute = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
                 const lastSegmentLength = lastSegmentOfCurrentRoute?.length;
                 const differenceInMinutes = getDifferenceInMinutes(
-                    lastSegmentOfCurrentRoute?.[lastSegmentLength - 1].departing_at,
+                    lastSegmentOfCurrentRoute?.[lastSegmentLength - 1].arriving_at,
                     nextRoute?.slices?.[0]?.segments?.[0]?.departing_at
                 );
 

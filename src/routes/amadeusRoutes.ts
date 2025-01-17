@@ -1,5 +1,5 @@
 import express from 'express';
-import AmadeusController from '../controllers/AmadusController';
+import AmadeusController from '../controllers/AmadeusController';
 
 const router = express.Router();
 const amadeusController = new AmadeusController();

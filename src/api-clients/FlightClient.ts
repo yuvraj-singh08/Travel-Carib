@@ -260,9 +260,9 @@ class FlightClient {
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        // ...(amadeus?.[index2] || []),
+                        ...(amadeus?.[index2] || []),
                         ...(duffel?.[index2] || []),
-                        // ...(kiu?.[index2] || [])
+                        ...(kiu?.[index2] || [])
                     ])
                 })
                 const paired = combineAllRoutes(temp, { maxTime: searchManagement?.searchManagement?.[0]?.maxConnectionTime, minTime: searchManagement?.searchManagement?.[0]?.minConnectionTime })

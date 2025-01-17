@@ -37,7 +37,6 @@ class AmadusController {
             const response = await this.amadusClient.priceCalendar({ origin, destination, date1, date2, oneWay });
             res.status(200).json(response)
         } catch (error) {
-            console.log(error);
             next(error);
         }
     }
