@@ -378,8 +378,11 @@ model Blog {
 }
 
 model Offer {
-  id        String   @id @default(uuid()) @map("_id")
-  data      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(uuid()) @map("_id")
+  data          String
+  passengers    Json
+  passengerData Json[]
+  flightWay     RouteType
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

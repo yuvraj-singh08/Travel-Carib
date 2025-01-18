@@ -1,12 +1,14 @@
 import { prisma } from "../prismaClient"
 
-export async function saveData(data: any) {
+export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY") {
     try {
         const promises = data.map(async (item: any) => {
             const response = await prisma.offer.create({
                 data: {
-                    data: JSON.stringify(item)
-                }
+                    data: JSON.stringify(item),
+                    passengers,
+                    flightWay
+                },
             })
             return {
                 ...item,

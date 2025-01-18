@@ -49,7 +49,7 @@ class KiuClient {
                 let flag = false;
                 let code = null;
                 segment?.bookingAvl?.forEach((bookingAvl) => {
-                  if (cabinClass.includes(bookingAvl.code)) {
+                  if (((params.CabinClass === 'economy' || params.CabinClass === 'premium_economy') && (!kiuClasses.business.includes(bookingAvl.code) && !kiuClasses.first.includes(bookingAvl.code))) || cabinClass.includes(bookingAvl.code)) {
                     flag = true;
                     code = bookingAvl.code;
                   }
@@ -160,9 +160,9 @@ class KiuClient {
 
   async priceCalendar() {
     try {
-      
+
     } catch (error) {
-      
+
     }
   }
 }

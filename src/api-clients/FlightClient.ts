@@ -57,8 +57,9 @@ class FlightClient {
             }
             return false;
         })
+        const savedResult = await saveData(result, params.passengers, params.flightWay)
 
-        return { flightData: result, airlinesDetails: { airlines, extendedData } };
+        return { flightData: savedResult, airlinesDetails: { airlines, extendedData } };
     }
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
@@ -287,7 +288,7 @@ class FlightClient {
                 }
                 return false;
             })
-            const savedData = await saveData(result);
+            const savedData = await saveData(result, params.passengers, "ONEWAY");
             return { flightData: savedData, airlinesDetails };
 
         } catch (error) {

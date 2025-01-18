@@ -36,6 +36,7 @@ export type MultiCitySearchParams = {
     },
     cabinClass: CabinClass,
     filters?: FilterType
+    flightWay?: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY"
 }
 
 export type routeType = {

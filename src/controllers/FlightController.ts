@@ -42,9 +42,9 @@ class FlightController {
 
   async multiCitySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
-      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
-        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
+      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy, flightWay } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass || !flightWay) {
+        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters, flightWay");
       }
       const response = await this.flightClient.multiCityFlightSearch({
         FlightDetails,
@@ -53,7 +53,8 @@ class FlightController {
         passengers: passengers || { adults: 1, children: 0, infants: 0 },
         sortBy: sortBy || "BEST",
         cabinClass,
-        filters
+        filters,
+        flightWay
       })
       res.status(200).json(response);
     } catch (error) {
