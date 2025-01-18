@@ -1,4 +1,4 @@
-import { CabinClass } from "@duffel/api/types"
+import { CabinClass, DuffelPassengerGender, DuffelPassengerTitle, DuffelPassengerType } from "@duffel/api/types"
 import { $Enums } from "@prisma/client"
 
 export type FlightOfferSearchParams = {
@@ -262,12 +262,18 @@ export interface AirlineProvider {
 }
 
 export interface PassengerType {
+    title: DuffelPassengerTitle
     firstName: string;
-    surname: string;
-    gender: string;
+    lastname: string;
+    gender: DuffelPassengerGender;
     nationality: string;
     passportNumber: string;
     passportExpiryDate: string;
+    issuingCountry: string;
+    passengerType: DuffelPassengerType;
+    infant_passenger_id?: string;
+    email:string;
+    phoneNumber:string;
     dob: string;
 }
 

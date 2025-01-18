@@ -10,3 +10,10 @@ export const GDS = {
     duffel: 'DUFFEL',
     amadeus: 'AMADEUS'
 }
+
+export const amadeusClass = {
+    economy: 'ECONOMY',
+    premium_economy: 'PREMIUM_ECONOMY',
+    business: 'BUSINESS',
+    first: 'FIRST'
+}

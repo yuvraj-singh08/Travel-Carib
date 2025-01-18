@@ -1,5 +1,6 @@
 import Amadus from 'amadeus'
 import { routeType } from './flightTypes'
+import { CabinClass } from '@duffel/api/types'
 
 export type FlightOfferSearchParams = {
     departure: string,
@@ -7,7 +8,8 @@ export type FlightOfferSearchParams = {
     locationDeparture: string,
     locationArrival: string,
     adults: string,
-    passengers: any
+    passengers: any,
+    cabinClass: CabinClass
 }
 
 export type multiCityFlightSearchParams = {

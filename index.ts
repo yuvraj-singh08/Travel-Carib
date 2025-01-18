@@ -75,8 +75,14 @@ app.use('/amadeus', amadeusRoutes);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     console.log(err);
-    const statusCode = err.statusCode || err?.meta?.status || 500;
-    const message = err.message || err?.errors?.[0]?.message || "Internal Server Error";
+    let statusCode = err.statusCode || err?.meta?.status || 500;
+    let message = err.message || err?.errors?.[0]?.message || "Internal Server Error";
+    if (err?.response?.statusCode) {
+      statusCode = err.response.statusCode;
+    }
+    if (err?.description?.[0]?.detail) {
+      message = err.description?.[0]?.detail;
+    }
 
     res.status(statusCode).json({
       success: false,

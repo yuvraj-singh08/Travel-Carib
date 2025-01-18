@@ -98,8 +98,8 @@ class FlightController {
 
   async BookFlight(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { offerId, passengers, contactDetails, address, flight_type, userId } = req.body;
-      if (!offerId || !passengers || !contactDetails || !address || !flight_type || !userId) {
+      const { offerId, passengers, flight_type, userId } = req.body;
+      if (!offerId || !passengers || !flight_type || !userId) {
         throw new HttpError("Missing required fields: offerId, passengers, contactDetails, address, flight_type, userId", 400);
       }
       const data = await getOffer(offerId);
@@ -113,14 +113,14 @@ class FlightController {
         switch (provider) {
           case GDS.kiu:
             //@ts-ignore
-            this.flightClient.bookKiuFlight(offer, passengers, contactDetails, address, flight_type, userId);
+            this.flightClient.bookKiuFlight(offer, passengers);
             break;
           case GDS.amadeus:
             //@ts-ignores
-            this.flightClient.bookAmadeusFlight(offer, passengers, contactDetails, address, flight_type, userId);
+            this.flightClient.bookAmadeusFlight(offer, passengers);
             break;
           case GDS.duffel:
-            const pnr = await this.flightClient.bookDuffelFlight(slice, passengers, contactDetails, address, flight_type, userId);
+            const pnr = await this.flightClient.bookDuffelFlight(slice, passengers);
             pnrs.push(pnr);
             break;
           default:

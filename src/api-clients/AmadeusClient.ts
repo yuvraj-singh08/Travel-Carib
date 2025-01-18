@@ -3,6 +3,7 @@ import config from '../configs/config';
 import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { routeType } from '../../types/flightTypes';
 import { convertToPriceCalendar } from '../utils/flights';
+import { amadeusClass } from '../../constants/cabinClass';
 
 class AmadeusClient {
   private client: amadeusClientType;
@@ -92,7 +93,7 @@ class AmadeusClient {
           flightFilters: {
             cabinRestrictions: [
               {
-                cabin: "ECONOMY",
+                cabin: amadeusClass[params.cabinClass],
                 coverage: "MOST_SEGMENTS",
                 originDestinationIds: [
                   1
@@ -111,7 +112,7 @@ class AmadeusClient {
       }))
       return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
-      console.log(error);
+      throw error;
     }
   }
 

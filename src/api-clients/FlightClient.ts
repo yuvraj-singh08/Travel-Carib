@@ -8,6 +8,7 @@ import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { saveData } from "../services/OfferService";
 import customDateFormat from "../utils/utils";
+import { CreateOrderPassenger } from "@duffel/api/types";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
@@ -217,6 +218,7 @@ class FlightClient {
                         locationArrival: segment.destination,
                         adults: params.passengerType,
                         passengers: amadeusPassengersArray,
+                        cabinClass: params.cabinClass,
                     }, index++)
                 })
             })
@@ -304,21 +306,30 @@ class FlightClient {
 
     }
 
-    async bookDuffelFlight(slice: Slice, passengers: PassengerType[], contactDetails: ContactDetailsType, address: any, flight_type, userId: string) {
+    async bookDuffelFlight(slice: Slice, passengers: PassengerType[]) {
         try {
-            const title: 'mr' = 'mr'
-            const gender: 'm' | 'f' = 'm'
             const passengersData = passengers.map((passenger, index) => {
-                return {
-                    title,
-                    phone_number: contactDetails.phone,
+                let returnValue: CreateOrderPassenger = {
+                    identity_documents: [{
+                        type: 'passport',
+                        unique_identifier: passenger.passportNumber,
+                        issuing_country_code: passenger.issuingCountry,
+                        expires_on: passenger.passportExpiryDate
+                    }],
+                    email: passenger.email,
+                    phone_number: passenger.phoneNumber,
+                    type: passenger.passengerType,
                     id: slice.passengers[index].id,
-                    given_name: passenger.firstName,
-                    gender: gender,
-                    family_name: passenger.surname,
-                    email: contactDetails.email,
                     born_on: passenger.dob,
+                    family_name: passenger.lastname,
+                    given_name: passenger.firstName,
+                    gender: passenger.gender,
+                    title: passenger.title,
                 }
+                if (passenger.infant_passenger_id) {
+                    returnValue.infant_passenger_id = passenger.infant_passenger_id;
+                }
+                return returnValue
             })
             const response = await this.duffelClient.createOrder({
                 passengers: passengersData,
