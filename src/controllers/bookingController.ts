@@ -118,23 +118,74 @@ export const fetchBooking = async (
       .status(403)
       .json({ error: "Unauthorized access", success: false });
   }
-  let whereClause = {};
-  if (!(req.user.role === "ADMIN")) {
-    whereClause = {
-      userId: userId,
-    }
+
+  const {
+    to,
+    from,
+    pageIndex = 0,
+    pageSize = 10,
+    searchKey,
+    status,
+
+  }: {
+    to:string,
+    from:string,
+    pageIndex?: number;
+    pageSize?: number;
+    searchKey?: string;
+    status:string
+  } = req.body;
+
+  if (pageSize <= 0 || pageIndex < 0) {
+    return res.status(400).json({
+      error: "Invalid pagination parameters",
+      success: false,
+    });
   }
 
+
+  
   try {
-    const bookings = await prisma.booking.findMany({
-      where: whereClause
-    });
+    const whereClause: any = req.user.role === "ADMIN" ? {} : { userId };
+
+  if (to != undefined && from != undefined ) {
+    const fromDate = new Date(from);
+      const toDate = new Date(to)
+      whereClause.
+      createdAt = {
+        gte: fromDate,
+        lte: toDate,  
+      };
+    
+  }
+  if(status){
+    whereClause.adminStatus = status; 
+  }
+
+  if (searchKey) {
+    whereClause.OR = [
+      { id:{
+        contains:searchKey,
+        mode:'insensitive',
+      }  },
+    ];
+  }
+
+    const [bookings,total] = await prisma.$transaction([
+      prisma.booking.findMany({
+        where: whereClause,
+        skip: pageIndex * pageSize,
+        take: pageSize,
+      }),
+      prisma.booking.count({ where: whereClause }),
+    ]);
 
     if (!bookings) {
       return res
         .status(404)
         .json({ error: "Booking not found", success: false });
     }
+
 
     // const updatedData = bookings.map((booking) => {
     //   let status = booking.adminStatus;
@@ -157,7 +208,7 @@ export const fetchBooking = async (
     //   };
     // });
 
-    return res.status(200).json({ data: bookings, success: true });
+    return res.status(200).json({ data: bookings,total:total, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res
