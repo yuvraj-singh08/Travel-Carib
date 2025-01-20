@@ -12,14 +12,8 @@ const SALT_ROUNDS = 10;
 
 // Register User
 export const registerUser = async (req: Request, res: Response) => {
-  const {
-    email,
-    password,
-    firstName,
-    lastName,
-    role,
-  } = req.body;
-  
+  const { email, password, firstName, lastName, role } = req.body;
+
   try {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -32,7 +26,7 @@ export const registerUser = async (req: Request, res: Response) => {
         role: role,
       },
     });
-    
+
     res.status(201).json({
       message: "User created successfully",
       user: response,
@@ -64,7 +58,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     //send email
     const messageId = await sendOTP(email, user.id);
-    
+
     if (!messageId) {
       return res.status(500).json({
         message: "Failed to send OTP",
@@ -152,10 +146,10 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     let isPasswordValid: Boolean;
-    
+
     if (password) {
       isPasswordValid = await bcrypt.compare(password, user.password);
-      
+
       if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
@@ -169,6 +163,36 @@ export const loginUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error logging in user:", error);
     return res.status(500).json({ error: "Failed to login" });
+  }
+};
+
+export const getAdminById = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const adminId = req.user?.id;
+  console.log(adminId);
+  if (!adminId) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized access, user ID missing" });
+  }
+
+  try {
+    const user = await prisma.admin.findUnique({
+      where: {
+        id: adminId,
+      },
+    });
+
+    if (user) {
+      return res.json(user);
+    } else {
+      return res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 

@@ -273,13 +273,13 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get a user by ID
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
-
+  
   if (!userId) {
     return res
       .status(401)
       .json({ error: "Unauthorized access, user ID missing" });
   }
-
+  
   try {
     const user = await prisma.user.findUnique({
       where: {

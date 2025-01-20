@@ -76,9 +76,13 @@ import {
   loginUser,
   forgotPassword,
   verifyOTP,
+  getAdminById,
 } from "../controllers/adminController";
+import { authenticateToken } from "../middleware/authmiddleware";
 
 const router = Router();
+router.get("/profile", authenticateToken, getAdminById);
+
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);

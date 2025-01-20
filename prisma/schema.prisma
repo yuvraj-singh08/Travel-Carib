@@ -253,7 +253,7 @@ enum Status {
 
 model userManagement {
   id       String @id @default(uuid()) @map("_id")
-  uniqueId String
+  uniqueId String @unique
   name     String
   address  String
   email    String
