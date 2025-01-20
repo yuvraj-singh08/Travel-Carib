@@ -64,7 +64,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     //send email
     const messageId = await sendOTP(email, user.id);
-
+    
     if (!messageId) {
       return res.status(500).json({
         message: "Failed to send OTP",

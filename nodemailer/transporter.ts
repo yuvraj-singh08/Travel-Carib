@@ -14,7 +14,7 @@ export async function sendOTP(email: string, id: string) {
     data: {
       otp: data.otp,
       email: data.email,
-      User: {
+      Admin: {
         connect: {
           id: data.id,
         },
@@ -25,7 +25,7 @@ export async function sendOTP(email: string, id: string) {
   if (!otp) {
     throw new Error("Failed to create otp");
   }
-
+  
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
