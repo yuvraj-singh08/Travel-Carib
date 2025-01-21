@@ -142,7 +142,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     
     if (user !== null) {
       const hashed = await bcrypt.hash(password as string, SALT_ROUNDS);
-      const updated = await prisma.user.update({
+      const updated = await prisma.admin.update({
         where: {
           email: email as string,
         },
