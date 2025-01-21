@@ -83,6 +83,9 @@ app.use(
     if (err?.description?.[0]?.detail) {
       message = err.description?.[0]?.detail;
     }
+    if (err?.description?.error) {
+      message = err.description?.error_description || err?.description?.error;
+    }
 
     res.status(statusCode).json({
       success: false,

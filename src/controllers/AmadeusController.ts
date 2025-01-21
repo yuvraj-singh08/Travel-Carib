@@ -13,6 +13,7 @@ class AmadusController {
         this.flightPrice = this.flightPrice.bind(this);
         this.priceCalendar = this.priceCalendar.bind(this);
         this.bookFlight = this.bookFlight.bind(this);
+        this.testBookFlight = this.testBookFlight.bind(this);
     }
 
     async citySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -72,6 +73,52 @@ class AmadusController {
     async bookFlight(req: Request, res: Response, next: NextFunction) {
         try {
             const response = await this.amadusClient.bookingFlight();
+            res.status(200).json(response);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async testBookFlight(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { departure, locationDeparture, locationArrival, adults, passengers } = req.body;
+            const passengersData = passengers.map((passenger, index) => {
+                let returnValue = {
+                    id: index + 1,
+                    dateOfBirth: passenger.dob,
+                    name: {
+                        firstName: passenger.firstName,
+                        lastName: passenger.lastname,
+                    },
+                    gender: passenger.gender,
+                    contact: {
+                        emailAddress: passenger.email,
+                        phones: [
+                            {
+                                deviceType: "MOBILE",
+                                countryCallingCode: passenger.phoneNumber.slice(0, passenger.phoneNumber.length - 10),
+                                number: passenger.phoneNumber.slice(passenger.phoneNumber.length - 10),
+                            },
+                        ],
+                    },
+                    documents: [
+                        {
+                            documentType: "PASSPORT",
+                            birthPlace: passenger.nationality,
+                            issuanceLocation: passenger.issuingCountry,
+                            issuanceDate: "2015-04-14",
+                            number: passenger.passportNumber,
+                            expiryDate: passenger.passportExpiryDate,
+                            issuanceCountry: passenger.issuingCountry,
+                            validityCountry: passenger.issuingCountry,
+                            nationality: passenger.issuingCountry,
+                            holder: true,
+                        },
+                    ],
+                }
+                return returnValue
+            })
+            const response = await this.amadusClient.testBookingApi({ departure, locationDeparture, locationArrival, adults }, passengersData);
             res.status(200).json(response);
         } catch (error) {
             next(error);

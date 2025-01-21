@@ -39,3 +39,39 @@ export async function getOffer(id: string) {
         throw error;
     }
 }
+
+export const saveAmadeusResponse = async (data: any) => {
+    try {
+        const promises = data.map(async (item: any) => {
+            const response = await prisma.amadeusOffer.create({
+                data: {
+                    data: JSON.stringify(item),
+                },
+            })
+            return {
+                ...item,
+                amadeusResponseId: response.id
+            };
+        })
+        const response = await Promise.all(promises);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getAmadeusOffer = async (id: string) => {
+    try {
+        const offer = await prisma.amadeusOffer.findUnique({
+            where: {
+                id: id
+            }
+        })
+        return {
+            ...offer,
+            data: JSON.parse(offer.data)
+        };
+    } catch (error) {
+        throw error;
+    }
+}

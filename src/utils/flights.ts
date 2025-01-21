@@ -212,7 +212,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                             departing_at,
                             arriving_at,
                             segments: segments,
-                            sourceId: GDS.amadeus
+                            sourceId: GDS.amadeus,
+                            amadeusResponseId: result.amadeusResponseId
                         }
                     ],
                 })

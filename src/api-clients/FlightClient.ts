@@ -6,7 +6,7 @@ import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { saveData } from "../services/OfferService";
+import { getAmadeusOffer, saveData } from "../services/OfferService";
 import customDateFormat from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 
@@ -302,8 +302,52 @@ class FlightClient {
 
     }
 
-    async bookAmadeusFlight() {
+    async bookAmadeusFlight(amadeusResponseId: string, passengers: PassengerType[]) {
+        try {
+            const amadeusOffer = await getAmadeusOffer(amadeusResponseId)
 
+            const passengersData = passengers.map((passenger, index) => {
+                let returnValue = {
+                    id: index + 1,
+                    dateOfBirth: passenger.dob,
+                    name: {
+                        firstName: passenger.firstName,
+                        lastName: passenger.lastName,
+                    },
+                    gender: passenger.gender === 'm' ? 'MALE' : 'FEMALE',
+                    contact: {
+                        emailAddress: passenger.email,
+                        phones: [
+                            {
+                                deviceType: "MOBILE",
+                                countryCallingCode: passenger.phoneNumber.slice(0, passenger.phoneNumber.length - 10),
+                                number: passenger.phoneNumber.slice(passenger.phoneNumber.length - 10),
+                            },
+                        ],
+                    },
+                    documents: [
+                        {
+                            documentType: "PASSPORT",
+                            birthPlace: passenger.nationality,
+                            issuanceLocation: passenger.issuingCountry,
+                            issuanceDate: "2015-04-14",
+                            number: passenger.passportNumber,
+                            expiryDate: passenger.passportExpiryDate,
+                            issuanceCountry: passenger.issuingCountry,
+                            validityCountry: passenger.issuingCountry,
+                            nationality: passenger.issuingCountry,
+                            holder: true,
+                        },
+                    ],
+                }
+                return returnValue
+            })
+            const response = await this.amadeusClient.bookingFlight(amadeusOffer.data, passengersData)
+            const PNR = response?.result?.data?.associatedRecords?.filter((record) => record.originSystemCode === 'GDS')?.[0]?.reference;
+            return PNR;
+        } catch (error) {
+            throw error;
+        }
     }
 
     async bookDuffelFlight(slice: Slice, passengers: PassengerType[]) {
@@ -318,10 +362,10 @@ class FlightClient {
                     }],
                     email: passenger.email,
                     phone_number: passenger.phoneNumber,
-                    type: passenger.passengerType,
+                    type: "adult",
                     id: slice.passengers[index].id,
                     born_on: passenger.dob,
-                    family_name: passenger.lastname,
+                    family_name: passenger.lastName,
                     given_name: passenger.firstName,
                     gender: passenger.gender,
                     title: passenger.title,

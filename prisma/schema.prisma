@@ -169,13 +169,14 @@ enum AdminStatus {
 model Booking {
   id             String        @id @default(uuid()) @map("_id")
   contactDetail  Json // email and phone number
+  subBooking     Json[]
   flightDetails  String
   payment        BookPayment[] // Payment id
   passenger      Json[] // passenger[] id reference
-  address        Json
-  baseFare       Json[]
-  tax_fee_surges Json[]
-  otherCharges   Json[]
+  // address        Json
+  baseFare       Float
+  tax_fee_surges Float
+  otherCharges   Float
   discount       Json?
   totalAmount    Float
   currency       String
@@ -388,4 +389,11 @@ model Offer {
   flightWay     RouteType
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model AmadeusOffer {
+  id        String   @id @default(uuid()) @map("_id")
+  data      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

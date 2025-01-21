@@ -107,6 +107,41 @@ export const getPaymentDetails = async (
   }
 };
 
+export const getBookings = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user.id;
+
+    if (!userId) {
+      res
+        .status(403)
+        .json({ error: "Unauthorized access", success: false });
+      return;
+    }
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId,
+      },
+    })
+    const parsedBooking = bookings.map((booking) => {
+      return {
+        ...booking,
+        passenger: booking.passenger.map((data) => {
+          //@ts-ignore
+          return JSON.parse(data)
+        }),
+        flightDetails: JSON.parse(booking.flightDetails),
+      }
+    })
+    res.status(200).json({ success: true, data: parsedBooking });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const fetchBooking = async (
   req: AuthenticatedRequest,
   res: Response
@@ -128,12 +163,12 @@ export const fetchBooking = async (
     status,
 
   }: {
-    to:string,
-    from:string,
+    to: string,
+    from: string,
     pageIndex?: number;
     pageSize?: number;
     searchKey?: string;
-    status:string
+    status: string
   } = req.body;
 
   if (pageSize <= 0 || pageIndex < 0) {
@@ -144,34 +179,36 @@ export const fetchBooking = async (
   }
 
 
-  
+
   try {
     const whereClause: any = req.user.role === "ADMIN" ? {} : { userId };
 
-  if (to != undefined && from != undefined ) {
-    const fromDate = new Date(from);
+    if (to != undefined && from != undefined) {
+      const fromDate = new Date(from);
       const toDate = new Date(to)
       whereClause.
-      createdAt = {
+        createdAt = {
         gte: fromDate,
-        lte: toDate,  
+        lte: toDate,
       };
-    
-  }
-  if(status){
-    whereClause.adminStatus = status; 
-  }
 
-  if (searchKey) {
-    whereClause.OR = [
-      { id:{
-        contains:searchKey,
-        mode:'insensitive',
-      }  },
-    ];
-  }
+    }
+    if (status) {
+      whereClause.adminStatus = status;
+    }
 
-    const [bookings,total] = await prisma.$transaction([
+    if (searchKey) {
+      whereClause.OR = [
+        {
+          id: {
+            contains: searchKey,
+            mode: 'insensitive',
+          }
+        },
+      ];
+    }
+
+    const [bookings, total] = await prisma.$transaction([
       prisma.booking.findMany({
         where: whereClause,
         skip: pageIndex * pageSize,
@@ -208,7 +245,7 @@ export const fetchBooking = async (
     //   };
     // });
 
-    return res.status(200).json({ data: bookings,total:total, success: true });
+    return res.status(200).json({ data: bookings, total: total, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return res

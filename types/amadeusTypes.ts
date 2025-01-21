@@ -21,7 +21,7 @@ export type multiCityFlightSearchParams = {
 
 export type AmadeusResponseType = {
     data: AmadeusOfferType[],
-    dictionaries: Dictionaries
+    dictionaries: Dictionaries,
 }
 
 export type Dictionaries = {
@@ -59,6 +59,7 @@ export type AmadeusOfferType = {
     pricingOptions: PricingOptions;
     validatingAirlineCodes: string[];
     travelerPricings: TravelerPricing[];
+    amadeusResponseId: string
 };
 
 type Itinerary = {

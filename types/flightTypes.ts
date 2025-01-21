@@ -101,6 +101,7 @@ export type Slice = {
     destination: Location;
     origin: Location;
     offerId: string;
+    amadeusResponseId?: string;
     sourceId: string;
     passengers: {
         type: string;
@@ -264,7 +265,7 @@ export interface AirlineProvider {
 export interface PassengerType {
     title: DuffelPassengerTitle
     firstName: string;
-    lastname: string;
+    lastName: string;
     gender: DuffelPassengerGender;
     nationality: string;
     passportNumber: string;
@@ -280,4 +281,19 @@ export interface PassengerType {
 export interface ContactDetailsType {
     phone: string;
     email: string;
+}
+
+export type SubBookingType = {
+    pnr: string;
+    status: 'pending' | 'confirmed' | 'failed';
+    ticketNumber: number;
+}
+
+export type CreateBookingServiceParams = {
+    flightData: any;
+    passengers: PassengerType[];
+    flightType: string;
+    userId: string;
+    contactDetails: ContactDetailsType;
+    subBookings: SubBookingType[]
 }

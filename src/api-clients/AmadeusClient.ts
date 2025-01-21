@@ -4,6 +4,7 @@ import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams
 import { routeType } from '../../types/flightTypes';
 import { convertToPriceCalendar } from '../utils/flights';
 import { amadeusClass } from '../../constants/cabinClass';
+import { saveAmadeusResponse } from '../services/OfferService';
 
 class AmadeusClient {
   private client: amadeusClientType;
@@ -12,7 +13,7 @@ class AmadeusClient {
     this.client = new Amadus({
       clientId: process.env.AMADEUS_CLIENT_ID,
       clientSecret: process.env.AMADEUS_CLIENT_SECRET,
-      hostname: 'production'
+      hostname: process.env.ENVIORNMENT || "production"
     });
   }
 
@@ -72,7 +73,7 @@ class AmadeusClient {
       // }));
 
       const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-        currencyCode: "EUR",
+        currencyCode: process.env.ISOCurrency || "USD",
         originDestinations: [
           {
             id: 1,
@@ -80,7 +81,6 @@ class AmadeusClient {
             destinationLocationCode: params.locationArrival,
             departureDateTimeRange: {
               date: params.departure,
-              // time: 10:00:00
             }
           },
         ],
@@ -100,17 +100,11 @@ class AmadeusClient {
                 ]
               }
             ],
-            // carrierRestrictions: {
-            //   excludedCarrierCodes: [
-            //     AA,
-            //     TP,
-            //     AZ
-            //   ]
-            // }
           }
         }
       }))
-      return { data: response.data, dictionaries: response.result.dictionaries };
+      const savedResponse = await saveAmadeusResponse(response.data);
+      return { data: savedResponse, dictionaries: response.result.dictionaries };
     } catch (error) {
       throw error;
     }
@@ -175,9 +169,9 @@ class AmadeusClient {
         JSON.stringify({
           'data': {
             'type': 'flight-offers-pricing',
-            'flightOffers': [flightOffer]
+            'flightOffers': [flightOffer],
           }
-        }), { include: 'credit-card-fees,detailed-fare-rules' }
+        }), { include: 'bags' }
       );
 
       return flightPricingResponse.data;
@@ -186,49 +180,46 @@ class AmadeusClient {
     }
   }
 
-  async bookingFlight() {
+  async bookingFlight(amadeusOffer: any, passengers: any[]) {
     try {
-      const response = await this.client.booking.flightOrders.post({
+      const response = await this.client.booking.flightOrders.post(JSON.stringify({
         data: {
           type: "flight-order",
-          // flightOffers: [pricingResponse.data.flightOffers[0]],
-          travelers: [
-            {
-              id: "1",
-              dateOfBirth: "1982-01-16",
-              name: {
-                firstName: "JORGE",
-                lastName: "GONZALES",
-              },
-              gender: "MALE",
-              contact: {
-                emailAddress: "jorge.gonzales833@telefonica.es",
-                phones: [
-                  {
-                    deviceType: "MOBILE",
-                    countryCallingCode: "34",
-                    number: "480080076",
-                  },
-                ],
-              },
-              documents: [
-                {
-                  documentType: "PASSPORT",
-                  birthPlace: "Madrid",
-                  issuanceLocation: "Madrid",
-                  issuanceDate: "2015-04-14",
-                  number: "00000000",
-                  expiryDate: "2025-04-14",
-                  issuanceCountry: "ES",
-                  validityCountry: "ES",
-                  nationality: "ES",
-                  holder: true,
-                },
-              ],
-            },
-          ],
+          flightOffers: [amadeusOffer],
+          travelers: passengers
         },
+      }));
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async testBookingApi(params: FlightOfferSearchParams, passengers) {
+    try {
+      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+        originLocationCode: params.locationDeparture,
+        destinationLocationCode: params.locationArrival,
+        departureDate: params.departure,
+        adults: params.adults,
       });
+      const flightOffer = flightOffersSearchResponse.data[0];
+      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
+      const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
+        JSON.stringify({
+          'data': {
+            'type': 'flight-offers-pricing',
+            'flightOffers': [flightOffer]
+          }
+        }), { include: 'credit-card-fees,detailed-fare-rules' }
+      );
+      const response = await this.client.booking.flightOrders.post(JSON.stringify({
+        data: {
+          type: "flight-order",
+          flightOffers: [flightPricingResponse.data.flightOffers[0]],
+          travelers: passengers
+        },
+      }));
       return response;
     } catch (error) {
       throw error;
