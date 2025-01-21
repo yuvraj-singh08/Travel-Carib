@@ -130,7 +130,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetAdminPassword = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   
   try {
@@ -150,7 +150,9 @@ export const resetPassword = async (req: Request, res: Response) => {
           password: hashed,
         },
       });
-
+      
+      console.log(updated);
+      
       if (updated) {
         return res.status(200).json({
           message: "Password changed",
