@@ -214,7 +214,7 @@ export const socialAuthRegister = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  
+
   try {
     const user = await prisma.user.findUnique({
       where: {
@@ -273,13 +273,13 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get a user by ID
 export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
-  
+
   if (!userId) {
     return res
       .status(401)
       .json({ error: "Unauthorized access, user ID missing" });
   }
-  
+
   try {
     const user = await prisma.user.findUnique({
       where: {
@@ -464,16 +464,39 @@ export const delUser = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
+    const isBooking = await prisma.booking.findMany({
+      where: {
+        userId: id,
+      },
+    });
+
+    if (isBooking.length > 0) {
+      await prisma.user.update({
+        where: {
+          id: id,
+        },
+        data: {
+          isBlocked: true,
+        },
+      })
+      
+      return res.status(200).json({
+        message: "User has bookings",
+        isBooking: true,
+        success: false,
+      });
+    }
+
     await prisma.user.delete({
       where: {
         id: id,
       },
     });
 
-    res.status(204).json({ message: "User deleted" });
+    return res.status(204).json({ message: "User deleted" });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Failed to delete user" });
+    return res.status(500).json({ error: "Failed to delete user" });
   }
 };
 
