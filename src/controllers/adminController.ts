@@ -130,6 +130,53 @@ export const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  
+  try {
+    const user = await prisma.admin.findUnique({
+      where: {
+        email: email as string,
+      },
+    });
+    
+    if (user !== null) {
+      const hashed = await bcrypt.hash(password as string, SALT_ROUNDS);
+      const updated = await prisma.user.update({
+        where: {
+          email: email as string,
+        },
+        data: {
+          password: hashed,
+        },
+      });
+
+      if (updated) {
+        return res.status(200).json({
+          message: "Password changed",
+          success: true,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update password",
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
 // Login User
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
