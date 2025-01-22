@@ -320,7 +320,7 @@ class FlightClient {
                         phones: [
                             {
                                 deviceType: "MOBILE",
-                                countryCallingCode: passenger.phoneNumber.slice(0, passenger.phoneNumber.length - 10),
+                                countryCallingCode: passenger.phoneNumber.slice(1, passenger.phoneNumber.length - 10),
                                 number: passenger.phoneNumber.slice(passenger.phoneNumber.length - 10),
                             },
                         ],

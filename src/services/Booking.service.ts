@@ -6,10 +6,8 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
         const booking = await prisma.booking.create({
             data: {
                 contactDetail: {
-                    create: {
-                        email: params.contactDetails.email,
-                        phone: params.contactDetails.phone,
-                    },
+                    email: params.contactDetails.email,
+                    phone: params.contactDetails.phone,
                 },
                 subBooking: params.subBookings,
                 flightDetails: JSON.stringify(params.flightData),

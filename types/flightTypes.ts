@@ -277,7 +277,7 @@ export interface PassengerType {
     phoneNumber:string;
     dob: string;
 }
-
+String
 export interface ContactDetailsType {
     phone: string;
     email: string;
@@ -292,7 +292,7 @@ export type SubBookingType = {
 export type CreateBookingServiceParams = {
     flightData: any;
     passengers: PassengerType[];
-    flightType: string;
+    flightType: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY";
     userId: string;
     contactDetails: ContactDetailsType;
     subBookings: SubBookingType[]

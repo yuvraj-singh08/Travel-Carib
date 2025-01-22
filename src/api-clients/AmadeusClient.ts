@@ -1,8 +1,5 @@
 import Amadus from 'amadeus'
-import config from '../configs/config';
 import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
-import { routeType } from '../../types/flightTypes';
-import { convertToPriceCalendar } from '../utils/flights';
 import { amadeusClass } from '../../constants/cabinClass';
 import { saveAmadeusResponse } from '../services/OfferService';
 
@@ -33,6 +30,7 @@ class AmadeusClient {
 
   async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string, oneWay?: boolean }): Promise<any> {
     try {
+      await new Promise(resolve => setTimeout(resolve, 400))
       const payload = {
         origin: params.origin,
         destination: params.destination,
