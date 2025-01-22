@@ -478,8 +478,8 @@ export const delUser = async (req: Request, res: Response) => {
         data: {
           isBlocked: true,
         },
-      })
-      
+      });
+
       return res.status(200).json({
         message: "User has bookings",
         isBooking: true,
@@ -497,6 +497,28 @@ export const delUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting user:", error);
     return res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
+export const unblockUser = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        isBlocked: false,
+      },
+    });
+
+    return res.status(200).json({ message: "User unblocked", success: true });
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to unblock user", success: false });
   }
 };
 

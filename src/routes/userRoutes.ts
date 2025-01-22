@@ -20,6 +20,7 @@ import {
   updateWatchlistById,
   forgotPassword,
   verifyOTP,
+  unblockUser,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -55,6 +56,7 @@ router.get("/:id", authenticateToken, getUserById);
 // router.put('/:id', authenticateToken, updateUser);
 router.post("/delete-user", authenticateToken, deleteUser);
 router.post("/del-user", delUser);
+router.post("/unblock", unblockUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
 router.post("/updatePassenger/:id", authenticateToken, updatePassenger);
