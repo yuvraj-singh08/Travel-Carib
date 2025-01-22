@@ -168,6 +168,26 @@ enum AdminStatus {
   FAILED_BOOKING
 }
 
+enum GDS_TYPE {
+  DUFFEL
+  AMADEUS
+  KIU
+}
+
+enum Passenger_Type {
+  ADULT
+  CHILD
+  INFANT
+}
+
+model OfferPassengers {
+  id            String         @id @default(uuid()) @map("_id")
+  passengerType Passenger_Type
+  amadeusId     String?
+  duffelId      String?
+  kiuId         String?
+}
+
 model Booking {
   id             String        @id @default(uuid()) @map("_id")
   contactDetail  Json // email and phone number

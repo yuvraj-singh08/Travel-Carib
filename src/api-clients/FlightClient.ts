@@ -6,8 +6,8 @@ import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { getAmadeusOffer, saveData } from "../services/OfferService";
-import customDateFormat from "../utils/utils";
+import { createOfferPassengers, getAmadeusOffer, saveData } from "../services/OfferService";
+import customDateFormat, { getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 
 class FlightClient {
@@ -65,10 +65,13 @@ class FlightClient {
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
+
+            const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(params.passengers);
             //Calculating Possible Routes
-            const [firewall, commission] = await Promise.all([
+            const [firewall, commission, offerPassengers] = await Promise.all([
                 prisma.firewall.findMany({}),
-                prisma.commissionManagement.findMany()
+                prisma.commissionManagement.findMany(),
+                createOfferPassengers(offerPassengerArray)
             ])
             const allFirewall = [], kiuFirewall = [], amadeusFirewall = [], duffelFirewall = [];
             firewall.forEach((firewall) => {
@@ -138,44 +141,7 @@ class FlightClient {
             })
             console.log(possibleRoutes);
 
-            const duffelPassengersArray = [], amadeusPassengersArray = [];
-            let travelerId = 1;
-            for (let i = 0; i < params.passengers.adults; i++) {
-                duffelPassengersArray.push({
-                    type: 'adult'
-                })
-                amadeusPassengersArray.push({
-                    id: travelerId++,
-                    travelerType: "ADULT",
-                    fareOptions: [
-                        "STANDARD"
-                    ]
-                },)
-            }
-            for (let i = 0; i < params.passengers.children; i++) {
-                duffelPassengersArray.push({
-                    type: 'child'
-                })
-                amadeusPassengersArray.push({
-                    id: travelerId++,
-                    travelerType: "ADULT",
-                    fareOptions: [
-                        "STANDARD"
-                    ]
-                },)
-            }
-            for (let i = 0; i < params.passengers.infants; i++) {
-                duffelPassengersArray.push({
-                    type: 'infant_without_seat'
-                })
-                // amadeusPassengersArray.push({
-                //     id: travelerId++,
-                //     travelerType: "ADULT",
-                //     fareOptions: [
-                //         "STANDARD"
-                //     ]
-                // },)
-            }
+
 
             //Duffel Request
             const duffelRequests = duffelPossibleRoutes.map((route) => {

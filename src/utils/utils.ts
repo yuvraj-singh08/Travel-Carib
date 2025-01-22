@@ -32,3 +32,61 @@ export default function customDateFormat(temp: Date) {
   const formattedValue = `${year}-${month < 10 ? "0" : ""}${month}-${date < 10 ? "0" : ""}${date}`;
   return formattedValue;
 }
+
+export const getPassengerArrays = (passengers: {
+  adults: number,
+  children: number,
+  infants: number
+}) => {
+  const offerPassengerArray = [], duffelPassengersArray = [], amadeusPassengersArray = [];
+  let travelerId = 1;
+  for (let i = 0; i < passengers.adults; i++) {
+    duffelPassengersArray.push({
+      type: 'adult'
+    })
+    offerPassengerArray.push({
+      type: "ADULT"
+    })
+    amadeusPassengersArray.push({
+      id: travelerId++,
+      travelerType: "ADULT",
+      fareOptions: [
+        "STANDARD"
+      ]
+    },)
+  }
+  for (let i = 0; i < passengers.children; i++) {
+    duffelPassengersArray.push({
+      type: 'child'
+    }),
+      offerPassengerArray.push({
+        type: "CHILD"
+      })
+    amadeusPassengersArray.push({
+      id: travelerId++,
+      travelerType: "ADULT",
+      fareOptions: [
+        "STANDARD"
+      ]
+    },)
+  }
+  for (let i = 0; i < passengers.infants; i++) {
+    duffelPassengersArray.push({
+      // type: 'infant_without_seat'
+      type: 'adult'
+    }),
+      offerPassengerArray.push({
+        type: "INFANT"
+      })
+    // amadeusPassengersArray.push({
+    //     id: travelerId++,
+    //     travelerType: "ADULT",
+    //     fareOptions: [
+    //         "STANDARD"
+    //     ]
+    // },)
+  }
+
+  return { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray }
+
+}

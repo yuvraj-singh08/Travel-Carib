@@ -1,3 +1,4 @@
+import { DuffelPassengerResponseType, SetPassengerIdServiceParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient"
 
 export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY") {
@@ -75,3 +76,66 @@ export const getAmadeusOffer = async (id: string) => {
         throw error;
     }
 }
+
+export const createOfferPassengers = async (passengers: { type: "ADULT" | "CHILD" | "INFANT" }[]) => {
+    try {
+        const response = await Promise.all(passengers.map((passenger) => {
+            return prisma.offerPassengers.create({
+                data: {
+                    passengerType: passenger.type,
+                }
+            })
+        }))
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const setOfferPassengersId = async (params: SetPassengerIdServiceParams) => {
+    try {
+        const adultPassengers = params.duffelPassengers.filter(p => p.type === 'adult');
+        const childPassengers = params.duffelPassengers.filter(p => p.type === 'child');
+        const infantPassengers = params.duffelPassengers.filter(p => p.type === 'infant_without_seat');
+        let adultIndex = 0, childIndex = 0, infantIndex = 0;
+        const updatedPassengers = await Promise.all(params.offerPassengers.map((passenger) => {
+            if (passenger.type === 'ADULT') {
+                return prisma.offerPassengers.update({
+                    where: {
+                        id: passenger.id
+                    },
+                    data: {
+                        duffelId: adultPassengers[adultIndex].id
+                    }
+                })
+                adultIndex++;
+            }
+            else if (passenger.type === 'CHILD') {
+                return prisma.offerPassengers.update({
+                    where: {
+                        id: passenger.id
+                    },
+                    data: {
+                        duffelId: childPassengers[childIndex].id
+                    }
+                })
+                childIndex++;
+            }
+            else {
+                return prisma.offerPassengers.update({
+                    where: {
+                        id: passenger.id
+                    },
+                    data: {
+                        duffelId: infantPassengers[infantIndex].id
+                    }
+                })
+                infantIndex++;
+            }
+        }))
+        return updatedPassengers;
+    } catch (error) {
+        throw error;
+    }
+}
+

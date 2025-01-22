@@ -1,9 +1,11 @@
 import { Duffel } from '@duffel/api';
-import { CreateOfferRequest } from '@duffel/api/types';
+import { CreateOfferRequest, OfferAvailableServiceBaggage } from '@duffel/api/types';
 import { DuffelCreateOrderParams } from '../../types/duffelTypes';
+import { AxiosInstance } from 'axios';
 
 class DuffelClient {
   private client: Duffel;
+  private axiosInstance: AxiosInstance;
 
   constructor() {
     this.client = new Duffel({ token: process.env.DUFFEL_TOKEN });
@@ -58,6 +60,17 @@ class DuffelClient {
       return response;
     } catch (error) {
       console.error(error);
+      throw error;
+    }
+  }
+
+  async getAvailableServices(offerId: string): Promise<any> {
+    try {
+      const response = await this.client.offers.get(offerId, {
+        return_available_services: true
+      })
+      return response.data.available_services;
+    } catch (error) {
       throw error;
     }
   }

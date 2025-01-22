@@ -273,11 +273,15 @@ export interface PassengerType {
     issuingCountry: string;
     passengerType: DuffelPassengerType;
     infant_passenger_id?: string;
-    email:string;
-    phoneNumber:string;
+    email: string;
+    phoneNumber: string;
     dob: string;
 }
-String
+
+export type DuffelPassengerResponseType = {
+    type: DuffelPassengerType,
+    id: string;
+}
 export interface ContactDetailsType {
     phone: string;
     email: string;
@@ -296,4 +300,14 @@ export type CreateBookingServiceParams = {
     userId: string;
     contactDetails: ContactDetailsType;
     subBookings: SubBookingType[]
+}
+
+export type SetPassengerIdServiceParams = {
+    duffelPassengers?: DuffelPassengerResponseType[],
+    amadeusPassengers?: DuffelPassengerResponseType[],
+    kiuPassengers?: DuffelPassengerResponseType[],
+    offerPassengers: {
+        id: string,
+        type: "ADULT" | "CHILD" | "INFANT"
+    }[]
 }
