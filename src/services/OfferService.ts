@@ -1,7 +1,7 @@
 import { DuffelPassengerResponseType, SetPassengerIdServiceParams } from "../../types/flightTypes";
 import { prisma } from "../prismaClient"
 
-export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY") {
+export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
     try {
         const promises = data.map(async (item: any) => {
             const response = await prisma.offer.create({

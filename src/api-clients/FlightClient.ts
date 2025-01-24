@@ -256,8 +256,8 @@ class FlightClient {
                 }
                 return false;
             })
-            const savedData = await saveData(result, params.passengers, "ONEWAY");
-            return { flightData: savedData, airlinesDetails };
+            // const savedData = await saveData(result, params.passengers, "ONEWAY");
+            return { flightData: result, airlinesDetails };
 
         } catch (error) {
             throw (error);

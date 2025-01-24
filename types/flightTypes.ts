@@ -36,7 +36,7 @@ export type MultiCitySearchParams = {
     },
     cabinClass: CabinClass,
     filters?: FilterType
-    flightWay?: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY"
+    flightWay?: "ONEWAY" | "ROUNDTRIP" | "MULTICITY"
 }
 
 export type routeType = {
@@ -296,7 +296,7 @@ export type SubBookingType = {
 export type CreateBookingServiceParams = {
     flightData: any;
     passengers: PassengerType[];
-    flightType: "ONEWAY" | "ROUNDTRIP" | "MULTIWAY";
+    flightType: "ONEWAY" | "ROUNDTRIP" | "MULTICITY";
     userId: string;
     contactDetails: ContactDetailsType;
     subBookings: SubBookingType[]

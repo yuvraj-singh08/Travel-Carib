@@ -10,7 +10,7 @@ datasource db {
 enum RouteType {
   ONEWAY
   ROUNDTRIP
-  MULTIWAY
+  MULTICITY
 }
 
 enum UserRole {
