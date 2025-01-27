@@ -8,5 +8,6 @@ router.post('/search-flights', duffelController.searchFlights);
 router.post('/get-flight-details', duffelController.getFlightDetails);
 router.post('/create-order', duffelController.createOrder);
 router.get('/available-services/:offerId', duffelController.getAvailableServices);
+router.get('/get-offer-request/:id', duffelController.getOfferRequestById);
 
 export default router;

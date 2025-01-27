@@ -1,5 +1,9 @@
-import { DuffelPassengerResponseType, SetPassengerIdServiceParams } from "../../types/flightTypes";
+import { GDS } from "../../constants/cabinClass";
+import { DuffelPassengerResponseType, Offer, SetPassengerIdServiceParams } from "../../types/flightTypes";
+import DuffelClient from "../api-clients/DuffelClient";
 import { prisma } from "../prismaClient"
+import HttpError from "../utils/httperror";
+import { transformBaggageDetailForPassengers } from "../utils/utils";
 
 export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
     try {
@@ -7,7 +11,6 @@ export async function saveData(data: any, passengers: { adults: number, children
             const response = await prisma.offer.create({
                 data: {
                     data: JSON.stringify(item),
-                    passengers,
                     flightWay
                 },
             })
@@ -24,17 +27,100 @@ export async function saveData(data: any, passengers: { adults: number, children
     }
 }
 
+export const getBaggageDataService = async (offer: Offer) => {
+    try {
+        const duffelClient = new DuffelClient();
+        const baggageRequests = offer.slices.map(async (slice) => {
+            const provider = slice.sourceId;
+            switch (provider) {
+                case GDS.kiu:
+                    //@ts-ignore
+                    await this.flightClient.bookKiuFlight(offer, passengers);
+                    break;
+                case GDS.amadeus:
+                    //@ts-ignore
+                    return [];
+                    break;
+                case GDS.duffel:
+                    const baggageData = await duffelClient.getAvailableServices(slice.gdsOfferId);
+                    return baggageData;
+                    break;
+                default:
+                    throw new HttpError("Provider not found", 404);
+            }
+        })
+        const baggageData = await Promise.all(baggageRequests);
+        return baggageData;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export async function getOffer(id: string) {
     try {
         const offer = await prisma.offer.findUnique({
             where: {
                 id: id
+            },
+            include: {
+                passengers: true
             }
         })
+        if (offer.passengers.length === 0) {
+            const parsedOffer = JSON.parse(offer.data) as Offer;
+            const savedPassengers = await Promise.all(parsedOffer.slices[0].passengers.map((passenger) => {
+                return prisma.offerPassengers.create({
+                    data: {
+                        type: passenger.type,
+                        gds_passenger_id: [passenger.id],
+                        offerId: id
+                    }
+                })
+            }))
+            const updatedPassengersRequest = [];
+            parsedOffer.slices.forEach((slice, index) => {
+                if (index > 0) {
+                    slice.passengers.forEach((passenger, index) => {
+                        updatedPassengersRequest.push(prisma.offerPassengers.update({
+                            where: {
+                                id: savedPassengers[index].id
+                            },
+                            data: {
+                                gds_passenger_id: [...savedPassengers[index].gds_passenger_id, passenger.id]
+                            }
+                        }))
+                    })
+                }
+            })
+            const updatedPassengers = await Promise.all(updatedPassengersRequest);
+            const passengers = parsedOffer.slices.length > 1 ? updatedPassengers : savedPassengers;
+            const availabeServices = await getBaggageDataService(JSON.parse(offer.data));
+            //@ts-ignore
+            const optimalPassengerBaggageMap = transformBaggageDetailForPassengers(availabeServices, passengers);
+
+            const passengersWithBaggageDetails = await Promise.all(passengers.map((passenger) => {
+                return prisma.offerPassengers.update({
+                    where: {
+                        id: passenger.id
+                    },
+                    data: {
+                        baggageDetails: (optimalPassengerBaggageMap.get(passenger.id) || [])
+                    }
+                })
+            }))
+
+
+            return {
+                ...offer,
+                data: JSON.parse(offer.data),
+                passengers: passengersWithBaggageDetails
+            };
+        }
         return {
             ...offer,
             data: JSON.parse(offer.data)
         };
+
     } catch (error) {
         console.log(error);
         throw error;
@@ -51,7 +137,7 @@ export const saveAmadeusResponse = async (data: any) => {
             })
             return {
                 ...item,
-                amadeusResponseId: response.id
+                gdsOfferId: response.id
             };
         })
         const response = await Promise.all(promises);
@@ -77,65 +163,65 @@ export const getAmadeusOffer = async (id: string) => {
     }
 }
 
-export const createOfferPassengers = async (passengers: { type: "ADULT" | "CHILD" | "INFANT" }[]) => {
-    try {
-        const response = await Promise.all(passengers.map((passenger) => {
-            return prisma.offerPassengers.create({
-                data: {
-                    passengerType: passenger.type,
-                }
-            })
-        }))
-        return response;
-    } catch (error) {
-        throw error;
-    }
-}
+// export const createOfferPassengers = async (passengers: { type: "ADULT" | "CHILD" | "INFANT" }[]) => {
+//     try {
+//         const response = await Promise.all(passengers.map((passenger) => {
+//             return prisma.offerPassengers.create({
+//                 data: {
+//                     passengerType: passenger.type,
+//                 }
+//             })
+//         }))
+//         return response;
+//     } catch (error) {
+//         throw error;
+//     }
+// }
 
-export const setOfferPassengersId = async (params: SetPassengerIdServiceParams) => {
-    try {
-        const adultPassengers = params.duffelPassengers.filter(p => p.type === 'adult');
-        const childPassengers = params.duffelPassengers.filter(p => p.type === 'child');
-        const infantPassengers = params.duffelPassengers.filter(p => p.type === 'infant_without_seat');
-        let adultIndex = 0, childIndex = 0, infantIndex = 0;
-        const updatedPassengers = await Promise.all(params.offerPassengers.map((passenger) => {
-            if (passenger.type === 'ADULT') {
-                return prisma.offerPassengers.update({
-                    where: {
-                        id: passenger.id
-                    },
-                    data: {
-                        duffelId: adultPassengers[adultIndex].id
-                    }
-                })
-                adultIndex++;
-            }
-            else if (passenger.type === 'CHILD') {
-                return prisma.offerPassengers.update({
-                    where: {
-                        id: passenger.id
-                    },
-                    data: {
-                        duffelId: childPassengers[childIndex].id
-                    }
-                })
-                childIndex++;
-            }
-            else {
-                return prisma.offerPassengers.update({
-                    where: {
-                        id: passenger.id
-                    },
-                    data: {
-                        duffelId: infantPassengers[infantIndex].id
-                    }
-                })
-                infantIndex++;
-            }
-        }))
-        return updatedPassengers;
-    } catch (error) {
-        throw error;
-    }
-}
+// export const setOfferPassengersId = async (params: SetPassengerIdServiceParams) => {
+//     try {
+//         const adultPassengers = params.duffelPassengers.filter(p => p.type === 'adult');
+//         const childPassengers = params.duffelPassengers.filter(p => p.type === 'child');
+//         const infantPassengers = params.duffelPassengers.filter(p => p.type === 'infant_without_seat');
+//         let adultIndex = 0, childIndex = 0, infantIndex = 0;
+//         const updatedPassengers = await Promise.all(params.offerPassengers.map((passenger) => {
+//             if (passenger.type === 'ADULT') {
+//                 return prisma.offerPassengers.update({
+//                     where: {
+//                         id: passenger.id
+//                     },
+//                     data: {
+//                         duffelId: adultPassengers[adultIndex].id
+//                     }
+//                 })
+//                 adultIndex++;
+//             }
+//             else if (passenger.type === 'CHILD') {
+//                 return prisma.offerPassengers.update({
+//                     where: {
+//                         id: passenger.id
+//                     },
+//                     data: {
+//                         duffelId: childPassengers[childIndex].id
+//                     }
+//                 })
+//                 childIndex++;
+//             }
+//             else {
+//                 return prisma.offerPassengers.update({
+//                     where: {
+//                         id: passenger.id
+//                     },
+//                     data: {
+//                         duffelId: infantPassengers[infantIndex].id
+//                     }
+//                 })
+//                 infantIndex++;
+//             }
+//         }))
+//         return updatedPassengers;
+//     } catch (error) {
+//         throw error;
+//     }
+// }
 

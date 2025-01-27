@@ -100,13 +100,13 @@ export type Slice = {
     duration: string;
     destination: Location;
     origin: Location;
-    offerId: string;
-    amadeusResponseId?: string;
+    gdsOfferId?: string;
     sourceId: string;
     passengers: {
         type: string;
         id: string;
-    }
+    }[],
+    travelerPricings?: any,
 };
 
 type Segment = {
@@ -150,6 +150,36 @@ type Baggage = {
     quantity: number;
     type: string;
 };
+
+export type OfferPassengerType = {
+    id: string;
+    type: string;
+    offerId: string;
+    gds_passenger_id: string[];
+    baggageDetails: GdsBaggageType[];
+}
+
+export type GdsBaggageType = {
+    maximum_quantity: number;
+    passenger_ids: string[];
+    total_currency: string;
+    total_amount: string;
+    metadata: {
+        maximum_weight_kg: number;
+        type: "checked";
+    },
+    type: string;
+    id: string;
+}
+
+export type DbBaggageType = {
+    weightInKg: number;
+    type: string;
+    maxQuantity: number;
+    price: number;
+    currency: string;
+}
+
 
 type Location = {
     iata_city_code: string;

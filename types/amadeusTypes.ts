@@ -59,7 +59,7 @@ export type AmadeusOfferType = {
     pricingOptions: PricingOptions;
     validatingAirlineCodes: string[];
     travelerPricings: TravelerPricing[];
-    amadeusResponseId: string
+    gdsOfferId: string
 };
 
 type Itinerary = {

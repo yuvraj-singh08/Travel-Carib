@@ -120,7 +120,7 @@ class FlightController {
             await this.flightClient.bookKiuFlight(offer, passengers);
             break;
           case GDS.amadeus:
-            pnr = await this.flightClient.bookAmadeusFlight(slice.amadeusResponseId, passengers);
+            pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
             subBookings.push({
               pnr,
               status: 'pending',

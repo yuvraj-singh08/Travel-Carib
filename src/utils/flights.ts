@@ -71,7 +71,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 //@ts-ignore
                 result.slices[0].sourceId = GDS.duffel;
                 //@ts-ignore
-                result.slices[0].offerId = result.id;
+                result.slices[0].gdsOfferId = result.id;
                 //@ts-ignore
                 result.slices[0].passengers = result.passengers;
             })
@@ -213,7 +213,14 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                             arriving_at,
                             segments: segments,
                             sourceId: GDS.amadeus,
-                            amadeusResponseId: result.amadeusResponseId
+                            gdsOfferId: result.gdsOfferId,
+                            travelerPricings: result.travelerPricings,
+                            passengers: result.travelerPricings.map((traveller) => {
+                                return {
+                                    id: traveller.travelerId,
+                                    type: traveller.travelerType
+                                }
+                            })
                         }
                     ],
                 })
