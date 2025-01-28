@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking Acknowledgement</title>
+   <style>
+      body {
+font-family: Arial, sans-serif;
+margin: 0;
+padding: 0;
+background-color: #f8f9fa;
+}
+
+.email-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .detail-header {
+      text-align: center;
+      padding: 10px 0;
+      background-color: #0073e6;
+      color: #fff;
+      border-radius: 8px 8px 0 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .content {
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .content p {
+      margin: 8px 0;
+    }
+    .passenger-details {
+      margin: 20px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      border-left: 4px solid #0073e6;
+    }
+    .details p {
+      margin: 5px 0;
+    }
+    .footer {
+      text-align: center;
+      padding: 10px 0;
+      font-size: 12px;
+      color: #777;
+    }
+    .social-icons {
+      margin-top: 10px;
+    }
+    .social-icons a {
+      margin: 0 5px;
+      text-decoration: none;
+      color: #0073e6;
+      font-size: 14px;
+    }
+
+
+
+.container {
+width: 90%;
+max-width: 1200px;
+/* Limit width on larger screens */
+margin: 20px auto;
+background: white;
+border: 1px solid #ddd;
+border-radius: 5px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+overflow: hidden;
+}
+
+.header-table { width: 100%; border-collapse: separate; border-spacing: 0; background-color: #f0f5ff; }
+        .header-cell { padding: 20px; vertical-align: middle; }
+        .help-text { font-size: 14px; color: #555; margin-bottom: 10px; }
+        .actions-cell { text-align: right; }
+        .actions-cell button {
+background: #007bff;
+color: white;
+border: none;
+padding: 8px 12px;
+border-radius: 5px;
+cursor: pointer;
+font-size: 14px;
+}
+.header {
+background-color: #f0f5ff;
+padding: 20px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.header img {
+height: 40px;
+}
+.header .help {
+font-size: 14px;
+color: #555;
+margin-bottom: 10px; /* Space between help text and buttons
+*/
+}
+.header .actions {
+display: flex;
+gap: 10px;
+float: right; /* Space
+between buttons */
+}
+.header .actions button {
+background: #007bff;
+color: white;
+border: none;
+padding: 8px 12px;
+border-radius: 5px;
+cursor: pointer;
+font-size: 14px;
+}
+
+.details-table { width: 100%; border-collapse: separate; border-spacing: 10px; }
+        .info-cell { width: 70%; vertical-align: top; }
+        .qr-code-cell { width: 30%; text-align: center; vertical-align: top; }
+        .qr-code-img { height: 80px; }
+.content {
+padding: 20px;
+}
+.content h2 {
+font-size: 18px;
+color: #e56232;
+margin-bottom: 10px;
+}
+.details {
+display: flex;
+flex-wrap: wrap; /* Allow wrapping */
+justify-content: space-between;
+margin-bottom: 10px;
+}
+.details .info {
+font-size: 14px;
+color: #555;
+flex: 1; /* Allow flex-grow */
+min-width: 240px; /* Prevent
+it from getting too narrow */
+}
+.details .qr-code {
+text-align: center;
+}
+.details .qr-code img {
+height: 80px;
+}
+.note {
+background: #f1f9ff;
+border-left: 4px solid #007bff;
+padding: 10px 15px;
+font-size: 14px;
+color: #555;
+margin-bottom: 20px;
+}
+.terms {
+font-size: 14px;
+color: #777;
+margin-bottom: 20px;
+}
+.steps {
+display: flex;
+flex-direction: row; /*
+flex-wrap: wrap; Allow wrapping */
+justify-content: space-between;
+background: #f9f9f9;
+padding: 15px;
+border-top: 1px solid #ddd;
+}
+.step {
+text-align: center;
+flex: 1 1 23%; /* Flex-grow, flex-shrink, and basis */
+margin: 5px; /* Space between steps */
+font-size: 14px;
+padding: 1rem;
+border-radius: 1rem;
+}
+.step1 {
+background: linear-gradient(to left, #ffffff, #dcecfb);
+}
+.step2 {
+background: linear-gradient(to right, #c5bfae, #ffffff);
+}
+.step3 {
+background: linear-gradient(to right, #c5bfae, #ffffff);
+}
+.step4 {
+background: linear-gradient(to right, #c5bfae, #ffffff);
+}
+.step img {
+height: 40px;
+margin-bottom: 10px;
+}
+.step h4 {
+font-size: 14px;
+color: #333;
+margin-bottom: 5px;
+}
+.step p {
+font-size: 12px;
+color: #777;
+} /* Flight Details Section */
+.flight-details {
+font-family: Arial, sans-serif;
+margin-top: 30px;
+background-color: #fff;
+padding: 20px;
+border-radius: 8px;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.flight-details h2 {
+color: #333;
+font-size: 18px;
+margin-bottom: 15px;
+}
+.flight-section h3 {
+color: #ff6600;
+font-size: 16px;
+margin-bottom: 10px;
+}
+.flight-info {
+border-top: 1px solid #eee;
+padding-top: 15px;
+}
+.flight-header {
+
+margin-bottom: 20px;
+}
+
+.airline-info-table { width: 100%; border-collapse: separate; border-spacing: 10px; }
+.airline-info {
+display: flex;
+align-items: center;
+flex-wrap: wrap; /* Wrap items on smaller screens */
+}
+.airline-info img {
+margin-right: 10px;
+height: 60px;
+}
+.airline-info h4 {
+margin: 0;
+color: #333;
+}
+.airline-info p {
+font-size: 12px;
+color: #666;
+}
+.travel-class {
+
+}
+.travel-class p {
+margin: 0;
+font-size: 14px;
+}
+.flight-details-body {
+background-color: #eaf0f0;
+padding: 20px;
+border-radius: 8px;
+}
+.flight-entry-table { width: 100%; border-collapse: separate; border-spacing: 10px; }
+        .flight-time-cell { width: 30%; vertical-align: top; }
+        .flight-path-cell { width: 40%; text-align: center; vertical-align: top; }
+.flight-entry {
+
+margin-bottom: 20px;
+width: 100%;
+}
+.flight-path {
+display: flex;
+align-items: center;
+gap: 1rem;
+}
+.flight-time {
+text-align: left;
+}
+.flight-time .date,
+.flight-time .time {
+font-size: 14px;
+color: #555;
+}
+.flight-time .time {
+font-size: 50px;
+color: #333;
+font-weight: bold;
+}
+.dot {
+width: 8px;
+height: 8px;
+background-color: #333;
+border-radius: 50%;
+}
+.duration {
+font-size: 14px;
+color: #555;
+margin: 0 10px;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+.duration img {
+height: 40px;
+}
+.baggage-note {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-top: 20px;
+}
+.baggage-note p {
+font-size: 12px;
+color: #666;
+}
+.baggage-info span {
+font-size: 14px;
+margin-right: 10px;
+display: inline-flex;
+align-items: center;
+}
+.layover {
+background-color: #eaf0f0;
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 10px; /* Add padding for spacing */
+margin-bottom: 20px; /* Space below
+layover */
+}
+.layover img {
+height: 30px;
+margin-right: 10px; /* Space
+between image and text */
+}
+.layover p {
+font-size: 14px;
+color: #555;
+}
+.travel-details {
+padding: 20px;
+}
+.section {
+margin-bottom: 20px;
+}
+.section h3 {
+border-bottom: 1px solid #ddd;
+padding-bottom: 10px;
+margin-bottom: 10px;
+font-size: 16px; /* Increase the section heading size
+*/
+}
+.traveler-info,
+.billing-details,
+.please-note {
+width: 100%;
+border-collapse: collapse;
+}
+.traveler-info th,
+.traveler-info td,
+.billing-details th,
+.billing-details td {
+padding: 10px;
+border: 1px solid #ddd;
+}
+.traveler-info td {
+text-align: center;
+}
+.traveler-info th {
+background-color: #f9f9f9;
+}
+.status-pending {
+color: red;
+}
+.status-confirm {
+color: green;
+}
+.total {
+font-weight: bold;
+color: #007bff;
+}
+.note {
+font-size: 0.9em;
+color: #555;
+}
+.note a {
+color: #007bff;
+text-decoration: none;
+}
+.note a:hover {
+text-decoration: underline;
+} /* Responsive styles */
+@media (max-width: 1024px) {
+.details {
+  flex-direction: row; /* Stack details on larger tablets */
+  align-items: flex-start;
+}
+.details .qr-code {
+  margin-top: 10px; /* Add margin for
+spacing when stacked */
+}
+}
+@media (max-width: 768px) {
+.container, .email-container {
+  width: 95%; /* Full width on small screens */
+  padding: 10px;
+}
+.baggage-note {
+  flex-direction: column;
+  align-items: start;
+}
+.header {
+  flex-direction: column;
+}
+h2 {
+  font-size: 1.5em;
+}
+.section h3 {
+  font-size: 1.2em;
+}
+.traveler-info th,
+.traveler-info td,
+.billing-details th,
+.billing-details td {
+  padding: 8px;
+  font-size: 0.9em;
+}
+.note {
+  font-size: 0.8em;
+}
+}
+@media screen and (max-width: 600px) {
+.traveler-info {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+}
+@media (max-width: 580px) {
+.content {
+  padding: 0;
+}
+.flight-details {
+  padding: 0;
+}
+.travel-details {
+  padding: 0;
+}
+.steps {
+  padding: 0;
+}
+}
+@media (max-width: 480px) {
+h2 {
+  font-size: 1.2em;
+}
+.section h3 {
+  font-size: 1em;
+}
+.traveler-info th,
+.traveler-info td,
+.billing-details th,
+.billing-details td {
+  padding: 6px;
+  font-size: 0.8em;
+}
+.header .actions {
+  align-items: flex-start; /* Align to the start */
+}
+.header .actions button {
+  width: 100%; /* Full width for buttons on mobile */
+  margin: 5px 0; /* Space between buttons */
+}
+.steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.step {
+  width: 90%;
+}
+}
+
+ </style>
+</head>
+
+<body>
+        <div class="email-container">
+    <div class="detail-header">
+      <h1>Your Flight Ticket Confirmation</h1>
+    </div>
+    <div class="content">
+      <h2>Dear {{passenger.0.firstName}},</h2>
+      <p>We are pleased to confirm your flight booking. Please find your e-ticket attached to this email. Kindly review the details carefully to ensure all information is correct.</p>
+      <div class="passenger-details">
+        <p><strong>Booking Details:</strong></p>
+
+
+
+        {{#with (getPassenger passenger 0)}}
+    <p>Passenger Name: {{firstName}} {{lastName}}</p>
+    <p>Nationality: {{nationality}}</p>
+    <p>Passport Number: {{passportNumber}}</p>
+  {{/with}}
+
+        <p>Booking ID: {{flightDetails.responseId}}</p>
+        <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
+        <p>Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        <p>Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        <p>Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</p>
+        <p>PNR/Booking Reference: {{subBooking.0.pnr}}</p>
+      </div>
+      <p>Please ensure to carry a valid ID along with this ticket during your travel. If you have any questions or need further assistance, feel free to contact us.</p>
+      <p>Thank you for choosing {{flightDetails.slices.0.segments.0.operating_carrier.name}}</p>
+    </div>
+    <div class="footer">
+      <p>Best regards,</p>
+      <h2><strong>Softnear Tech.</strong></h2>
+      <p>📞 +91 87648648674 | 📧 admin@gmail.com</p>
+      <p>🌐 www.example.com</p>
+      <p>🏢 Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore-560016</p>
+      <div class="social-icons">
+        Follow us on:
+        <a href="#">Facebook</a>
+        <a href="#">Instagram</a>
+        <a href="#">Twitter</a>
+      </div>
+    </div>
+  </div>
+
+
+  {{!-- <div class="email-container"><div class="email-container">
+  {{#if (eq status "pending")}}
+    <div class="detail-header">
+      <h1>Flight Booking Pending Confirmation</h1>
+    </div>
+    <div class="content">
+      <h2>Dear {{passenger.0.firstName}},</h2>
+      <p>Your flight booking is currently pending confirmation. We will notify you once the booking is confirmed.</p>
+      <div class="passenger-details">
+        <p><strong>Pending Booking Details:</strong></p>
+        {{#with (getPassenger passenger 0)}}
+          <p>Passenger Name: {{firstName}} {{lastName}}</p>
+          <p>Nationality: {{nationality}}</p>
+          <p>Passport Number: {{passportNumber}}</p>
+        {{/with}}
+        <p>Booking ID: {{flightDetails.responseId}}</p>
+        <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
+        <p>Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+      </div>
+      <p>Please note that this is not a confirmed ticket. You will receive a confirmation email once the booking is complete.</p>
+    </div>
+  {{else if (eq status "confirmed")}}
+    <div class="detail-header">
+      <h1>Your Flight Ticket Confirmation</h1>
+    </div>
+    <div class="content">
+      <h2>Dear {{passenger.0.firstName}},</h2>
+      <p>We are pleased to confirm your flight booking. Please find your e-ticket attached to this email. Kindly review the details carefully to ensure all information is correct.</p>
+      <div class="passenger-details">
+        <p><strong>Booking Details:</strong></p>
+        {{#with (getPassenger passenger 0)}}
+          <p>Passenger Name: {{firstName}} {{lastName}}</p>
+          <p>Nationality: {{nationality}}</p>
+          <p>Passport Number: {{passportNumber}}</p>
+        {{/with}}
+        <p>Booking ID: {{flightDetails.responseId}}</p>
+        <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
+        <p>Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        <p>Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        <p>Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</p>
+        <p>PNR/Booking Reference: {{subBooking.0.pnr}}</p>
+      </div>
+      <p>Please ensure to carry a valid ID along with this ticket during your travel.</p>
+    </div>
+  {{else if (eq status "cancelled")}}
+    <div class="detail-header">
+      <h1>Flight Booking Cancellation Notice</h1>
+    </div>
+    <div class="content">
+      <h2>Dear {{passenger.0.firstName}},</h2>
+      <p>We regret to inform you that your flight booking has been cancelled.</p>
+      <div class="passenger-details">
+        <p><strong>Cancelled Booking Details:</strong></p>
+        {{#with (getPassenger passenger 0)}}
+          <p>Passenger Name: {{firstName}} {{lastName}}</p>
+        {{/with}}
+        <p>Booking ID: {{flightDetails.responseId}}</p>
+        <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
+        <p>Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+      </div>
+      <p>If you believe this cancellation was made in error or need assistance with rebooking, please contact our customer service team immediately.</p>
+      <p>If this was a paid booking, your refund will be processed according to the fare rules and our refund policy.</p>
+    </div>
+  {{/if}}
+  
+  <div class="footer">
+    <p>If you have any questions or need further assistance, feel free to contact us.</p>
+    <p>Thank you for choosing {{flightDetails.slices.0.segments.0.operating_carrier.name}}</p>
+    <p>Best regards,</p>
+    <h2><strong>Softnear Tech.</strong></h2>
+    <p>📞 +91 87648648674 | 📧 admin@gmail.com</p>
+    <p>🌐 www.example.com</p>
+    <p>🏢 Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore-560016</p>
+    <div class="social-icons">
+      Follow us on:
+      <a href="#">Facebook</a>
+      <a href="#">Instagram</a>
+      <a href="#">Twitter</a>
+    </div>
+  </div>
+</div></div> --}}
+        {{!-- /////////////////////////////////////////////////////// --}}
+    <div class="container">
+        <table class="header-table">
+            <tr>
+                <td class="header-cell">
+                    <p class="help-text">
+                        For any changes with your flight, date, route, or names<br />
+                        Call us at <strong>{{contactDetail.phone}}</strong> or
+                        <a href="#">Click here to reach help center</a>
+                    </p>
+                </td>
+                <td class="header-cell actions-cell">
+                    <button class="action-button">Print Ticket</button>
+                    <button class="action-button">Download Ticket</button>
+                    <button class="action-button">Share Ticket</button>
+                </td>
+            </tr>
+        </table>
+
+       <div class="content">
+            <h2 class="booking_header">Booking Acknowledgement</h2>
+            <table class="details-table">
+                <tr>
+                    <td class="info-cell">
+                        <p><strong>Booking Reference:</strong> {{id}}</p>
+                        <p><strong>Email:</strong> {{contactDetail.email}}</p>
+                        <p><strong>Booking on:</strong> {{formatIsoDate createdAt}}</p>
+                    </td>
+                    <td class="qr-code-cell">
+                        <img class="qr-code-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1UA-RNBzfbFgVg3sWZWoZoJwkEAc6jy5OtA&s" alt="QR Code" />
+                        <p>{{subBooking.0.pnr}}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="note">
+          Please check your terminal and gate information with the airline
+          directly at least 24 hours before departure.
+        </div>
+        <div class="terms">Terms and Confirmation</div>
+        <div class="steps">
+          <div class="step step1">
+            <img
+              src="https://cdn-icons-png.freepik.com/256/16200/16200876.png?semt=ais_hybrid"
+              alt="90 minutes"
+            />
+            <h4>Check in online, or</h4>
+            <p>
+              Check in at the airport. At most airports, you need to arrive 3
+              hours before departure.
+            </p>
+          </div>
+          <div class="step step2">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/456/456432.png"
+              alt="90 minutes"
+            />
+            <h4>90 minutes</h4>
+            <p>90 minutes before take-off go through passport control.</p>
+          </div>
+          <div class="step step3">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/657/657674.png"
+              alt="60 minutes"
+            />
+            <h4>60 minutes</h4>
+            <p>
+              60 minutes before take-off be ready at the gate (Premium Economy,
+              Economy Class).
+            </p>
+          </div>
+          <div class="step step4">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/799/799627.png"
+              alt="45 minutes"
+            />
+            <h4>45 minutes</h4>
+            <p>
+              45 minutes before take-off be ready at the gate (First Class,
+              Business Class).
+            </p>
+          </div>
+        </div>
+      
+        <div class="flight-details">
+            <h2>Flight Details</h2>
+            <div class="flight-section">
+                <h3>Departing Flight</h3>
+          <p class="note">
+            Note: The following flight has different class of service
+          </p>
+                <div class="flight-info">
+                    <div class="flight-header">
+                         <div class="flight-header">
+                        <div class="airline-info">
+                            <img src={{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}} alt="Airline Logo" />
+                            <p>{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}</p>
+
+                            <div>
+                                <h4>{{flightDetails.slices.0.segments.0.operating_carrier.name}}</h4>
+                                <p>
+                                    Flight {{flightDetails.slices.0.segments.0.operating_carrier_flight_number}} 
+                                    | Aircraft: {{flightDetails.slices.0.segments.0.aircraft}} 
+                                    | {{flightDetails.cabinClass}} Class
+                                </p>
+                        </div>
+                        </div>
+                        <div class="travel-class">
+                <div>Travel Class: <strong>{{flightDetails.cabinClass}}</strong></div>
+                <div>Airlines Confirmation [PNR]: <strong>{{flightDetails.slices.0.PNR}}</strong></div>
+              </div>
+                    </div>
+                    
+                    <div class="flight-details-body">
+                        <table class="flight-entry-table">
+                            <tr>
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+                                    <strong class="time">{{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</strong>
+                                    <p>{{flightDetails.origin.name}}</p>
+                                </td>
+                                <td class="flight-path-cell">
+                                    <span class="flight-dot"></span>
+                                    <span class="duration">
+                                        <img class="duration-img" src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" alt="Airline Logo" />
+                                        {{flightDetails.slices.0.duration}}
+                                        
+                                    </span>
+                                    <span class="flight-dot"></span>
+                                </td>
+                                
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</p>
+                                    <strong class="time">{{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</strong>
+                                    <p>{{flightDetails.destination.name}}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {{!-- <div class="baggage-note">
+                        <p>
+                Check airlines Fare rules. Most airlines charge baggage fees.
+                Check the baggage Fees for complete details.
+              </p>
+                        <div class="baggage-info">
+                            <span><span style="font-size: 15px;">🛄</span> {{flightDetails.slices.0.segments.0.checkedBaggage}}</span>
+                            <span><span style="font-size: 15px;">📂</span> {{flightDetails.slices.0.segments.0.cabinBaggage}}</span>
+                        </div>
+                    </div> --}}
+
+                    <table class="baggage-note-table" style="width: 100%; margin-top: 15px;">
+    <tr>
+        <td style="padding-bottom: 10px; width: 90%;">
+            <p style="margin: 0; font-size: 14px; color: #666;">
+                Check airlines Fare rules. Most airlines charge baggage fees. 
+                Check the baggage Fees for complete details.
+            </p>
+        </td>
+   
+        <td style="width: 10%;">
+            <div class="baggage-info" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">🛄</span> 
+                    {{flightDetails.slices.0.segments.0.checkedBaggage}}
+                </span>
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">📂</span> 
+                    {{flightDetails.slices.0.segments.0.cabinBaggage}}
+                </span>
+            </div>
+        </td>
+    </tr>
+</table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layover">
+        <img
+          src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png"
+          alt="food"
+        />
+        <p>3h 5m layover</p>
+        <p>Stopover in Mumbai (BOM), you will have to change the FLIGHT</p>
+      </div>
+
+        <div class="travel-details">
+            <div class="section">
+                <h2>Traveler Information</h2>
+                <table class="traveler-info">
+                    <tr>
+                        <th>E-Ticket Number</th>
+                        <th>PNR Number</th>
+                        <th>Status</th>
+                        <th>First name</th>
+                        <th>Last name</th>
+                        <th>Gender</th>
+                    </tr>
+                    
+                    {{#each passenger}}
+    <tr>
+      <td>{{../subBooking.0.ticketNumber}}</td>
+      <td>{{../subBooking.0.pnr}}</td>
+      <td style="{{#if (eq ../subBooking.0.status 'confirmed')}}color: green;{{else}}color: red;{{/if}}">
+        {{../subBooking.0.status}}
+      </td>
+      <td>{{firstName}}</td>
+      <td>{{lastName}}</td>
+      <td>{{gender}}</td>
+      
+    </tr>
+    {{/each}}
+                    
+                </table>
+                <p class="note">
+            Disclaimer: Not all flights offer free meals. Any specific request
+            you may have will be sent to the airline(s). Please contact your
+            airline(s) directly, prior to your departure date, to confirm what
+            meal options may be available and if your other requests can be
+            fulfilled.
+          </p>
+            </div>
+
+            <div class="section">
+                <h2>Billing Details</h2>
+                <table class="billing-details">
+                    <tr>
+                        <td>Base Fare</td>
+                        <td>{{baseFare}} {{currency}}</td>
+                    </tr>
+                    <tr>
+                        <td>Taxes and Fees</td>
+                        <td>{{tax_fee_surges}} {{currency}}</td>
+                    </tr>
+                    <tr>
+                        <td>Other Charges</td>
+                        <td>{{otherCharges}} {{currency}}</td>
+                    </tr>
+                    <tr>
+                        <td class="total">Total Amount</td>
+                        <td class="total">{{totalAmount}} {{currency}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="section">
+          <h2>Please Note</h2>
+          <p class="note">
+            Fares are not guaranteed until ticketed. Taxes, fees, and baggage
+            charges are subject to change and may be additional. For more
+            information, please review our
+            <a href="#">Privacy Policy</a>
+            or
+            <a href="#">Contact Us</a>.
+          </p>
+        </div>
+        </div>
+    </div>
+    </div>
+</body>
+
+</html>
