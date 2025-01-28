@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { handlePrismaError } from "../utils/prismaError";
 import HttpError from "../utils/httperror";
 import { sendOTP } from "../../nodemailer/transporter";
+import { AdminPermissions } from "../../types/adminTypes";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
@@ -253,11 +254,54 @@ export const getAdminById = async (
         },
       });
 
-      data.permissions = specificRole?.permissionGroups;
+      const permissions: AdminPermissions[] =
+        specificRole?.permissionGroups as any;
+
+      const specificNames = {
+        "View & Manage User Accounts": "user",
+        "Access Booking Management": "booking",
+        "Manage Support Tickets": "support",
+        "View Financial Reports": "financial",
+        "Process Refunds": "refund",
+        "Generate Reports & Analytics": "analytics",
+        "Create & Manage Discount Codes": "discount",
+        "Configure System Settings": "settings",
+      };
+      
+      const updatedPermissions = permissions.map((permission) => {
+        const view = permission.permissions.View.view;
+        const create = permission.permissions.Create.view;
+        const update = permission.permissions.Update.view;
+        const del = permission.permissions.Delete.view;
+
+        const actions: string[] = [];
+
+        if (view) {
+          actions.push("view");
+        }
+        if (create) {
+          actions.push("create");
+        }
+        if (update) {
+          actions.push("update");
+        }
+        if (del) {
+          actions.push("delete");
+        }
+
+        return {
+          name: specificNames[permission.name],
+          actions: actions,
+        };
+      });
+
+      data.permissions = updatedPermissions;4
     } else {
       data.permissions = "all";
     }
-    
+
+    console.log(data);
+
     if (data) {
       return res.json(data);
     } else {

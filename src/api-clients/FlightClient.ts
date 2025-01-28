@@ -6,7 +6,7 @@ import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { createOfferPassengers, getAmadeusOffer, saveData } from "../services/OfferService";
+import { getAmadeusOffer, saveData } from "../services/OfferService";
 import customDateFormat, { getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 
@@ -68,10 +68,9 @@ class FlightClient {
 
             const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(params.passengers);
             //Calculating Possible Routes
-            const [firewall, commission, offerPassengers] = await Promise.all([
+            const [firewall, commission] = await Promise.all([
                 prisma.firewall.findMany({}),
                 prisma.commissionManagement.findMany(),
-                createOfferPassengers(offerPassengerArray)
             ])
             const allFirewall = [], kiuFirewall = [], amadeusFirewall = [], duffelFirewall = [];
             firewall.forEach((firewall) => {
@@ -268,9 +267,9 @@ class FlightClient {
 
     }
 
-    async bookAmadeusFlight(amadeusResponseId: string, passengers: PassengerType[]) {
+    async bookAmadeusFlight(gdsOfferId: string, passengers: PassengerType[]) {
         try {
-            const amadeusOffer = await getAmadeusOffer(amadeusResponseId)
+            const amadeusOffer = await getAmadeusOffer(gdsOfferId)
 
             const passengersData = passengers.map((passenger, index) => {
                 let returnValue = {
@@ -343,7 +342,7 @@ class FlightClient {
             })
             const response = await this.duffelClient.createOrder({
                 passengers: passengersData,
-                offerId: slice.offerId
+                offerId: slice.gdsOfferId
             })
             return response.data.booking_reference;
         } catch (error) {

@@ -142,6 +142,31 @@ export const getBookings = async (
   }
 }
 
+export const getBookingById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user.id;
+
+    if (!userId) {
+      throw new HttpError("Unauthorized access", 403);
+    }
+
+    const { id } = req.params;
+    if (!id) {
+      throw new HttpError("Invalid booking ID", 400);
+    }
+
+    const booking = await prisma.booking.findFirst({
+      where: {
+        id
+      }
+    });
+    res.status(200).json({ success: true, data: { ...booking, flightDetails: JSON.parse(booking.flightDetails) } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 export const fetchBooking = async (
   req: AuthenticatedRequest,
   res: Response

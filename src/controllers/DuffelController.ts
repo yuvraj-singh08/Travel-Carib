@@ -12,6 +12,7 @@ class DuffelController {
         this.getFlightDetails = this.getFlightDetails.bind(this);
         this.createOrder = this.createOrder.bind(this);
         this.getAvailableServices = this.getAvailableServices.bind(this);
+        this.getOfferRequestById = this.getOfferRequestById.bind(this);
     }
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -61,9 +62,19 @@ class DuffelController {
             const { offerId } = req.params;
             const data = await getOffer(offerId);
             const offer = data.data as Offer;
-            const duffelOfferId = offer.slices[0].offerId;
+            const duffelOfferId = offer.slices[0].gdsOfferId;
             const availableServices = await this.duffelClient.getAvailableServices(duffelOfferId);
             res.status(200).json({ success: true, data: availableServices });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getOfferRequestById(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { id } = req.params;
+            const offerRequest = await this.duffelClient.getOfferRequestById(id);
+            res.status(200).json(offerRequest);
         } catch (error) {
             next(error);
         }

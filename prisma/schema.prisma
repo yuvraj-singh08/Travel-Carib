@@ -10,7 +10,7 @@ datasource db {
 enum RouteType {
   ONEWAY
   ROUNDTRIP
-  MULTIWAY
+  MULTICITY
 }
 
 enum UserRole {
@@ -178,14 +178,6 @@ enum Passenger_Type {
   ADULT
   CHILD
   INFANT
-}
-
-model OfferPassengers {
-  id            String         @id @default(uuid()) @map("_id")
-  passengerType Passenger_Type
-  amadeusId     String?
-  duffelId      String?
-  kiuId         String?
 }
 
 model Booking {
@@ -407,14 +399,22 @@ model Blog {
   updatedAt DateTime @updatedAt
 }
 
+model OfferPassengers {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  type           String
+  gds_passenger_id         String[]
+  baggageDetails Json[]
+  offer          Offer    @relation(fields: [offerId], references: [id])
+  offerId        String   @db.ObjectId
+}
+
 model Offer {
-  id            String    @id @default(uuid()) @map("_id")
-  data          String
-  passengers    Json
-  passengerData Json[]
-  flightWay     RouteType
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id         String            @id @default(auto()) @map("_id") @db.ObjectId
+  data       String
+  passengers OfferPassengers[]
+  flightWay  RouteType
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
 }
 
 model AmadeusOffer {
