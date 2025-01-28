@@ -18,6 +18,7 @@ import resetRoute from "./src/routes/resetRoute";
 import paymentRoutes from "./src/routes/paymentRoutes";
 import amadeusRoutes from './src/routes/amadeusRoutes';
 import offerRoutes from './src/routes/offer.routes';
+import emailRouter from "./src/routes/emailRoute";
 import { AuthenticatedRequest } from "./types/express";
 import { main } from "./mail/transporter";
 import { prisma } from "./src/prismaClient";
@@ -72,6 +73,7 @@ app.use("/reset", resetRoute);
 app.use("/payment", paymentRoutes);
 app.use('/offer', offerRoutes);
 app.use('/amadeus', amadeusRoutes);
+app.use("/email", emailRouter);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     console.log(err);
