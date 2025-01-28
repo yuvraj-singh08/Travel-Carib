@@ -1,4 +1,4 @@
-import { DbBaggageType, GdsBaggageType, OfferPassengerType } from "../../types/flightTypes";
+import { DbBaggageType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
 import { airlines } from "./airlines";
 
 export function getDifferenceInMinutes(time1: string, time2: string): number {
@@ -94,19 +94,20 @@ export const getPassengerArrays = (passengers: {
 
 export const transformBaggageDetailForPassengers = (baggageDetailForAllSlices: GdsBaggageType[][], passengers: OfferPassengerType[]) => {
 
-  const passengerBaggageMap = new Map<string, DbBaggageType[][]>();
+  const passengerBaggageMap = new Map<string, UtilBaggageType[][]>();
   baggageDetailForAllSlices.map((baggageDetails, index) => {
 
     passengers.forEach((passenger) => {
       const baggageData = passengerBaggageMap.get(passenger.id) || [];
       const baggageDetailForThisPassenger = baggageDetails.filter((baggageDetail) => baggageDetail.passenger_ids[0] == passenger.gds_passenger_id[index]);
-      const parsedBaggageDetailForThisPassenger = baggageDetailForThisPassenger.map((baggageDetail): DbBaggageType => {
+      const parsedBaggageDetailForThisPassenger = baggageDetailForThisPassenger.map((baggageDetail): UtilBaggageType => {
         return {
           weightInKg: baggageDetail.metadata.maximum_weight_kg,
           type: baggageDetail.type,
           maxQuantity: baggageDetail.maximum_quantity,
           price: parseFloat(baggageDetail.total_amount),
-          currency: baggageDetail.total_currency
+          currency: baggageDetail.total_currency,
+          serviceId: baggageDetail.id
         }
       })
       baggageData.push(parsedBaggageDetailForThisPassenger);
@@ -126,7 +127,7 @@ export const transformBaggageDetailForPassengers = (baggageDetailForAllSlices: G
 }
 
 
-function findOptimalCombinations(legs: DbBaggageType[][]) {
+function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
   // Collect all unique weights from all legs
   const allWeights = new Set<number>();
   legs.forEach(leg => {
@@ -149,48 +150,53 @@ function findOptimalCombinations(legs: DbBaggageType[][]) {
     );
     const maxCount = Math.min(...maxCountsPerLeg);
 
-    // Calculate total price for this combination
+    // Calculate total price and collect service IDs
     let totalPrice = 0;
+    const serviceIds: string[] = [];
+    let isValid = true;
+
     for (const leg of legs) {
       const validOptions = leg.filter(opt =>
         opt.weightInKg >= weight && opt.maxQuantity >= maxCount
       );
+
       if (validOptions.length === 0) {
-        totalPrice = Infinity;
+        isValid = false;
         break;
       }
-      totalPrice += Math.min(...validOptions.map(opt => opt.price));
+
+      // Find the cheapest valid option for this leg
+      const cheapestOption = validOptions.reduce((min, curr) =>
+        curr.price < min.price ? curr : min, validOptions[0]);
+
+      totalPrice += cheapestOption.price;
+      serviceIds.push(cheapestOption.serviceId);
     }
 
-    if (totalPrice !== Infinity) {
+    if (isValid) {
       combinations.push({
         weightInKg: weight,
         type: 'checked',
         maxQuantity: maxCount,
         price: totalPrice,
-        currency: "USD"
+        currency: "USD", // Assuming currency is consistent across legs
+        serviceIds: serviceIds
       });
     }
   }
 
   // Filter out dominated combinations
-  const nonDominated = [];
-  for (const current of combinations) {
-    let isDominated = false;
-    for (const other of combinations) {
-      if (other === current) continue;
-      if (other.weightInKg >= current.weightInKg &&
-        other.maxQuantity >= current.maxQuantity &&
-        other.price <= current.price) {
-        isDominated = true;
-        break;
-      }
-    }
-    if (!isDominated) nonDominated.push(current);
-  }
+  const nonDominated = combinations.filter((current, _, arr) =>
+    !arr.some(other =>
+      other !== current &&
+      other.weightInKg >= current.weightInKg &&
+      other.maxQuantity >= current.maxQuantity &&
+      other.price <= current.price
+    )
+  );
 
   // Sort by descending weight, then ascending price
   return nonDominated.sort((a, b) =>
-    b.weight - a.weight || a.price - b.price
+    b.weightInKg - a.weightInKg || a.price - b.price
   );
 }

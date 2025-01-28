@@ -44,6 +44,13 @@ export type routeType = {
     destination: string
 }
 
+export type MulticityOffer = {
+    total_amount: number;
+    itenaries: Offer[]
+    cabinClass: string;
+    id: string;
+}
+
 export type Offer = {
     total_emissions_kg: string;
     payment_requirements: {
@@ -172,12 +179,17 @@ export type GdsBaggageType = {
     id: string;
 }
 
+export type UtilBaggageType = Omit<DbBaggageType, 'serviceIds'> & {
+    serviceId: string;
+}
+
 export type DbBaggageType = {
     weightInKg: number;
     type: string;
     maxQuantity: number;
     price: number;
     currency: string;
+    serviceIds: string[];
 }
 
 

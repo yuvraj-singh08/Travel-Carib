@@ -67,54 +67,62 @@ export async function getOffer(id: string) {
             }
         })
         if (offer.passengers.length === 0) {
-            const parsedOffer = JSON.parse(offer.data) as Offer;
-            const savedPassengers = await Promise.all(parsedOffer.slices[0].passengers.map((passenger) => {
-                return prisma.offerPassengers.create({
-                    data: {
-                        type: passenger.type,
-                        gds_passenger_id: [passenger.id],
-                        offerId: id
-                    }
-                })
-            }))
-            const updatedPassengersRequest = [];
-            parsedOffer.slices.forEach((slice, index) => {
-                if (index > 0) {
-                    slice.passengers.forEach((passenger, index) => {
-                        updatedPassengersRequest.push(prisma.offerPassengers.update({
-                            where: {
-                                id: savedPassengers[index].id
-                            },
-                            data: {
-                                gds_passenger_id: [...savedPassengers[index].gds_passenger_id, passenger.id]
-                            }
-                        }))
+            if (offer.flightWay === "ONEWAY") {
+                const parsedOffer = JSON.parse(offer.data) as Offer;
+                const savedPassengers = await Promise.all(parsedOffer.slices[0].passengers.map((passenger) => {
+                    return prisma.offerPassengers.create({
+                        data: {
+                            type: passenger.type,
+                            gds_passenger_id: [passenger.id],
+                            offerId: id
+                        }
                     })
-                }
-            })
-            const updatedPassengers = await Promise.all(updatedPassengersRequest);
-            const passengers = parsedOffer.slices.length > 1 ? updatedPassengers : savedPassengers;
-            const availabeServices = await getBaggageDataService(JSON.parse(offer.data));
-            //@ts-ignore
-            const optimalPassengerBaggageMap = transformBaggageDetailForPassengers(availabeServices, passengers);
-
-            const passengersWithBaggageDetails = await Promise.all(passengers.map((passenger) => {
-                return prisma.offerPassengers.update({
-                    where: {
-                        id: passenger.id
-                    },
-                    data: {
-                        baggageDetails: (optimalPassengerBaggageMap.get(passenger.id) || [])
+                }))
+                const updatedPassengersRequest = [];
+                parsedOffer.slices.forEach((slice, index) => {
+                    if (index > 0) {
+                        slice.passengers.forEach((passenger, index) => {
+                            updatedPassengersRequest.push(prisma.offerPassengers.update({
+                                where: {
+                                    id: savedPassengers[index].id
+                                },
+                                data: {
+                                    gds_passenger_id: [...savedPassengers[index].gds_passenger_id, passenger.id]
+                                }
+                            }))
+                        })
                     }
                 })
-            }))
+                const updatedPassengers = await Promise.all(updatedPassengersRequest);
+                const passengers = parsedOffer.slices.length > 1 ? updatedPassengers : savedPassengers;
+                const availabeServices = await getBaggageDataService(JSON.parse(offer.data));
+                //@ts-ignore
+                const optimalPassengerBaggageMap = transformBaggageDetailForPassengers(availabeServices, passengers);
+
+                const passengersWithBaggageDetails = await Promise.all(passengers.map((passenger) => {
+                    return prisma.offerPassengers.update({
+                        where: {
+                            id: passenger.id
+                        },
+                        data: {
+                            baggageDetails: (optimalPassengerBaggageMap.get(passenger.id) || [])
+                        }
+                    })
+                }))
 
 
-            return {
-                ...offer,
-                data: JSON.parse(offer.data),
-                passengers: passengersWithBaggageDetails
-            };
+                return {
+                    ...offer,
+                    data: JSON.parse(offer.data),
+                    passengers: passengersWithBaggageDetails
+                };
+            }
+            else{
+                return {
+                    ...offer,
+                    data: JSON.parse(offer.data)
+                };
+            }
         }
         return {
             ...offer,
