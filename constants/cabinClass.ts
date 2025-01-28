@@ -17,3 +17,9 @@ export const amadeusClass = {
     business: 'BUSINESS',
     first: 'FIRST'
 }
+
+export const flightTypeValue = {
+    oneway: 'ONEWAY',
+    roundtrip: 'ROUNDTRIP',
+    multicity: 'MULTICITY'
+}

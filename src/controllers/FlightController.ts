@@ -4,8 +4,8 @@ import { promises } from 'dns';
 import { getPossibleRoutes } from '../utils/flights';
 import HttpError from '../utils/httperror';
 import { getOffer } from '../services/OfferService';
-import { Offer, SubBookingType } from '../../types/flightTypes';
-import { GDS } from '../../constants/cabinClass';
+import { MulticityOffer, Offer, SubBookingType } from '../../types/flightTypes';
+import { flightTypeValue, GDS } from '../../constants/cabinClass';
 import { createBookingService } from '../services/Booking.service';
 import { AuthenticatedRequest } from '../../types/express';
 
@@ -109,55 +109,85 @@ class FlightController {
       if (!data) {
         throw new HttpError("Offer not found", 404);
       }
-      const offer = data.data as Offer;
-      const subBookings: SubBookingType[] = [];
-      let pnr;
-      const promises = offer.slices.map(async (slice, index) => {
-        const provider = slice.sourceId;
-        switch (provider) {
-          case GDS.kiu:
-            //@ts-ignore
-            await this.flightClient.bookKiuFlight(offer, passengers);
-            break;
-          case GDS.amadeus:
-            pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
+
+      if (flight_type === flightTypeValue.oneway) {
+        const offer = data.data as Offer;
+        const subBookings: SubBookingType[] = [];
+        let pnr;
+        const promises = offer.slices.map(async (slice, index) => {
+          const provider = slice.sourceId;
+          switch (provider) {
+            case GDS.kiu:
+              //@ts-ignore
+              await this.flightClient.bookKiuFlight(offer, passengers);
+              break;
+            case GDS.amadeus:
+              pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
+              subBookings.push({
+                pnr,
+                status: 'pending',
+                ticketNumber: index + 1,
+              });
+              return {
+                ...slice,
+                PNR: (pnr)
+              }
+              break;
+            case GDS.duffel:
+              pnr = await this.flightClient.bookDuffelFlight(slice, passengers)
+              subBookings.push({
+                pnr,
+                status: 'pending',
+                ticketNumber: index + 1,
+              });
+              return {
+                ...slice,
+                PNR: pnr
+              }
+              break;
+            default:
+              throw new HttpError("Provider not found", 404);
+          }
+          return { ...slice, PNR: "Not Found" };
+        })
+        const modifiedSlices = await Promise.all(promises);
+        const bookingResponse = await createBookingService({
+          flightData: { ...offer, slices: modifiedSlices },
+          passengers,
+          flightType: flight_type,
+          userId,
+          contactDetails,
+          subBookings
+        })
+        res.status(200).json(bookingResponse);
+      }
+      else {
+
+        const offer = data.data as MulticityOffer;
+
+        const subBookings = [];
+        let index = 0;
+        offer.itenaries.forEach((itenary) => {
+          itenary.slices.forEach((slice) => {
             subBookings.push({
-              pnr,
+              pnr: "Not Found",
               status: 'pending',
-              ticketNumber: index + 1,
-            });
-            return {
-              ...slice,
-              PNR: (pnr)
-            }
-            break;
-          case GDS.duffel:
-            pnr = await this.flightClient.bookDuffelFlight(slice, passengers)
-            subBookings.push({
-              pnr,
-              status: 'pending',
-              ticketNumber: index + 1,
-            });
-            return {
-              ...slice,
-              PNR: pnr
-            }
-            break;
-          default:
-            throw new HttpError("Provider not found", 404);
-        }
-        return { ...slice, PNR: "Not Found" };
-      })
-      const modifiedSlices = await Promise.all(promises);
-      const bookingResponse = await createBookingService({
-        flightData: { ...offer, slices: modifiedSlices },
-        passengers,
-        flightType: flight_type,
-        userId,
-        contactDetails,
-        subBookings
-      })
-      res.status(200).json(bookingResponse);
+              ticketNumber: index++,
+            })
+          })
+        })
+
+        const bookingResponse = await createBookingService({
+          flightData: offer,
+          passengers,
+          flightType: flight_type,
+          userId,
+          contactDetails,
+          subBookings
+        })
+        res.status(200).json(bookingResponse);
+      }
+
     } catch (error) {
       next(error);
     }
