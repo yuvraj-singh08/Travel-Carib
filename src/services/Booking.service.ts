@@ -3,6 +3,13 @@ import { prisma } from "../prismaClient";
 
 export const createBookingService = async (params: CreateBookingServiceParams) => {
     try {
+        let totalAmount = params.flightData.total_amount;
+        params.passengers.forEach((passenger) => {
+            passenger.baggageDetails?.forEach((baggage) => {
+                totalAmount += baggage.price;
+            })
+        })
+
         const booking = await prisma.booking.create({
             data: {
                 contactDetail: {
@@ -10,9 +17,9 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                     phone: params.contactDetails.phone,
                 },
                 flightDetails: JSON.stringify(params.flightData),
-                passenger: params.passengers.map(passenger => JSON.stringify(passenger)),
+                passenger: JSON.stringify(params.passengers),
                 baseFare: params.flightData.total_amount,
-                totalAmount: params.flightData.total_amount,
+                totalAmount,
                 currency: "USD",
                 flight_type: params.flightType,
                 adminStatus: "PENDING_PAYMENT",
@@ -31,10 +38,12 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
             })
         }))
 
+        
+
         const payment = await prisma.bookPayment.create({
             data: {
                 bookingId: booking.id,
-                totalAmount: params.flightData.total_amount,
+                totalAmount,
                 currency: "USD",
                 paymentType: "",
             },

@@ -129,10 +129,7 @@ export const getBookings = async (
     const parsedBooking = bookings.map((booking) => {
       return {
         ...booking,
-        passenger: booking.passenger.map((data) => {
-          //@ts-ignore
-          return JSON.parse(data)
-        }),
+        passenger: JSON.parse(booking.passenger),
         flightDetails: JSON.parse(booking.flightDetails),
       }
     })

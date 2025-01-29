@@ -329,7 +329,7 @@ class FlightClient {
                     }],
                     email: passenger.email,
                     phone_number: passenger.phoneNumber,
-                    type: "adult",
+                    type: passenger.passengerType,
                     id: slice.passengers[index].id,
                     born_on: passenger.dob,
                     family_name: passenger.lastName,
@@ -340,8 +340,8 @@ class FlightClient {
                 if (passenger.infant_passenger_id) {
                     returnValue.infant_passenger_id = passenger.infant_passenger_id;
                 }
-                if (passenger.baggageInfo) {
-                    passenger?.baggageInfo.forEach((baggageData) => {
+                if (passenger.baggageDetails) {
+                    passenger?.baggageDetails.forEach((baggageData) => {
                         services.push({
                             id: baggageData.serviceIds[sliceIndex],
                             quantity: baggageData.quantity

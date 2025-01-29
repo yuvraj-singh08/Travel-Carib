@@ -318,7 +318,7 @@ export interface PassengerType {
     infant_passenger_id?: string;
     email: string;
     phoneNumber: string;
-    baggageInfo?: CreateOrderPassengerBaggageDetails[];
+    baggageDetails?: CreateOrderPassengerBaggageDetails[];
     dob: string;
 }
 

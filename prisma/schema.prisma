@@ -108,7 +108,7 @@ model Watchlist {
 }
 
 model Passenger {
-  id                 String @id @default(uuid()) @map("_id")
+  id                 String             @id @default(uuid()) @map("_id")
   phone              String
   email              String
   firstName          String
@@ -404,11 +404,11 @@ model Offer {
 }
 
 model Booking {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
   contactDetail  Json // email and phone number
   flightDetails  String
   payment        BookPayment[] // Payment id
-  passenger      Json[] // passenger[] id reference
+  passenger      String
   // address        Json
   baseFare       Float
   tax_fee_surges Float
@@ -417,12 +417,32 @@ model Booking {
   totalAmount    Float
   currency       String
   flight_type    RouteType
-  adminStatus    AdminStatus   @default(PENDING_TICKET)
-  User           User          @relation(fields: [userId], references: [id])
+  adminStatus    AdminStatus        @default(PENDING_TICKET)
+  User           User               @relation(fields: [userId], references: [id])
   userId         String
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime           @default(now())
   SubBooking     SubBooking[]
 }
+
+// model BookingPassenger {
+//   id                  String         @id @default(uuid()) @map("_id")
+//   title               String
+//   firstName           String
+//   lastName            String
+//   gender              String
+//   nationality         String
+//   passportNumber      String
+//   passportExpiryDate  String
+//   issuingCountry      String
+//   passengerType       Passenger_Type
+//   infant_passenger_id String?
+//   email               String
+//   phoneNumber         String
+//   baggageInfo         String
+//   dob                 String
+//   bookingId           String         @db.ObjectId
+//   booking             Booking        @relation(fields: [bookingId], references: [id])
+// }
 
 model SubBooking {
   id        String           @id @default(uuid()) @map("_id")
