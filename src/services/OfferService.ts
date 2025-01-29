@@ -1,9 +1,9 @@
 import { GDS } from "../../constants/cabinClass";
-import { DuffelPassengerResponseType, Offer, SetPassengerIdServiceParams } from "../../types/flightTypes";
+import { DuffelPassengerResponseType, MulticityOffer, Offer, SetPassengerIdServiceParams } from "../../types/flightTypes";
 import DuffelClient from "../api-clients/DuffelClient";
 import { prisma } from "../prismaClient"
 import HttpError from "../utils/httperror";
-import { transformBaggageDetailForPassengers } from "../utils/utils";
+import { transformBaggageDetailForPassengers, transformMultiCityBaggageDetailForPassengers } from "../utils/utils";
 
 export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
     try {
@@ -23,6 +23,17 @@ export async function saveData(data: any, passengers: { adults: number, children
         return response;
     } catch (error) {
         console.log(error);
+        throw error;
+    }
+}
+
+export const getMultiCityBaggageDataService = async (offer: MulticityOffer) => {
+    try {
+        const baggageData = await Promise.all(offer.itenaries.map(async (itenary) => {
+            return await getBaggageDataService(itenary);
+        }))
+        return baggageData;
+    } catch (error) {
         throw error;
     }
 }
@@ -79,9 +90,9 @@ export async function getOffer(id: string) {
                     })
                 }))
                 const updatedPassengersRequest = [];
-                parsedOffer.slices.forEach((slice, index) => {
+                parsedOffer.slices.forEach(async (slice, index) => {
                     if (index > 0) {
-                        slice.passengers.forEach((passenger, index) => {
+                        slice.passengers.forEach(async (passenger, index) => {
                             updatedPassengersRequest.push(prisma.offerPassengers.update({
                                 where: {
                                     id: savedPassengers[index].id
@@ -90,6 +101,14 @@ export async function getOffer(id: string) {
                                     gds_passenger_id: [...savedPassengers[index].gds_passenger_id, passenger.id]
                                 }
                             }))
+                            // updatedPassengersRequest.push(prisma.offerPassengers.update({
+                            //     where: {
+                            //         id: savedPassengers[index].id
+                            //     },
+                            //     data: {
+                            //         gds_passenger_id: [...savedPassengers[index].gds_passenger_id, passenger.id]
+                            //     }
+                            // }))
                         })
                     }
                 })
@@ -117,10 +136,84 @@ export async function getOffer(id: string) {
                     passengers: passengersWithBaggageDetails
                 };
             }
-            else{
+            else {
+                const parsedOffer = JSON.parse(offer.data) as MulticityOffer;
+                const savedPassengers = await Promise.all(parsedOffer.itenaries[0].slices[0].passengers.map((passenger) => {
+                    return prisma.offerPassengers.create({
+                        data: {
+                            type: passenger.type,
+                            multicity_passenger_id: JSON.stringify([[passenger.id]]),
+                            offerId: id
+                        }
+                    })
+                }))
+                // const updatedPassengersRequest = [];
+                const updatedPassengers = await parsedOffer.itenaries.map(async (itenary, itenaryIndex) => {
+                    itenary.slices.map(async (slice, sliceIndex) => {
+                        if (!(itenaryIndex === 0 && sliceIndex === 0)) {
+                            slice.passengers.map(async (passenger, index) => {
+                                const updatedIds = JSON.parse(savedPassengers[index].multicity_passenger_id);
+                                if (sliceIndex === 0) {
+                                    updatedIds.push([passenger.id])
+                                }
+                                else {
+                                    updatedIds[itenaryIndex].push(passenger.id)
+                                }
+                                return await (prisma.offerPassengers.update({
+                                    where: {
+                                        id: savedPassengers[index].id
+                                    },
+                                    data: {
+                                        multicity_passenger_id: JSON.stringify(updatedIds)
+                                    }
+                                }))
+                                // updatedPassengersRequest.push(prisma.offerPassengers.update({
+                                //     where: {
+                                //         id: savedPassengers[index].id
+                                //     },
+                                //     data: {
+                                //         multicity_passenger_id: JSON.stringify(updatedIds)
+                                //     }
+                                // }))
+                            })
+                        }
+                    })
+                })
+                // const updatedPassengers = await Promise.all(updatedPassengersRequest);
+                const updatedOffer = await prisma.offer.findFirst({
+                    where: {
+                        id
+                    },
+                    include: {
+                        passengers: true
+                    }
+                })
+                const passengers = updatedOffer.passengers.map((passenger) => {
+                    return {
+                        ...passenger,
+                        multicity_passenger_id: JSON.parse(passenger.multicity_passenger_id)
+                    }
+                });
+                const availabeServices = await getMultiCityBaggageDataService(parsedOffer);
+                //@ts-ignore
+                const optimalPassengerBaggageMap = transformMultiCityBaggageDetailForPassengers(availabeServices, passengers);
+
+                // const passengersWithBaggageDetails = await Promise.all(passengers.map((passenger) => {
+                //     return prisma.offerPassengers.update({
+                //         where: {
+                //             id: passenger.id
+                //         },
+                //         data: {
+                //             baggageDetails: (optimalPassengerBaggageMap.get(passenger.id) || [])
+                //         }
+                //     })
+                // }))
+
+
                 return {
                     ...offer,
-                    data: JSON.parse(offer.data)
+                    data: JSON.parse(offer.data),
+                    passengers: passengers
                 };
             }
         }

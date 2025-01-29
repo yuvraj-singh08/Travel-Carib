@@ -52,6 +52,7 @@ class DuffelClient {
     try {
       const response = await this.client.orders.create({
         type: "pay_later",
+        services: params.services,
         selected_offers: [
           params.offerId
         ],

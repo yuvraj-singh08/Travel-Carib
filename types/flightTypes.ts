@@ -305,6 +305,7 @@ export interface AirlineProvider {
 }
 
 export interface PassengerType {
+    id: string;
     title: DuffelPassengerTitle
     firstName: string;
     lastName: string;
@@ -317,7 +318,15 @@ export interface PassengerType {
     infant_passenger_id?: string;
     email: string;
     phoneNumber: string;
+    baggageInfo?: CreateOrderPassengerBaggageDetails[];
     dob: string;
+}
+
+export interface CreateOrderPassengerBaggageDetails {
+    weightInKg: number;
+    quantity: number;
+    price: number;
+    serviceIds: string[];
 }
 
 export type DuffelPassengerResponseType = {
@@ -331,8 +340,8 @@ export interface ContactDetailsType {
 
 export type SubBookingType = {
     pnr: string;
-    status: 'pending' | 'confirmed' | 'failed';
-    ticketNumber: number;
+    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+    ticket?: string;
 }
 
 export type CreateBookingServiceParams = {

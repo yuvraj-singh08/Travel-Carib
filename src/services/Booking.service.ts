@@ -9,7 +9,6 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                     email: params.contactDetails.email,
                     phone: params.contactDetails.phone,
                 },
-                subBooking: params.subBookings,
                 flightDetails: JSON.stringify(params.flightData),
                 passenger: params.passengers.map(passenger => JSON.stringify(passenger)),
                 baseFare: params.flightData.total_amount,
@@ -22,6 +21,15 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                 otherCharges: 20.0,
             },
         });
+        const subBookings = await Promise.all(params.subBookings.map((subBooking) => {
+            return prisma.subBooking.create({
+                data: {
+                    bookingId: booking.id,
+                    pnr: subBooking.pnr,
+                    status: subBooking.status,
+                },
+            })
+        }))
 
         const payment = await prisma.bookPayment.create({
             data: {

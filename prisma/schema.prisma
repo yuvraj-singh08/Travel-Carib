@@ -180,27 +180,6 @@ enum Passenger_Type {
   INFANT
 }
 
-model Booking {
-  id             String        @id @default(uuid()) @map("_id")
-  contactDetail  Json // email and phone number
-  subBooking     Json[]
-  flightDetails  String
-  payment        BookPayment[] // Payment id
-  passenger      Json[] // passenger[] id reference
-  // address        Json
-  baseFare       Float
-  tax_fee_surges Float
-  otherCharges   Float
-  discount       Json?
-  totalAmount    Float
-  currency       String
-  flight_type    RouteType
-  adminStatus    AdminStatus   @default(PENDING_TICKET)
-  User           User          @relation(fields: [userId], references: [id])
-  userId         String
-  createdAt      DateTime      @default(now())
-}
-
 enum UserStatus {
   PENDING
   COMPLETED
@@ -215,7 +194,7 @@ model BookPayment {
   status      UserStatus @default(PENDING)
   paymentDate DateTime   @default(now())
   Booking     Booking    @relation(fields: [bookingId], references: [id])
-  bookingId   String
+  bookingId   String     @db.ObjectId
 }
 
 model passenger {
@@ -400,12 +379,19 @@ model Blog {
 }
 
 model OfferPassengers {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  type           String
-  gds_passenger_id         String[]
-  baggageDetails Json[]
-  offer          Offer    @relation(fields: [offerId], references: [id])
-  offerId        String   @db.ObjectId
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  type                   String
+  gds_passenger_id       String[]
+  multicity_passenger_id String?
+  baggageDetails         Json[]
+  offer                  Offer    @relation(fields: [offerId], references: [id])
+  offerId                String   @db.ObjectId
+}
+
+enum SubBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
 }
 
 model Offer {
@@ -415,6 +401,36 @@ model Offer {
   flightWay  RouteType
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+}
+
+model Booking {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  contactDetail  Json // email and phone number
+  flightDetails  String
+  payment        BookPayment[] // Payment id
+  passenger      Json[] // passenger[] id reference
+  // address        Json
+  baseFare       Float
+  tax_fee_surges Float
+  otherCharges   Float
+  discount       Json?
+  totalAmount    Float
+  currency       String
+  flight_type    RouteType
+  adminStatus    AdminStatus   @default(PENDING_TICKET)
+  User           User          @relation(fields: [userId], references: [id])
+  userId         String
+  createdAt      DateTime      @default(now())
+  SubBooking     SubBooking[]
+}
+
+model SubBooking {
+  id        String           @id @default(uuid()) @map("_id")
+  status    SubBookingStatus
+  ticket    String?
+  pnr       String
+  bookingId String           @db.ObjectId
+  booking   Booking          @relation(fields: [bookingId], references: [id])
 }
 
 model AmadeusOffer {

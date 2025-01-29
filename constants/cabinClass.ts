@@ -1,3 +1,5 @@
+import { SubBookingStatus } from "@prisma/client"
+
 export const kiuClasses = {
     economy: ['H', 'Y', 'K', 'N', 'V'],
     premium_economy: ['M'],
@@ -22,4 +24,14 @@ export const flightTypeValue = {
     oneway: 'ONEWAY',
     roundtrip: 'ROUNDTRIP',
     multicity: 'MULTICITY'
+}
+
+export const SubBookingStatusValues: {
+    pending: SubBookingStatus,
+    confirmed: SubBookingStatus,
+    cancelled: SubBookingStatus
+} = {
+    pending: "PENDING",
+    confirmed: "CONFIRMED",
+    cancelled: "CANCELLED"
 }

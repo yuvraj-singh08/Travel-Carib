@@ -92,6 +92,41 @@ export const getPassengerArrays = (passengers: {
 
 }
 
+export const transformMultiCityBaggageDetailForPassengers = (baggageDetailForAllItenaries: GdsBaggageType[][][], passengers: OfferPassengerType[]) => {
+  const baggageDetailsForPassengers = baggageDetailForAllItenaries.map((itenaryBaggage, itenaryIndex) => {
+    const passengerBaggageMap = new Map<string, UtilBaggageType[][]>();
+    itenaryBaggage.forEach((baggageDetails, sliceIndex) => {
+
+      // passengers.forEach((passenger) => {
+      //   const baggageData = passengerBaggageMap.get(passenger.id) || [];
+      //   const baggageDetailForThisPassenger = baggageDetails.filter((baggageDetail) => baggageDetail.passenger_ids[0] == passenger.gds_passenger_id[index]);
+      //   const parsedBaggageDetailForThisPassenger = baggageDetailForThisPassenger.map((baggageDetail): UtilBaggageType => {
+      //     return {
+      //       weightInKg: baggageDetail.metadata.maximum_weight_kg,
+      //       type: baggageDetail.type,
+      //       maxQuantity: baggageDetail.maximum_quantity,
+      //       price: parseFloat(baggageDetail.total_amount),
+      //       currency: baggageDetail.total_currency,
+      //       serviceId: baggageDetail.id
+      //     }
+      //   })
+      //   baggageData.push(parsedBaggageDetailForThisPassenger);
+      //   passengerBaggageMap.set(passenger.id, baggageData)
+      // })
+    })
+
+    const optimalPassengerBaggageMap = new Map<string, DbBaggageType[]>();
+
+    passengerBaggageMap.forEach((passengerBaggage, key: string) => {
+      const parsedBaggage = findOptimalCombinations(passengerBaggage);
+      optimalPassengerBaggageMap.set(key, parsedBaggage);
+
+    })
+
+    return optimalPassengerBaggageMap;
+  })
+}
+
 export const transformBaggageDetailForPassengers = (baggageDetailForAllSlices: GdsBaggageType[][], passengers: OfferPassengerType[]) => {
 
   const passengerBaggageMap = new Map<string, UtilBaggageType[][]>();

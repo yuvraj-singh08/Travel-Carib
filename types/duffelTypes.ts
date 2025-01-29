@@ -1,4 +1,4 @@
-import { CreateOrderPassenger } from "@duffel/api/types"
+import { CreateOrderPassenger, CreateOrderService } from "@duffel/api/types"
 
 type DuffelOfferRequest = {
     slices: [
@@ -17,4 +17,5 @@ type DuffelOfferRequest = {
 export type DuffelCreateOrderParams = {
     offerId: string
     passengers: CreateOrderPassenger[]
+    services: CreateOrderService[]
 }

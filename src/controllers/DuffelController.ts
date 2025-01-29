@@ -50,8 +50,8 @@ class DuffelController {
     async createOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { offerId, passengers } = req.body;
-            const order = await this.duffelClient.createOrder({ offerId, passengers });
-            res.status(200).json(order);
+            // const order = await this.duffelClient.createOrder({ offerId, passengers });
+            res.status(200).json({});
         } catch (error) {
             next(error);
         }

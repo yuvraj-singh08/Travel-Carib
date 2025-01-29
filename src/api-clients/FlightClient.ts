@@ -315,8 +315,10 @@ class FlightClient {
         }
     }
 
-    async bookDuffelFlight(slice: Slice, passengers: PassengerType[]) {
+    async bookDuffelFlight(slice: Slice, passengers: PassengerType[], sliceIndex: number) {
         try {
+            const services = [];
+
             const passengersData = passengers.map((passenger, index) => {
                 let returnValue: CreateOrderPassenger = {
                     identity_documents: [{
@@ -338,11 +340,20 @@ class FlightClient {
                 if (passenger.infant_passenger_id) {
                     returnValue.infant_passenger_id = passenger.infant_passenger_id;
                 }
+                if (passenger.baggageInfo) {
+                    passenger?.baggageInfo.forEach((baggageData) => {
+                        services.push({
+                            id: baggageData.serviceIds[sliceIndex],
+                            quantity: baggageData.quantity
+                        })
+                    })
+                }
                 return returnValue
             })
             const response = await this.duffelClient.createOrder({
                 passengers: passengersData,
-                offerId: slice.gdsOfferId
+                offerId: slice.gdsOfferId,
+                services
             })
             return response.data.booking_reference;
         } catch (error) {

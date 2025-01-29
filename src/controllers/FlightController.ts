@@ -5,7 +5,7 @@ import { getPossibleRoutes } from '../utils/flights';
 import HttpError from '../utils/httperror';
 import { getOffer } from '../services/OfferService';
 import { MulticityOffer, Offer, SubBookingType } from '../../types/flightTypes';
-import { flightTypeValue, GDS } from '../../constants/cabinClass';
+import { flightTypeValue, GDS, SubBookingStatusValues } from '../../constants/cabinClass';
 import { createBookingService } from '../services/Booking.service';
 import { AuthenticatedRequest } from '../../types/express';
 
@@ -125,8 +125,7 @@ class FlightController {
               pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
               subBookings.push({
                 pnr,
-                status: 'pending',
-                ticketNumber: index + 1,
+                status: SubBookingStatusValues.pending,
               });
               return {
                 ...slice,
@@ -134,11 +133,10 @@ class FlightController {
               }
               break;
             case GDS.duffel:
-              pnr = await this.flightClient.bookDuffelFlight(slice, passengers)
+              pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index)
               subBookings.push({
                 pnr,
-                status: 'pending',
-                ticketNumber: index + 1,
+                status: SubBookingStatusValues.pending,
               });
               return {
                 ...slice,
@@ -171,7 +169,7 @@ class FlightController {
           itenary.slices.forEach((slice) => {
             subBookings.push({
               pnr: "Not Found",
-              status: 'pending',
+              status: SubBookingStatusValues.pending,
               ticketNumber: index++,
             })
           })
