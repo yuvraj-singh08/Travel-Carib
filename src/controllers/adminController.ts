@@ -200,6 +200,8 @@ export const loginUser = async (req: Request, res: Response) => {
     if (password) {
       isPasswordValid = await bcrypt.compare(password, user.password);
 
+      console.log(isPasswordValid);
+
       if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
@@ -247,6 +249,17 @@ export const getAdminById = async (
       lastname: user?.lastname,
     };
 
+    const specificNames = {
+      "View & Manage User Accounts": "user",
+      "Access Booking Management": "booking",
+      "Manage Support Tickets": "support",
+      "View Financial Reports": "financial",
+      "Process Refunds": "refund",
+      "Generate Reports & Analytics": "analytics",
+      "Create & Manage Discount Codes": "discount",
+      "Configure System Settings": "settings",
+    };
+
     if (user.userManagement.length > 0) {
       const specificRole = await prisma.role.findUnique({
         where: {
@@ -257,17 +270,6 @@ export const getAdminById = async (
       const permissions: AdminPermissions[] =
         specificRole?.permissionGroups as any;
 
-      const specificNames = {
-        "View & Manage User Accounts": "user",
-        "Access Booking Management": "booking",
-        "Manage Support Tickets": "support",
-        "View Financial Reports": "financial",
-        "Process Refunds": "refund",
-        "Generate Reports & Analytics": "analytics",
-        "Create & Manage Discount Codes": "discount",
-        "Configure System Settings": "settings",
-      };
-      
       const updatedPermissions = permissions.map((permission) => {
         const view = permission.permissions.View.view;
         const create = permission.permissions.Create.view;
@@ -297,29 +299,19 @@ export const getAdminById = async (
 
       data.permissions = updatedPermissions;
     } else {
-      const updatedPermissions = permissions.map((permission) => {
-        const view = permission.permissions.View.view;
-        const create = permission.permissions.Create.view;
-        const update = permission.permissions.Update.view;
-        const del = permission.permissions.Delete.view;
+      const updatedPermissions = Object.keys(specificNames).map(
+        (permission) => {
+          const actions: string[] = ["view", "delete", "create", "update"];
 
-        const actions: string[] = [];
-
-				actions.push("view")
-				actions.push("delete")
-				actions.push("create")
-				actions.push("update")
-
-        return {
-          name: specificNames[permission.name],
-          actions: actions,
-        };
-      });
+          return {
+            name: specificNames[permission],
+            actions: actions,
+          };
+        }
+      );
 
       data.permissions = updatedPermissions;
     }
-
-    console.log(data);
 
     if (data) {
       return res.json(data);
