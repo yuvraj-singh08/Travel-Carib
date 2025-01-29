@@ -295,9 +295,28 @@ export const getAdminById = async (
         };
       });
 
-      data.permissions = updatedPermissions;4
+      data.permissions = updatedPermissions;
     } else {
-      data.permissions = "all";
+      const updatedPermissions = permissions.map((permission) => {
+        const view = permission.permissions.View.view;
+        const create = permission.permissions.Create.view;
+        const update = permission.permissions.Update.view;
+        const del = permission.permissions.Delete.view;
+
+        const actions: string[] = [];
+
+				actions.push("view")
+				actions.push("delete")
+				actions.push("create")
+				actions.push("update")
+
+        return {
+          name: specificNames[permission.name],
+          actions: actions,
+        };
+      });
+
+      data.permissions = updatedPermissions;
     }
 
     console.log(data);
