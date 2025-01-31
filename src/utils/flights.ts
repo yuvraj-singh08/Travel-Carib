@@ -7,7 +7,6 @@ import { getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
-import { FlightSupplier } from "@prisma/client";
 import { GDS } from "../../constants/cabinClass";
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType) => {
@@ -19,6 +18,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
             let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             let flag = true;
+            let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
             result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
@@ -56,14 +56,14 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 // if (segment?.passengers?.[0]?.baggages?.filter((baggage) => baggage.type === "checked")?.quantity == undefined) {
                 //     console.log(segment?.passengers?.[0]);
                 // }
-                //@ts-ignore
+
                 const cabinBaggageData = baggages?.filter((baggage) => baggage.type === "carry_on")
-                //@ts-ignore
                 const checkedBaggageData = baggages?.filter((baggage) => baggage.type === "checked")
-                //@ts-ignore
-                const checkedBaggage = checkedBaggageData?.quantity || 0;
-                //@ts-ignore
-                const cabinBaggage = cabinBaggageData?.quantity || 0;
+                const checkedBaggage = checkedBaggageData?.[0]?.quantity || 0;
+                const cabinBaggage = cabinBaggageData?.[0]?.quantity || 0;
+                sliceCabinBaggage = Math.min(cabinBaggage, sliceCabinBaggage)
+                sliceCheckedBaggage = Math.min(checkedBaggage, sliceCheckedBaggage)
+
                 //@ts-ignore
                 result.slices[0].segments[segmentIndex].checkedBaggage = checkedBaggage;
                 //@ts-ignore
@@ -95,6 +95,8 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                     responseId,
                     departing_at,
                     arriving_at,
+                    cabinBaggage: sliceCabinBaggage,
+                    checkedBaggage: sliceCheckedBaggage,
                     cabin_class: duffelResponse.data.cabin_class
                 })
             }
@@ -477,8 +479,15 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
         if (slices?.length > 1) {
             stops += 1
         }
-        const totalAmount = offer.reduce((total, route) => total + parseFloat(route.total_amount), 0);
-        const totalCommission = offer.reduce((total, route) => total + (route.commissionAmount), 0);
+
+        let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabbinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
+        offer.forEach((route) => {
+            totalAmount = totalAmount + parseFloat(route.total_amount);
+            totalCommission = totalCommission + (route.commissionAmount);
+            cabinBaggage = Math.min(cabinBaggage, route.cabbinBaggage || 0);
+            checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
+        });
+
         let commissionAmount = 0;
         if (applicableCommission) {
             if (applicableCommission.feeType === 'FIXED') {
@@ -503,6 +512,8 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             // base_currency: offer[0].base_currency,
             // tax_currency: offer[0].tax_currency,
             slices,
+            cabinBaggage,
+            checkedBaggage,
             cabinClass
         };
     })
