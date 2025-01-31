@@ -65,7 +65,6 @@ class FlightClient {
 
     async advanceFlightSearch(params: FlightOfferSearchParams) {
         try {
-
             const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(params.passengers);
             //Calculating Possible Routes
             const [firewall, commission] = await Promise.all([
@@ -98,13 +97,10 @@ class FlightClient {
             const possibleRoutes = searchManagement.possibleRoutes
             const kiuPossibleRoutes = possibleRoutes.filter((route) => {
                 let flag = true;
-                let routeId = "";
-                route.forEach((route) => {
-                    routeId += route.origin + route.destination + ","
-                })
+                let routeId = params.originLocation + params.destinationLocation;
                 kiuFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId === id && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -112,13 +108,10 @@ class FlightClient {
             })
             const amaduesPossibleRoutes = possibleRoutes.filter((route) => {
                 let flag = true;
-                let routeId = "";
-                route.forEach((route) => {
-                    routeId += route.origin + route.destination + ","
-                })
+                let routeId = params.originLocation + params.destinationLocation;
                 amadeusFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId === id && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -126,13 +119,10 @@ class FlightClient {
             })
             const duffelPossibleRoutes = possibleRoutes.filter((route) => {
                 let flag = true;
-                let routeId = "";
-                route.forEach((route) => {
-                    routeId += route.origin + route.destination + ","
-                })
+                let routeId = params.originLocation + params.destinationLocation;
                 duffelFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId.includes(id) && !firewall.code) {
+                    if (id !== '' && routeId === id && !firewall.code) {
                         flag = false;
                     }
                 })
@@ -205,7 +195,7 @@ class FlightClient {
 
             const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
                 const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusNewParser(response, amadeusFirewall, amadeusCommission);
+                    const parsedResponse = amadeusNewParser(response, amadeusFirewall, amadeusCommission, params.originLocation, params.destinationLocation);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes
@@ -213,7 +203,7 @@ class FlightClient {
 
             const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
                 const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelNewParser(response, duffelFirewall, duffelCommission);
+                    const parsedResponse = duffelNewParser(response, duffelFirewall, duffelCommission, params.originLocation, params.destinationLocation);
                     return parsedResponse;
                 })
                 return parsedPossibleRoutes

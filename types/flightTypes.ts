@@ -87,7 +87,7 @@ export type Offer = {
     owner: Carrier;
     id: string;
     responseId: string;
-    cabbinBaggage: number;
+    cabinBaggage: number;
     checkedBaggage: number;
     sourceId: string;
     routeId: string;

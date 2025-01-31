@@ -9,7 +9,7 @@ import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
 import { GDS } from "../../constants/cabinClass";
 
-export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType) => {
+export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType, origin: string, destination: string) => {
     try {
         let response = []
         duffelResponse.data.offers.forEach((result) => {
@@ -23,12 +23,8 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
                 for (let i = 0; i < firewall.length; i++) {
-                    if (firewall[i].from === segment?.destination?.iata_code && firewall[i].to === segment?.destination?.iata_code) {
-                        if (!firewall[i].code) {
-                            flag = false;
-                            break;
-                        }
-                        else if (segment?.operating_carrier?.iata_code === firewall[i]?.code) {
+                    if (firewall[i].from === origin && firewall[i].to === destination) {
+                        if (segment?.operating_carrier?.iata_code === firewall[i]?.code) {
                             if (!firewall[i].flightNumber) {
                                 flag = false;
                                 break;
@@ -107,7 +103,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
     }
 }
 
-export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = [], commission: CommissionType) => {
+export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall: any = [], commission: CommissionType, origin: string, destination: string) => {
     try {
         let parsedResponse = [];
         amadeusResponse?.data?.forEach((result) => {
@@ -122,12 +118,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                 responseId += segment?.carrierCode + segment?.number
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
                 for (let i = 0; i < firewall.length; i++) {
-                    if (firewall[i].from === segment?.departure?.iataCode && firewall[i].to === segment?.arrival?.iataCode) {
-                        if (!firewall[i].code) {
-                            flag = false;
-                            break;
-                        }
-                        else if ((segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
+                    if (firewall[i].from === origin && firewall[i].to === destination) {
+                        if ((segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
                             if (!firewall[i].flightNumber) {
                                 flag = false;
                                 break;
@@ -480,11 +472,11 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             stops += 1
         }
 
-        let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabbinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
+        let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
         offer.forEach((route) => {
             totalAmount = totalAmount + parseFloat(route.total_amount);
             totalCommission = totalCommission + (route.commissionAmount);
-            cabinBaggage = Math.min(cabinBaggage, route.cabbinBaggage || 0);
+            cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
         });
 
@@ -688,7 +680,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             let flag = true;
             firewall.forEach((firewall) => {
                 const id = firewall.from + firewall.to
-                if (id !== '' && routeId.includes(id) && !firewall.code) {
+                if (id !== '' && routeId === id && !firewall.code) {
                     flag = false;
                 }
             })
@@ -737,23 +729,9 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             formattedRoutes.push(...results);
         })
         const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
-        const filteredRoutes = possibleRoutes.filter((route) => {
-            let routeId = "";
-            let flag = true;
-            route.forEach((segment) => {
-                routeId += segment.origin + segment.destination + ",";
-            })
-            firewall.forEach((firewall) => {
-                const id = firewall.from + firewall.to
-                if (routeId.includes(id)) {
-                    flag = false;
-                }
-            })
-            return flag;
-        })
         return {
             searchManagement,
-            possibleRoutes: filteredRoutes
+            possibleRoutes
         }
     } catch (error: any) {
         throw new HttpError(error.message, 400);

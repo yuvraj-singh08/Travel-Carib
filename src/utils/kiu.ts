@@ -313,7 +313,7 @@ export const combineRoute = (route1: any, route2: any) => {
   }
 }
 
-export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
+export const parseKiuResposne = (data: any, kiuFirewall: any = [], origin: string, destination: string) => {
   try {
     if (data?.Root?.Error !== undefined) {
       console.log("Error in KIU response: ", data.Root.Error);
@@ -385,12 +385,8 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = []) => {
         segments.push(segment);
 
         for (let i = 0; i < kiuFirewall.length; i++) {
-          if (kiuFirewall[i].from === segment?.origin?.iata_code && kiuFirewall[i].to === segment?.destination?.iata_code) {
-            if (!kiuFirewall[i].code) {
-              flag = false;
-              break;
-            }
-            else if (segment?.operating_carrier?.iata_code === kiuFirewall[i]?.code) {
+          if (kiuFirewall[i].from === origin && kiuFirewall[i].to === destination) {
+            if (segment?.operating_carrier?.iata_code === kiuFirewall[i]?.code) {
               if (!kiuFirewall[i].flightNumber) {
                 flag = false;
                 break;

@@ -37,7 +37,7 @@ class KiuClient {
       // console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = parseKiuResposne(jsonResponse, firewall);
+      const parsedResponse = parseKiuResposne(jsonResponse, firewall, params.tripOrigin, params.tripDestination);
       const cabinClass = kiuClasses[params.CabinClass];
       const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
         let sliceSum = 0;
