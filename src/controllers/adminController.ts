@@ -248,7 +248,7 @@ export const getAdminById = async (
       firstname: user?.firstname,
       lastname: user?.lastname,
     };
-
+    
     const specificNames = {
       "View & Manage User Accounts": "user",
       "Access Booking Management": "booking",
@@ -259,7 +259,7 @@ export const getAdminById = async (
       "Create & Manage Discount Codes": "discount",
       "Configure System Settings": "settings",
     };
-
+    
     if (user.userManagement.length > 0) {
       const specificRole = await prisma.role.findUnique({
         where: {
@@ -292,7 +292,7 @@ export const getAdminById = async (
         }
 
         return {
-          name: specificNames[permission.name],
+          name: permission.name,
           actions: actions,
         };
       });
@@ -304,7 +304,7 @@ export const getAdminById = async (
           const actions: string[] = ["view", "delete", "create", "update"];
 
           return {
-            name: specificNames[permission],
+            name: permission,
             actions: actions,
           };
         }
@@ -312,7 +312,7 @@ export const getAdminById = async (
 
       data.permissions = updatedPermissions;
     }
-
+    
     if (data) {
       return res.json(data);
     } else {
