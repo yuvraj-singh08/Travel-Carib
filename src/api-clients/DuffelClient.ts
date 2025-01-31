@@ -1,15 +1,34 @@
 import { Duffel } from '@duffel/api';
-import { CreateOfferRequest, OfferAvailableServiceBaggage } from '@duffel/api/types';
+import { CreateOfferRequest } from '@duffel/api/types';
 import { DuffelCreateOrderParams } from '../../types/duffelTypes';
-import { AxiosInstance } from 'axios';
+import { getGdsCreds } from '../services/GdsCreds.service';
 
 class DuffelClient {
   private client: Duffel;
-  private axiosInstance: AxiosInstance;
 
-  constructor() {
-    this.client = new Duffel({ token: process.env.DUFFEL_TOKEN });
+  constructor(creds: { token: string }) {
+    this.client = new Duffel(creds);
     this.getFlightDetails = this.getFlightDetails.bind(this);
+  }
+
+  static async create(): Promise<DuffelClient> {
+    try {
+      // Fetch API credentials from DB
+      const creds = await getGdsCreds('DUFFEL');
+
+      if (!creds) {
+        throw new Error("Duffel credentials not found in DB");
+      }
+
+      const client = new DuffelClient({
+        token: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
+      });
+
+      return client;
+    } catch (error) {
+      console.error("Failed to initialize Duffel client:", error);
+      throw error;
+    }
   }
 
   async createOfferRequest(offerRequestData: CreateOfferRequest) {

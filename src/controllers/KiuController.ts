@@ -5,16 +5,25 @@ import { getPossibleRoutes } from "../utils/flights";
 class KiuController {
     private kiuClient: KiuClientInstance;
 
-    constructor() {
-        this.kiuClient = new KiuClient();
+    constructor({ kiuClient }: { kiuClient: KiuClientInstance }) {
+        this.kiuClient = kiuClient;
         this.searchFlights = this.searchFlights.bind(this);
         this.multiCitySearch = this.multiCitySearch.bind(this);
+    }
+
+    static async create() {
+        try {
+            const kiuClient = await KiuClient.create();
+            return kiuClient;
+        } catch (error) {
+            throw error;
+        }
     }
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { OriginLocation, DestinationLocation, DepartureDate, CabinClass, ReturnDate, Passengers } = req.body;
-            const response = await this.kiuClient.searchFlights({ OriginLocation, CabinClass, DestinationLocation, DepartureDate, ReturnDate, Passengers },"FWE",null);
+            const response = await this.kiuClient.searchFlights({ OriginLocation, CabinClass, DestinationLocation, DepartureDate, ReturnDate, Passengers }, "FWE", null);
             res.send(response);
         } catch (error) {
             next(error);

@@ -15,10 +15,22 @@ class FlightClient {
     private amadeusClient: AmadeusClientInstance
     private kiuClient: KiuClientInstance
 
-    constructor() {
-        this.duffelClient = new DuffelClient();
-        this.amadeusClient = new AmadeusClient();
-        this.kiuClient = new KiuClient();
+    constructor({ duffelClient, amadeusClient, kiuClient }: { duffelClient: DuffelClientInstance, amadeusClient: AmadeusClientInstance, kiuClient: KiuClientInstance }) {
+        this.duffelClient = duffelClient;
+        this.amadeusClient = amadeusClient;
+        this.kiuClient = kiuClient;
+    }
+
+    static async create() {
+        try {
+            const duffelClient = await DuffelClient.create();
+            const amadeusClient = await AmadeusClient.create();
+            const kiuClient = await KiuClient.create();
+
+            return new FlightClient({ duffelClient, amadeusClient, kiuClient });
+        } catch (error) {
+            throw error;
+        }
     }
 
     async multiCityFlightSearch(params: MultiCitySearchParams) {

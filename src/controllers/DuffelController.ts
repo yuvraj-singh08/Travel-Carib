@@ -6,13 +6,22 @@ import { Offer } from "../../types/flightTypes";
 class DuffelController {
     private duffelClient: DuffelClientInstance;
 
-    constructor() {
-        this.duffelClient = new DuffelClient();
+    constructor({ duffelClient }: { duffelClient: DuffelClientInstance }) {
+        this.duffelClient = duffelClient;
         this.searchFlights = this.searchFlights.bind(this);
         this.getFlightDetails = this.getFlightDetails.bind(this);
         this.createOrder = this.createOrder.bind(this);
         this.getAvailableServices = this.getAvailableServices.bind(this);
         this.getOfferRequestById = this.getOfferRequestById.bind(this);
+    }
+
+    static async create() {
+        try {
+            const duffelClient = await DuffelClient.create();
+            return duffelClient
+        } catch (error) {
+            throw error;
+        }
     }
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {

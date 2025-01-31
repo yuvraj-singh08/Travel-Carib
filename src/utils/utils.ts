@@ -235,3 +235,5 @@ function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
     b.weightInKg - a.weightInKg || a.price - b.price
   );
 }
+
+export const capitalizeFirstLetter = (str) => str.charAt(0).toUpperCase() + str.slice(1);

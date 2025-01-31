@@ -1,17 +1,40 @@
-import Amadus from 'amadeus'
+import Amadeus from 'amadeus'
 import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { amadeusClass } from '../../constants/cabinClass';
 import { saveAmadeusResponse } from '../services/OfferService';
+import { getGdsCreds } from '../services/GdsCreds.service';
 
 class AmadeusClient {
   private client: amadeusClientType;
 
-  constructor() {
-    this.client = new Amadus({
-      clientId: process.env.AMADEUS_CLIENT_ID,
-      clientSecret: process.env.AMADEUS_CLIENT_SECRET,
-      hostname: process.env.ENVIORNMENT || "production"
-    });
+  public constructor(creds: {
+    clientId: string,
+    clientSecret: string,
+    hostname: 'test' | 'production'
+  }) {
+    this.client = new Amadeus(creds);
+  }
+
+  static async create(): Promise<AmadeusClient> {
+    try {
+      // Fetch API credentials from DB
+      const creds = await getGdsCreds('AMADEUS');
+
+      if (!creds) {
+        throw new Error("Amadeus credentials not found in DB");
+      }
+
+      const client = new AmadeusClient({
+        clientId: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
+        clientSecret: creds.mode === 'PRODUCTION' ? creds.productionApiSecret : creds.testApiSecret,
+        hostname: creds.mode.toLowerCase() as 'test' | 'production',
+      });
+
+      return client;
+    } catch (error) {
+      console.error("Failed to initialize Amadeus client:", error);
+      throw error;
+    }
   }
 
   async citySearch(query: string, subType: string) {

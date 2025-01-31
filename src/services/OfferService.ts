@@ -40,7 +40,7 @@ export const getMultiCityBaggageDataService = async (offer: MulticityOffer) => {
 
 export const getBaggageDataService = async (offer: Offer) => {
     try {
-        const duffelClient = new DuffelClient();
+        const duffelClient = await DuffelClient.create();
         const baggageRequests = offer.slices.map(async (slice) => {
             const provider = slice.sourceId;
             switch (provider) {

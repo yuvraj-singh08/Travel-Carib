@@ -5,12 +5,21 @@ import { FlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTy
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
 import { CommissionType } from '../../types/flightTypes';
+import { getGdsCreds } from '../services/GdsCreds.service';
+import { capitalizeFirstLetter } from '../utils/utils';
 
 class KiuClient {
   private endpoint: string;
   private axiosInstance: AxiosInstance;
+  private clientId: string;
+  private clientSecret: string;
+  private mode: 'Test' | 'Production';
 
-  constructor() {
+  constructor(creds: { clientId: string; clientSecret: string, mode: 'Test' | 'Production' }) {
+    this.clientId = creds.clientId;
+    this.clientSecret = creds.clientSecret;
+    this.mode = creds.mode;
+
     this.endpoint = 'your-kiu-endpoint';
     const baseURL = "https://ssl00.kiusys.com/ws3/index.php";
 
@@ -24,14 +33,36 @@ class KiuClient {
     this.searchFlights = this.searchFlights.bind(this);
   }
 
+  static async create(): Promise<KiuClient> {
+    try {
+      // Fetch API credentials from DB
+      const creds = await getGdsCreds('KIU');
+
+      if (!creds) {
+        throw new Error("Amadeus credentials not found in DB");
+      }
+
+      const client = new KiuClient({
+        clientId: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
+        clientSecret: creds.mode === 'PRODUCTION' ? creds.productionApiSecret : creds.testApiSecret,
+        mode: capitalizeFirstLetter(creds.mode) as 'Test' | 'Production',
+      });
+
+      return client;
+    } catch (error) {
+      console.error("Failed to initialize Amadeus client:", error);
+      throw error;
+    }
+  }
+
   async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
     try {
       const invalidResponseIndexs = [];
       const DepartureDate = getDateString(params.DepartureDate)
-      const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate });
+      const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate }, this.mode);
       const response = await this.axiosInstance.post('', {
-        user: process.env.KIU_USER,
-        password: process.env.KIU_PASSWORD,
+        user: this.clientId,
+        password: this.clientSecret,
         request: requestXML
       })
       // console.log("KIU response: ", response.data);
@@ -122,11 +153,11 @@ class KiuClient {
 
   async searchPrice(params: PriceRequestBuilderParams) {
     try {
-      const requestXML = buildFlightPriceRequest(params);
+      const requestXML = buildFlightPriceRequest(params, this.mode);
       // console.log("Price Request: ", requestXML);
       const response = await this.axiosInstance.post('', {
-        user: process.env.KIU_USER,
-        password: process.env.KIU_PASSWORD,
+        user: this.clientId,
+        password: this.clientSecret,
         request: requestXML
       })
       // console.log("Price Response: ", response.data);
@@ -140,10 +171,10 @@ class KiuClient {
 
   async multiCitySearch({ routeSegments, departureDate, passengers }: multiCityFlightSearchParams): Promise<any> {
     try {
-      const requestXML = bulidMultiCityFlightSearchRequest({ routeSegments, departureDate, passengers })
+      const requestXML = bulidMultiCityFlightSearchRequest({ routeSegments, departureDate, passengers }, this.mode);
       const response = await this.axiosInstance.post('', {
-        user: process.env.KIU_USER,
-        password: process.env.KIU_PASSWORD,
+        user: this.clientId,
+        password: this.clientSecret,
         request: requestXML
       })
       // console.log(response.data);

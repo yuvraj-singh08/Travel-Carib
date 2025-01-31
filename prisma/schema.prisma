@@ -108,7 +108,7 @@ model Watchlist {
 }
 
 model Passenger {
-  id                 String             @id @default(uuid()) @map("_id")
+  id                 String @id @default(uuid()) @map("_id")
   phone              String
   email              String
   firstName          String
@@ -172,6 +172,11 @@ enum GDS_TYPE {
   DUFFEL
   AMADEUS
   KIU
+}
+
+enum ServiceMode {
+  TEST
+  PRODUCTION
 }
 
 enum Passenger_Type {
@@ -404,7 +409,7 @@ model Offer {
 }
 
 model Booking {
-  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
   contactDetail  Json // email and phone number
   flightDetails  String
   payment        BookPayment[] // Payment id
@@ -417,11 +422,21 @@ model Booking {
   totalAmount    Float
   currency       String
   flight_type    RouteType
-  adminStatus    AdminStatus        @default(PENDING_TICKET)
-  User           User               @relation(fields: [userId], references: [id])
+  adminStatus    AdminStatus   @default(PENDING_TICKET)
+  User           User          @relation(fields: [userId], references: [id])
   userId         String
-  createdAt      DateTime           @default(now())
+  createdAt      DateTime      @default(now())
   SubBooking     SubBooking[]
+}
+
+model gdsCreds {
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
+  gds                 GDS_TYPE    @unique
+  testApiKey          String
+  productionApiKey    String
+  productionApiSecret String
+  testApiSecret       String
+  mode                ServiceMode
 }
 
 // model BookingPassenger {

@@ -11,7 +11,7 @@ export const getDateString = (date: string) => {
   return dateString;
 }
 
-export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchParams) => {
+export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchParams, target: 'Test' | 'Production') => {
   const segments = params.routeSegments.map((segment) => {
     return {
       DepartureDateTime: params.departureDate,
@@ -27,7 +27,7 @@ export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchP
   const xmlObj = {
     KIU_AirAvailRQ: {
       '@EchoToken': '1',
-      '@Target': 'Production',
+      '@Target': target,
       '@Version': '3.0',
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',
@@ -65,11 +65,11 @@ export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchP
   return xml;
 }
 
-export const buildFlightSearchRequest = (params: FlightSearchParams) => {
+export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Test' | 'Production') => {
   const xmlObj = {
     KIU_AirAvailRQ: {
       '@EchoToken': '1',
-      '@Target': 'Production',
+      '@Target': target,
       '@Version': '3.0',
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',
@@ -110,12 +110,12 @@ export const buildFlightSearchRequest = (params: FlightSearchParams) => {
   return xml;
 }
 
-export const buildFlightPriceRequest = (params: PriceRequestBuilderParams) => {
+export const buildFlightPriceRequest = (params: PriceRequestBuilderParams, target: 'Test' | 'Production') => {
   // console.log("Marketing Airline: ", params.MarketingAirline);
   const xmlObj = {
     KIU_AirPriceRQ: {
       '@EchoToken': '1',
-      '@Target': 'Production',
+      '@Target': target,
       '@Version': '3.0',
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',

@@ -12,8 +12,8 @@ import { AuthenticatedRequest } from '../../types/express';
 class FlightController {
   private flightClient: FlightClientInstance;
 
-  constructor() {
-    this.flightClient = new FlightClient();
+  constructor(flightClient: FlightClientInstance) {
+    this.flightClient = flightClient;
     this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
     this.multiCitySearch = this.multiCitySearch.bind(this);
     this.BookFlight = this.BookFlight.bind(this);
