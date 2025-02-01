@@ -24,7 +24,7 @@ import { AuthenticatedRequest } from "./types/express";
 import { main } from "./mail/transporter";
 import { prisma } from "./src/prismaClient";
 import { authenticateToken } from "./src/middleware/authmiddleware";
-import { updateGdsCreds } from "./src/controllers/gds.controller";
+import { getGdsCreds, updateGdsCreds } from "./src/controllers/gds.controller";
 import HttpError from "./src/utils/httperror";
 
 const app = express();
@@ -44,7 +44,7 @@ app.get("/", (req, res) => {
 
 app.post('/server/restart', authenticateToken, (req: AuthenticatedRequest, res: Response, next) => {
   try {
-    if (req.user.role!== 'ADMIN') {
+    if (req.user.role !== 'ADMIN') {
       throw new HttpError("Unauthorized access", 403);
     }
     res.json({ success: true, message: 'Restarting server...' });
@@ -95,6 +95,7 @@ app.use('/offer', offerRoutes);
 app.use('/amadeus', amadeusRoutes);
 app.use("/email", emailRouter);
 app.post('/gds/creds/update', authenticateToken, updateGdsCreds);
+app.get('/gds/creds', authenticateToken, getGdsCreds);
 app.use(
   (err: any, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     console.log(err);

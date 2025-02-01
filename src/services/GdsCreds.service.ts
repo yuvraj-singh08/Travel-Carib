@@ -34,6 +34,15 @@ export const updateGdsCredsService = async (data: UpdateGdsCredsParam) => {
     }
 }
 
+export const getAllGdsCredsService = async () => {
+    try {
+        const data = await prisma.gdsCreds.findMany();
+        return data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getGdsCreds = async (gds: 'KIU' | 'AMADEUS' | 'DUFFEL') => {
     try {
         const data = await prisma.gdsCreds.findFirst({
