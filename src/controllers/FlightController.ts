@@ -110,7 +110,7 @@ class FlightController {
         throw new HttpError("Offer not found", 404);
       }
 
-      if (flight_type === flightTypeValue.oneway) {
+      if (data.flightWay === flightTypeValue.oneway) {
         const offer = data.data as Offer;
         const subBookings: SubBookingType[] = [];
         let pnr;
@@ -165,18 +165,52 @@ class FlightController {
 
         const subBookings = [];
         let index = 0;
-        offer.itenaries.forEach((itenary) => {
-          itenary.slices.forEach((slice) => {
+        let pnr;
+        const modifiedItenaries = await Promise.all(offer.itenaries.map(async (itenary) => {
+          const modifiedSlices = await Promise.all(itenary.slices.map(async (slice) => {
+            const provider = slice.sourceId;
+            switch (provider) {
+              case GDS.kiu:
+                //@ts-ignore
+                await this.flightClient.bookKiuFlight(offer, passengers);
+                break;
+              case GDS.amadeus:
+                pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
+                subBookings.push({
+                  pnr,
+                  status: SubBookingStatusValues.pending,
+                });
+                return {
+                  ...slice,
+                  PNR: (pnr)
+                }
+                break;
+              case GDS.duffel:
+                pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index)
+                subBookings.push({
+                  pnr,
+                  status: SubBookingStatusValues.pending,
+                });
+                return {
+                  ...slice,
+                  PNR: pnr
+                }
+                break;
+              default:
+                throw new HttpError("Provider not found", 404);
+            }
             subBookings.push({
               pnr: "Not Found",
               status: SubBookingStatusValues.pending,
               ticketNumber: index++,
             })
-          })
-        })
+            return { ...slice, PNR: "Not Found" };
+          }))
+          return { ...itenary, slices: modifiedSlices }
+        }))
 
         const bookingResponse = await createBookingService({
-          flightData: offer,
+          flightData: { ...offer, itenaries: modifiedItenaries },
           passengers,
           flightType: flight_type,
           userId,
