@@ -6,10 +6,10 @@ const router = express.Router();
 async function setupRoutes() {
     try {
         const amadeusController = await AmadusController.create();
-        router.get('/priceCalendar', amadeusController.priceCalendar);
-        router.post('/bookFlight', amadeusController.bookFlight);
-        router.post('/price', amadeusController.flightPrice);
-        router.post('/testbook', amadeusController.testBookFlight);
+
+        router.get('/cities/:query', amadeusController.citySearch);
+        router.post("/flights/search", amadeusController.searchFlights);
+        router.post("/flights/price", amadeusController.flightPrice);
 
     } catch (error) {
         throw error;
