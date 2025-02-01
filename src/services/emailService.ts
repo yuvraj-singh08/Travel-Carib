@@ -85,9 +85,9 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from: process.env.EMAIL,
-    to: recipientEmail,
+    to: "hemant27134@gmail.com",
     subject: "Your Flight Ticket Confirmation",
-    template: "ticket-confermation-template",
+    template: "template_6",
     context: processedBookingData
   };
 
