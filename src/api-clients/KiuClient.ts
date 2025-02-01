@@ -45,7 +45,7 @@ class KiuClient {
       const client = new KiuClient({
         clientId: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
         clientSecret: creds.mode === 'PRODUCTION' ? creds.productionApiSecret : creds.testApiSecret,
-        mode: capitalizeFirstLetter(creds.mode) as 'Test' | 'Production',
+        mode: capitalizeFirstLetter(creds.mode.toLowerCase()) as 'Test' | 'Production',
       });
 
       return client;
