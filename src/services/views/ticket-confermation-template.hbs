@@ -270,7 +270,7 @@ border-radius: 8px;
 }
 .flight-entry-table { width: 100%; border-collapse: separate; border-spacing: 10px; }
         .flight-time-cell { width: 30%; vertical-align: top; }
-        .flight-path-cell { width: 40%; text-align: center; vertical-align: top; }
+        .flight-path-cell { width: 40%; text-align: center; vertical-align: middle; }
 .flight-entry {
 
 margin-bottom: 20px;
@@ -492,9 +492,9 @@ h2 {
 </head>
 
 <body>
-        <div class="email-container">
+        {{!-- <div class="email-container">
     <div class="detail-header">
-      <h1>Your Flight Ticket Confirmation</h1>
+      <h1>Your Flight Ticket confermation</h1>
     </div>
     <div class="content">
       <h2>Dear {{passenger.0.firstName}},</h2>
@@ -512,7 +512,7 @@ h2 {
 
         <p>Booking ID: {{flightDetails.responseId}}</p>
         <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
-        <p>Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        !-- <p>Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
         <p>Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</p>
         <p>Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</p>
         <p>PNR/Booking Reference: {{subBooking.0.pnr}}</p>
@@ -533,17 +533,17 @@ h2 {
         <a href="#">Twitter</a>
       </div>
     </div>
-  </div>
+  </div> --}}
 
 
-  {{!-- <div class="email-container"><div class="email-container">
-  {{#if (eq status "pending")}}
+ <div class="email-container">
+  {{#if (eq adminStatus "PENDING_PAYMENT")}}
     <div class="detail-header">
-      <h1>Flight Booking Pending Confirmation</h1>
+      <h1>Flight Booking Pending</h1>
     </div>
     <div class="content">
       <h2>Dear {{passenger.0.firstName}},</h2>
-      <p>Your flight booking is currently pending confirmation. We will notify you once the booking is confirmed.</p>
+      <p>Your flight booking is currently <strong>Pending</strong> confirmation. We will notify you once the booking is confirmed.</p>
       <div class="passenger-details">
         <p><strong>Pending Booking Details:</strong></p>
         {{#with (getPassenger passenger 0)}}
@@ -551,13 +551,19 @@ h2 {
           <p>Nationality: {{nationality}}</p>
           <p>Passport Number: {{passportNumber}}</p>
         {{/with}}
-        <p>Booking ID: {{flightDetails.responseId}}</p>
-        <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
-        <p>Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        <p>Booking ID: {{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}N/A{{/if}}</p>
+        {{#if (eq flight_type "ONEWAY")}}
+          <p>Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</p>
+          <p>Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+        {{else}}
+          <p>Flight Number: {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.id}}</p>
+          <p>Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</p>
+        {{/if}}
+        
       </div>
       <p>Please note that this is not a confirmed ticket. You will receive a confirmation email once the booking is complete.</p>
     </div>
-  {{else if (eq status "confirmed")}}
+  {{else if (eq adminStatus "confirmed")}}
     <div class="detail-header">
       <h1>Your Flight Ticket Confirmation</h1>
     </div>
@@ -586,7 +592,7 @@ h2 {
     </div>
     <div class="content">
       <h2>Dear {{passenger.0.firstName}},</h2>
-      <p>We regret to inform you that your flight booking has been cancelled.</p>
+      <p>We regret to inform you that your flight booking has been <strong></strong>Cancelled.</p>
       <div class="passenger-details">
         <p><strong>Cancelled Booking Details:</strong></p>
         {{#with (getPassenger passenger 0)}}
@@ -605,18 +611,18 @@ h2 {
     <p>If you have any questions or need further assistance, feel free to contact us.</p>
     <p>Thank you for choosing {{flightDetails.slices.0.segments.0.operating_carrier.name}}</p>
     <p>Best regards,</p>
-    <h2><strong>Softnear Tech.</strong></h2>
-    <p>📞 +91 87648648674 | 📧 admin@gmail.com</p>
+    <h1><strong>Softnear Tech.</strong></h1>
+    <p>📞 +91 6376681802 | 📧 admin@gmail.com</p>
     <p>🌐 www.example.com</p>
     <p>🏢 Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore-560016</p>
     <div class="social-icons">
-      Follow us on:
-      <a href="#">Facebook</a>
-      <a href="#">Instagram</a>
-      <a href="#">Twitter</a>
+      <h2>Follow us on:</h2>
+      <a href="#"><img title="Facebook" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/facebook-logo-colored.png" alt="Fb" width="32" height="32"></a>
+      <a href="#"><img title="Instagram" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/instagram-logo-colored.png" alt="Ig" width="32" height="32"></a>
+      <a href="#"><img title="X" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/x-logo-colored.png" alt="X" width="32" height="32"></a>
     </div>
   </div>
-</div></div> --}}
+</div>
         {{!-- /////////////////////////////////////////////////////// --}}
     <div class="container">
         <table class="header-table">
@@ -708,12 +714,15 @@ h2 {
           <p class="note">
             Note: The following flight has different class of service
           </p>
+
+            {{#if (eq flight_type "ONEWAY")}}
+
                 <div class="flight-info">
                     <div class="flight-header">
                          <div class="flight-header">
                         <div class="airline-info">
                             <img src={{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}} alt="Airline Logo" />
-                            <p>{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}</p>
+                            
 
                             <div>
                                 <h4>{{flightDetails.slices.0.segments.0.operating_carrier.name}}</h4>
@@ -741,8 +750,8 @@ h2 {
                                 <td class="flight-path-cell">
                                     <span class="flight-dot"></span>
                                     <span class="duration">
-                                        <img class="duration-img" src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" alt="Airline Logo" />
-                                        {{flightDetails.slices.0.duration}}
+                                        <div><img class="duration-img" src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" alt="Airline Logo" /></div>
+                                        {{formatDuration flightDetails.slices.0.duration}}
                                         
                                     </span>
                                     <span class="flight-dot"></span>
@@ -757,16 +766,7 @@ h2 {
                         </table>
                     </div>
 
-                    {{!-- <div class="baggage-note">
-                        <p>
-                Check airlines Fare rules. Most airlines charge baggage fees.
-                Check the baggage Fees for complete details.
-              </p>
-                        <div class="baggage-info">
-                            <span><span style="font-size: 15px;">🛄</span> {{flightDetails.slices.0.segments.0.checkedBaggage}}</span>
-                            <span><span style="font-size: 15px;">📂</span> {{flightDetails.slices.0.segments.0.cabinBaggage}}</span>
-                        </div>
-                    </div> --}}
+                    
 
                     <table class="baggage-note-table" style="width: 100%; margin-top: 15px;">
     <tr>
@@ -793,6 +793,167 @@ h2 {
 </table>
                 </div>
             </div>
+
+            {{else}}
+            {{#if (eq flight_type "ROUNDTRIP")}}
+              <div class="flight-info">
+                    <div class="flight-header">
+                         <div class="flight-header">
+                        <div class="airline-info">
+                            <img src={{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.logo_symbol_url}}} alt="Airline Logo" />
+                            
+
+                            <div>
+                                <h4>{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.name}}</h4>
+                                <p>
+                                    Flight {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier_flight_number}} 
+                                    | Aircraft: {{flightDetails.itenaries.0.slices.0.segments.0.aircraft}} 
+                                    | {{flightDetails.itenaries.0.cabinClass}} Class
+                                </p>
+                        </div>
+                        </div>
+                        <div class="travel-class">
+                <div>Travel Class: <strong>{{flightDetails.itenaries.0.cabinClass}}</strong></div>
+                <div>Airlines Confirmation [PNR]: <strong>{{flightDetails.itenaries.0.slices.0.PNR}}</strong></div>
+              </div>
+                    </div>
+                    
+                    <div class="flight-details-body">
+                        <table class="flight-entry-table">
+                            <tr>
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</p>
+                                      <strong class="time">{{formatTime flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</strong>
+                                    <p>{{flightDetails.itenaries.0.origin.name}}</p>
+                                </td>
+                                <td class="flight-path-cell">
+                                    <span class="flight-dot"></span>
+                                    <span class="duration">
+                                        <div><img class="duration-img" src="{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.logo_symbol_url}}" alt="Airline Logo" /></div>
+                                        <div>{{formatDuration flightDetails.itenaries.0.slices.0.duration}}</div>
+                                        
+                                    </span>
+                                    <span class="flight-dot"></span>
+                                </td>
+                                
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.itenaries.0.slices.0.segments.0.arriving_at}}</p>
+                                    <strong class="time">{{formatTime flightDetails.itenaries.0.slices.0.segments.0.arriving_at}}</strong>
+                                    <p>{{flightDetails.itenaries.0.destination.name}}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    
+
+                    <table class="baggage-note-table" style="width: 100%; margin-top: 15px;">
+    <tr>
+        <td style="padding-bottom: 10px; width: 90%;">
+            <p style="margin: 0; font-size: 14px; color: #666;">
+                Check airlines Fare rules. Most airlines charge baggage fees. 
+                Check the baggage Fees for complete details.
+            </p>
+        </td>
+   
+        <td style="width: 10%;">
+            <div class="baggage-info" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">🛄</span> 
+                    {{flightDetails.itenaries.0.slices.0.segments.0.checkedBaggage}}
+                </span>
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">📂</span> 
+                    {{flightDetails.itenaries.0.slices.0.segments.0.cabinBaggage}}
+                </span>
+            </div>
+        </td>
+    </tr>
+</table>
+                </div>
+            </div>
+
+            <div class="flight-info">
+                    <div class="flight-header">
+                         <div class="flight-header">
+                        <div class="airline-info">
+                            <img src={{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.logo_symbol_url}}} alt="Airline Logo" />
+                            
+
+                            <div>
+                                <h4>{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.name}}</h4>
+                                <p>
+                                    Flight {{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier_flight_number}} 
+                                    | Aircraft: {{flightDetails.itenaries.0.slices.0.segments.0.aircraft}} 
+                                    | {{flightDetails.itenaries.1.cabinClass}} Class
+                                </p>
+                        </div>
+                        </div>
+                        <div class="travel-class">
+                <div>Travel Class: <strong>{{flightDetails.itenaries.1.cabinClass}}</strong></div>
+                <div>Airlines Confirmation [PNR]: <strong>{{flightDetails.itenaries.1.slices.0.PNR}}</strong></div>
+              </div>
+                    </div>
+                    
+                    <div class="flight-details-body">
+                        <table class="flight-entry-table">
+                            <tr>
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.itenaries.1.slices.0.segments.0.departing_at}}</p>
+                                    <strong class="time">{{ formatTime flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</strong>
+                                    <p>{{flightDetails.itenaries.1.origin.name}}</p>
+                                </td>
+                                <td class="flight-path-cell">
+                                    <span class="flight-dot"></span>
+                                    <span class="duration">
+                                        <div><img class="duration-img" src='{{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.logo_symbol_url}}}' alt="Airline Logo" /></div>
+                                        <div>{{formatDuration flightDetails.itenaries.1.slices.0.duration}}</div>
+                                        
+                                    </span>
+                                    <span class="flight-dot"></span>
+                                </td>
+                                
+                                <td class="flight-time-cell">
+                                    <p class="date">{{formatDate flightDetails.itenaries.1.slices.0.segments.0.arriving_at}}</p>
+                                    <strong class="time">{{formatTime flightDetails.itenaries.0.slices.0.segments.0.arriving_at}}</strong>
+                                    <p>{{flightDetails.itenaries.1.destination.name}}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    
+
+                    <table class="baggage-note-table" style="width: 100%; margin-top: 15px;">
+    <tr>
+        <td style="padding-bottom: 10px; width: 90%;">
+            <p style="margin: 0; font-size: 14px; color: #666;">
+                Check airlines Fare rules. Most airlines charge baggage fees. 
+                Check the baggage Fees for complete details.
+            </p>
+        </td>
+   
+        <td style="width: 10%;">
+            <div class="baggage-info" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">🛄</span> 
+                    {{flightDetails.itenaries.1.slices.0.segments.0.checkedBaggage}}
+                </span>
+                <span style="font-size: 14px; color: #555;">
+                    <span style="font-size: 15px; margin-right: 5px;">📂</span> 
+                    {{flightDetails.itenaries.1.slices.0.segments.0.cabinBaggage}}
+                </span>
+            </div>
+        </td>
+    </tr>
+</table>
+                </div>
+            </div>
+            {{/if}}
+            {{/if}}
+
+
+           
         </div>
         
         <div class="layover">
@@ -819,11 +980,12 @@ h2 {
                     
                     {{#each passenger}}
     <tr>
-      <td>{{../subBooking.0.ticketNumber}}</td>
-      <td>{{../subBooking.0.pnr}}</td>
-      <td style="{{#if (eq ../subBooking.0.status 'confirmed')}}color: green;{{else}}color: red;{{/if}}">
-        {{../subBooking.0.status}}
-      </td>
+     
+      <td>{{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}N/A{{/if}}</td>
+<td>{{#if ../subBooking.0.pnr}}{{../subBooking.0.pnr}}{{else}}N/A{{/if}}</td>
+<td style="{{#if (eq ../subBooking.0.status 'confirmed')}}color: green;{{else}}color: red;{{/if}}">
+  {{#if ../subBooking.0.status}}{{../subBooking.0.status}}{{else}}NOT FOUND{{/if}}
+</td>
       <td>{{firstName}}</td>
       <td>{{lastName}}</td>
       <td>{{gender}}</td>
