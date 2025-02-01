@@ -2,42 +2,53 @@ import nodemailer from "nodemailer";
 import path from "path";
 import dotenv from "dotenv";
 import { format } from "date-fns";
+import { generateBookingPdf } from "./pdfService";
 
 const hbs = require("nodemailer-express-handlebars");
 
 dotenv.config();
 
+function generateDownloadUrl(bookingId: string): string {
+  
+  return `${process.env.BACKEND}/email/pdf/${bookingId}`;
+}
+
 
 
 export const sendEmail = async (bookingData: any) => {
-  // Parse the passenger data which is stored as a JSON string
-  console.log(bookingData)
-
+  console.log(bookingData);
+  const downloadLink = generateDownloadUrl(bookingData.id)
+  console.log("downloadLink",downloadLink)
 
   let processedBookingData = {
     ...bookingData,
+    downloadLink,
     passenger: (() => {
-      if (!bookingData.passenger) return []; // Handle undefined/null case
+      if (!bookingData.passenger) return []; 
       if (typeof bookingData.passenger === "string") {
         try {
-          return JSON.parse(bookingData.passenger); // Convert string to array
+          return JSON.parse(bookingData.passenger); 
         } catch (error) {
           console.error("Error parsing passenger data:", error);
-          return []; // Return an empty array if parsing fails
+          return []; 
         }
       }
       return Array.isArray(bookingData.passenger) ? bookingData.passenger : [bookingData.passenger];
     })(),
   };
 
-  // In your Express/Node.js file
+  
+  const pdfBuffer = await generateBookingPdf(processedBookingData);
+
   
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
+      // user: process.env.EMAIL,
+      // pass: process.env.PASSWORD,
+      user: "hemant@adirayglobal.com",
+      pass: "ogmnatcklinhjoyl",
     },
   });
 
@@ -54,7 +65,7 @@ export const sendEmail = async (bookingData: any) => {
         },
         formatTime: (datetime: string) => {
           const date = new Date(datetime);
-          return format(date, "HH.mm");
+          return format(date, "HH:mm");
         },
         formatIsoDate: (isoDate: string) => {
           const date = new Date(isoDate);
@@ -68,6 +79,9 @@ export const sendEmail = async (bookingData: any) => {
         getPassenger: (passengers: any[], index: number) => {
           return passengers && passengers[index] ? passengers[index] : {};
         },
+        inc:(value:any)=>{
+          return parseInt(value) +1;
+        }
       },
     },
     viewPath: path.resolve("./src/services/views/"),
@@ -84,11 +98,17 @@ export const sendEmail = async (bookingData: any) => {
   }
 
   const mailOptions = {
-    from: process.env.EMAIL,
+    from:"hemant27134@gmail.com", 
     to: "hemant27134@gmail.com",
+    // bcc:"neeleshishu021@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_6",
-    context: processedBookingData
+    context: processedBookingData,
+    attachments: [{
+      filename: `ticket-${bookingData.id}.pdf`,
+      content: Buffer.from(pdfBuffer),
+      contentType: 'application/pdf'
+    }]
   };
 
   await transporter.sendMail(mailOptions);
