@@ -2,6 +2,7 @@ import express, { Request, NextFunction, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import pm2 from 'pm2';
 dotenv.config();
 
 //Router Imports
@@ -24,6 +25,7 @@ import { main } from "./mail/transporter";
 import { prisma } from "./src/prismaClient";
 import { authenticateToken } from "./src/middleware/authmiddleware";
 import { updateGdsCreds } from "./src/controllers/gds.controller";
+import HttpError from "./src/utils/httperror";
 
 const app = express();
 
@@ -39,6 +41,22 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("The server is working fine and running on port 8000");
 });
+
+app.post('/server/restart', authenticateToken, (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    if (req.user.role!== 'ADMIN') {
+      throw new HttpError("Unauthorized access", 403);
+    }
+    res.json({ success: true, message: 'Restarting server...' });
+    pm2.restart(process.env.PM2_APP_NAME || 'index', (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+})
 
 
 app.use(
