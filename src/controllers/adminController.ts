@@ -248,18 +248,19 @@ export const getAdminById = async (
       firstname: user?.firstname,
       lastname: user?.lastname,
     };
-    
+
     const specificNames = {
-      "View & Manage User Accounts": "user",
-      "Access Booking Management": "booking",
-      "Manage Support Tickets": "support",
-      "View Financial Reports": "financial",
-      "Process Refunds": "refund",
-      "Generate Reports & Analytics": "analytics",
-      "Create & Manage Discount Codes": "discount",
-      "Configure System Settings": "settings",
+      "Dashboard": "dashboard",
+      "Firewall": "firewall",
+      "Customer Details": "customer_details",
+      "Commission Details": "commission_details",
+      "User Management": "user_management",
+      "Ticket System": "ticket_system",
+      "Landing Page": "landing_page",
+      "Settings": "settings",
+      "Search Management": "search_management",
     };
-    
+
     if (user.userManagement.length > 0) {
       const specificRole = await prisma.role.findUnique({
         where: {
@@ -292,7 +293,7 @@ export const getAdminById = async (
         }
 
         return {
-          name: permission.name,
+          name: specificNames[permission.name],
           actions: actions,
         };
       });
@@ -304,7 +305,7 @@ export const getAdminById = async (
           const actions: string[] = ["view", "delete", "create", "update"];
 
           return {
-            name: permission,
+            name: specificNames[permission],
             actions: actions,
           };
         }
@@ -312,7 +313,7 @@ export const getAdminById = async (
 
       data.permissions = updatedPermissions;
     }
-    
+
     if (data) {
       return res.json(data);
     } else {
