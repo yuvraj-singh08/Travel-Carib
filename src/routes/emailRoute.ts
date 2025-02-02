@@ -1,9 +1,10 @@
 import express from 'express';
-import { emailSend } from '../controllers/emailController';
+import { downloadTicket, emailSend } from '../controllers/emailController';
 
 const router = express.Router();
 
 router.post('/send',emailSend);
+router.get('/pdf/:bookingId',downloadTicket);
 
 export default router;
 // import { sendEmail } from "../services/emailService";

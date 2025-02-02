@@ -54,6 +54,7 @@
     "multer-s3": "^3.0.1",
     "nodemailer": "^6.9.15",
     "nodemailer-express-handlebars": "^3.0.0",
+    "puppeteer": "^24.1.1",
     "server": "file:",
     "stripe": "^17.2.0",
     "uuid": "^10.0.0",
