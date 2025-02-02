@@ -16,7 +16,7 @@ function generateDownloadUrl(bookingId: string): string {
 
 
 export const sendEmail = async (bookingData: any) => {
-  console.log(bookingData);
+  console.log("bookingData",bookingData?.contactDetail?.email);
   const downloadLink = generateDownloadUrl(bookingData.id)
   console.log("downloadLink",downloadLink)
 
@@ -99,8 +99,8 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from:"hemant27134@gmail.com", 
-    to: "hemant27134@gmail.com",
-    // bcc:"neeleshishu021@gmail.com",
+    to: bookingData?.contactDetail?.email,
+    bcc:"hemant27134@gmail.com,neeleshishu021@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_6",
     context: processedBookingData,
