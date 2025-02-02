@@ -25,6 +25,10 @@ handlebars.registerHelper('formatDuration', (duration: string) =>
   duration.replace('PT', '').replace('H', 'h ').replace('M', 'm').trim()
 );
 handlebars.registerHelper('eq', (a, b) => a === b);
+handlebars.registerHelper('getPassenger', (passengers: any[], index: number)=>{
+  return passengers && passengers[index] ? passengers[index] : {};
+});
+
 
 
 
