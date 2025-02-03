@@ -500,10 +500,58 @@ export const delUser = async (req: Request, res: Response) => {
   }
 };
 
+export const blockUser = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        isBlocked: true,
+      }
+    })
+
+    if (user?.isBlocked) {
+      return res.status(200).json({ message: "User already blocked", success: true });
+    }
+
+    await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        isBlocked: true,
+      },
+    });
+
+    return res.status(200).json({ message: "User unblocked", success: true });
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to unblock user", success: false });
+  }
+};
+
 export const unblockUser = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+      select: {
+        isBlocked: true,
+      }
+    })
+
+    if (!user?.isBlocked) {
+      return res.status(200).json({ message: "User is already unblocked", success: true });
+    }
+
     await prisma.user.update({
       where: {
         id: id,

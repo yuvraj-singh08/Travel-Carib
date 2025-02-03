@@ -21,6 +21,7 @@ import {
   forgotPassword,
   verifyOTP,
   unblockUser,
+  blockUser,
 } from "../controllers/userController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import {
@@ -56,6 +57,7 @@ router.get("/:id", authenticateToken, getUserById);
 // router.put('/:id', authenticateToken, updateUser);
 router.post("/delete-user", authenticateToken, deleteUser);
 router.post("/del-user", delUser);
+router.post("/block", blockUser);
 router.post("/unblock", unblockUser);
 router.post("/addPassenger", authenticateToken, addPassenger);
 router.post("/deletePassenger/:id", authenticateToken, deletePassenger);
