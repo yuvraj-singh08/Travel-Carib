@@ -425,12 +425,8 @@ export function combineMultiCityRoutes(routeArrays: Offer[][]): Offer[][] {
                 const minTime = parseInt('240');
 
                 if (differenceInMinutes > minTime) {
-                    // Sum the total_amount of the currentRoute and nextRoute
-                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0)
-                        + (parseFloat(nextRoute.total_amount) || 0);
-
                     // Add the combined route with updated total_amount
-                    newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
+                    newResult.push([...currentRoute, nextRoute]);
                 }
 
             }
