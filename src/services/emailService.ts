@@ -10,7 +10,7 @@ dotenv.config();
 
 function generateDownloadUrl(bookingId: string): string {
   
-  return `${process.env.BACKEND}/email/pdf/${bookingId}`;
+  return `${process.env.BACKEND || "https://travelcarib.tekniche.xyz" }/email/pdf/${bookingId}`;
 }
 
 
@@ -79,6 +79,7 @@ export const sendEmail = async (bookingData: any) => {
         getPassenger: (passengers: any[], index: number) => {
           return passengers && passengers[index] ? passengers[index] : {};
         },
+        
         inc:(value:any)=>{
           return parseInt(value) +1;
         }
@@ -99,18 +100,17 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from:"hemant27134@gmail.com", 
-    to: bookingData?.contactDetail?.email,
-    // to:"hemant27134@gmail.com",
-    bcc:"hemant27134@gmail.com,neeleshishu021@gmail.com",
+    // to: bookingData?.contactDetail?.email,
+    to:"hemant27134@gmail.com",
+    // bcc:"hemant27134@gmail.com,neeleshishu021@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_6",
     context: processedBookingData,
-    attachments: [{
-      filename: `ticket-${bookingData.id}.pdf`,
-      content: Buffer.from(pdfBuffer),
-      contentType: 'application/pdf'
-    }]
+    // attachments: [{
+    //   filename: `ticket-${bookingData.id}.pdf`,
+    //   content: Buffer.from(pdfBuffer),
+    //   contentType: 'application/pdf'
+    // }]
   };
-
   await transporter.sendMail(mailOptions);
 };
