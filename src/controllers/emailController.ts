@@ -35,10 +35,7 @@ export const downloadTicket = async (req: Request, res: Response) => {
         }
       });
       console.log("booking",booking);
-      // Get booking data from database
-    //   const booking = await getBookingFromDatabase(bookingId);
-      
-      // Generate PDF
+     
       const pdfBuffer = await generateBookingPdf({ ...booking, flightDetails: JSON.parse(booking.flightDetails)});
   
       // Set proper headers

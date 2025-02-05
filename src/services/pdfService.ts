@@ -3,14 +3,6 @@ import handlebars from 'handlebars';
 import fs from 'fs';
 import path from 'path';
 
-// Register Handlebars helpers
-// handlebars.registerHelper('inc', (value: number) => value + 1);
-// handlebars.registerHelper('formatDate', (datetime: string) => 
-//   new Date(datetime).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-// );
-// handlebars.registerHelper('formatTime', (datetime: string) =>
-//   new Date(datetime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-// );
 
 handlebars.registerHelper('inc', (value) => parseInt(value) + 1);
 handlebars.registerHelper('formatDate', (datetime: string) => {
@@ -30,8 +22,6 @@ handlebars.registerHelper('getPassenger', (passengers: any[], index: number)=>{
 });
 
 
-
-
 export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
   const browser = await puppeteer.launch({
     headless: true,
@@ -42,11 +32,11 @@ export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
     const page = await browser.newPage();
     
     // Load and compile template
-    const templatePath = path.join(__dirname,"views", 'template_6.hbs');
+    const templatePath = path.join(__dirname,"views",'template_6.hbs');
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = handlebars.compile(templateContent);
-    
-    
+    console.log("Using template:", templatePath);
+    console.log("Template content:", template); 
 
     let processedBookingData = {
         ...bookingData,
