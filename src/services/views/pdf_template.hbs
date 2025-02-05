@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Acknowledgement</title>
+    <style>
+  @media print {
+    body { 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact;
+    }
+    .page-break { 
+      page-break-before: always;
+    }
+  }
+  @media print {
+    .keep-together {
+      page-break-inside: avoid;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  }
+</style>
+</head>
+<body style="margin: 0; padding: 20px 0; background-color: #f8f9fa; font-family: Arial, sans-serif;">
+ 
+    <!--[if mso]>
+    <style type="text/css">
+    body, table, td {font-family: Arial, sans-serif !important;}
+    </style>
+    <![endif]-->
+
+    <center style="width: 100%;">
+<div class="page-break">
+
+        {{#if (eq adminStatus "PENDING_PAYMENT")}}
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+            <tr>
+                <td style="padding: 20px; background-color: #f8f9fa;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="text-align: center; padding-bottom: 20px; ">
+                        <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Pending</h1>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
+                        <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
+                        <p style="margin: 0 0 20px 0; color: #666;">Your flight booking is currently <strong>Pending</strong> confirmation. We will notify you once the booking is confirmed.</p>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding-bottom: 10px;">
+                            <strong style="color: #333;">Pending Booking Details:</strong>
+                            </td>
+                        </tr>
+                        {{#with (getPassenger passenger 0)}}
+                        <tr>
+                            <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;">Nationality: {{nationality}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;">Passport Number: {{passportNumber}}</td>
+                        </tr>
+                        {{/with}}
+                        <tr>
+                            <td style="padding: 5px 0;">Booking ID: {{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}N/A{{/if}}</td>
+                        </tr>
+                        {{#if (eq flight_type "ONEWAY")}}
+                        <tr>
+                            <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td style="padding: 5px 0;">Flight Number: {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.id}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td>
+                        </tr>
+                        {{/if}}
+                        </table>
+                        
+                        <p style="margin: 0; color: #666;">Please note that this is not a confirmed ticket. You will receive a confirmation email once the booking is complete.</p>
+                    </td>
+                    </tr>
+                </table>
+                </td>
+            </tr>
+    {{else if (eq adminStatus "confirmed")}}
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <tr>
+            <td style="padding: 20px; background-color: #f8f9fa;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                <td style="text-align: center; padding-bottom: 20px;">
+                    <h1 style="margin: 0; color: #333; font-size: 24px;">Your Flight Ticket Confirmation</h1>
+                </td>
+                </tr>
+                <tr>
+                <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
+                    <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
+                    <p style="margin: 0 0 20px 0; color: #666;">We are pleased to confirm your flight booking. Please find your e-ticket attached to this email. Kindly review the details carefully to ensure all information is correct.</p>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding-bottom: 10px;">
+                        <strong style="color: #333;">Booking Details:</strong>
+                        </td>
+                    </tr>
+                    {{#with (getPassenger passenger 0)}}
+                    <tr>
+                        <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Nationality: {{nationality}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Passport Number: {{passportNumber}}</td>
+                    </tr>
+                    {{/with}}
+                    <tr>
+                        <td style="padding: 5px 0;">Booking ID: {{flightDetails.responseId}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">PNR/Booking Reference: {{subBooking.0.pnr}}</td>
+                    </tr>
+                    </table>
+                    
+                    <p style="margin: 0; color: #666;">Please ensure to carry a valid ID along with this ticket during your travel.</p>
+                </td>
+                </tr>
+            </table>
+            </td>
+        </tr>
+    {{else if (eq status "cancelled")}}
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <tr>
+            <td style="padding: 20px; background-color: #f8f9fa;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                <td style="text-align: center; padding-bottom: 20px;">
+                    <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Cancellation Notice</h1>
+                </td>
+                </tr>
+                <tr>
+                <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
+                    <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
+                    <p style="margin: 0 0 20px 0; color: #666;">We regret to inform you that your flight booking has been <strong>Cancelled</strong>.</p>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding-bottom: 10px;">
+                        <strong style="color: #333;">Cancelled Booking Details:</strong>
+                        </td>
+                    </tr>
+                    {{#with (getPassenger passenger 0)}}
+                    <tr>
+                        <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
+                    </tr>
+                    {{/with}}
+                    <tr>
+                        <td style="padding: 5px 0;">Booking ID: {{flightDetails.responseId}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+                    </table>
+                    
+                    <p style="margin: 0 0 10px 0; color: #666;">If you believe this cancellation was made in error or need assistance with rebooking, please contact our customer service team immediately.</p>
+                    <p style="margin: 0; color: #666;">If this was a paid booking, your refund will be processed according to the fare rules and our refund policy.</p>
+                </td>
+                </tr>
+            </table>
+            </td>
+        </tr>
+    {{/if}}
+
+        <!-- Footer Section -->
+        <tr>
+            <td style="padding: 20px; background-color: #f8f9fa; text-align: center;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                <td style="padding-bottom: 15px; color: #666;">
+                    <p style="margin: 0 0 10px 0;">If you have any questions or need further assistance, feel free to contact us.</p>
+                    <p style="margin: 0 0 10px 0;">Thank you for choosing {{flightDetails.slices.0.segments.0.operating_carrier.name}}</p>
+                    <p style="margin: 0 0 5px 0;">Best regards,</p>
+                    <h1 style="margin: 0 0 10px 0; color: #333; font-size: 20px;"><strong>Softnear Tech.</strong></h1>
+                </td>
+                </tr>
+                <tr>
+                <td style="padding-bottom: 15px; color: #666;">
+                    <p style="margin: 0 0 5px 0;">📞 +91 6376681802 | 📧 admin@gmail.com</p>
+                    <p style="margin: 0 0 5px 0;">🌐 www.example.com</p>
+                    <p style="margin: 0;">🏢 Akshya Nagar 1st Block 1st Cross, Rammurthy nagar, Bangalore-560016</p>
+                </td>
+                </tr>
+                <tr>
+                <td style="padding-top: 15px;">
+                    <h2 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">Follow us on:</h2>
+                    <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                    <tr>
+                        <td style="padding: 0 5px;">
+                        <a href="#" style="text-decoration: none;">
+                            <img title="Facebook" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/facebook-logo-colored.png" alt="Fb" width="32" height="32" style="display: block;">
+                        </a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                        <a href="#" style="text-decoration: none;">
+                            <img title="Instagram" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/instagram-logo-colored.png" alt="Ig" width="32" height="32" style="display: block;">
+                        </a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                        <a href="#" style="text-decoration: none;">
+                            <img title="X" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/x-logo-colored.png" alt="X" width="32" height="32" style="display: block;">
+                        </a>
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+                </tr>
+            </table>
+            </td>
+        </tr>
+    </table>
+       </div>
+       <div class="page-break"></div>
+
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="800" style="border-collapse: collapse; background-color: #ffffff; border: 1px solid #ddd;">
+            <!-- Header Section -->
+            <tr>
+                <td style="padding: 20px; background-color: #f0f5ff;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="font-size: 12px; color: #555; line-height: 1.5; width: 60%;">
+                                For any changes with your flight, date, route, or names<br>
+                                Call us at <strong>{{contactDetail.phone}}</strong> or 
+                                <a href="#" style="color: #007bff; text-decoration: none;">Click here to reach help center</a>
+                            </td>
+                            <td style="text-align: right; vertical-align: top; width: 40%;">
+                                <table border="0" cellpadding="0" cellspacing="0" align="right" style="display: inline-block;">
+                                    <tr>
+                                        <td style="padding: 5px;">
+                                            <a href="#" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Print Ticket</a>
+                                        </td>
+                                        <td style="padding: 5px;">
+                                              
+                                            <a href={{downloadLink}} style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Download Ticket</a>
+                                       
+                                        </td>
+                                        <td style="padding: 5px;">
+                                            <a href="#" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Share Ticket</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <!-- Media Query for Small Screens -->
+                        <style type="text/css">
+                            @media only screen and (max-width: 600px) {
+                                td[class="responsive-td"] {
+                                    display: block !important;
+                                    width: 100% !important;
+                                    text-align: left !important;
+                                }
+                                table[class="responsive-table"] {
+                                    display: block !important;
+                                    width: 100% !important;
+                                    text-align: left !important;
+                                }
+                                table[class="responsive-table"] td {
+                                    display: block !important;
+                                    width: 100% !important;
+                                    text-align: left !important;
+                                    padding: 5px 0 !important;
+                                }
+                            }
+                        </style>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Main Content -->
+            <tr>
+                <td style="padding: 20px;">
+                    <h2 style="font-size: 18px; color: #e56232; margin: 0 0 15px 0;">Booking Acknowledgement</h2>
+                    
+                    <!-- Booking Details -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 15px;">
+                        <tr>
+                            <td style="vertical-align: top; width: 70%;">
+                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Booking Reference:</strong> {{id}}</p>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Email:</strong> {{contactDetail.email}}</p>
+                                <p style="margin: 0; font-size: 14px;"><strong>Booking on:</strong> {{formatIsoDate createdAt}}</p>
+                            </td>
+                            <td style="text-align: center; vertical-align: top; width: 30%;">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1UA-RNBzfbFgVg3sWZWoZoJwkEAc6jy5OtA&s" 
+                                     alt="QR Code" width="80" style="display: block; margin: 0 auto 5px auto;">
+                                <p style="margin: 0; font-size: 14px;">{{subBooking.0.pnr}}</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Note -->
+                    <div style="background: #f1f9ff; border-left: 4px solid #007bff; padding: 10px 15px; margin-bottom: 20px;">
+                        <p style="margin: 0;color: rgb(106, 106, 106); font-size: 14px;">Please check your terminal and gate information with the airline directly at least 24 hours before departure.</p>
+                    </div>
+
+                    <!-- Steps -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style=" ">
+                        <tr>
+                            <td style="padding: 30px; text-align: center; vertical-align: top;border-radius: 20px; background: linear-gradient(90deg, #d5ddf0, #ffffff);">
+                                <img src="https://cdn-icons-png.freepik.com/256/16200/16200876.png?semt=ais_hybrid" 
+                                     alt="Check in" width="40" style="display: block; margin: 0 auto 10px auto;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #333;">Check in online, or</h4>
+                                <p style="margin: 0; font-size: 12px; color: #777;">Check in at the airport. At most airports, you need to arrive 3 hours before departure.</p>
+                            </td>
+                            <td style="padding: 30px; text-align: center; vertical-align: top; border-radius: 20px; background: linear-gradient(90deg, #d5ddf0, #ffffff);">
+                                <img src="https://cdn-icons-png.flaticon.com/512/456/456432.png" 
+                                     alt="90 minutes" width="40" style="display: block; margin: 0 auto 10px auto;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #333;">90 minutes</h4>
+                                <p style="margin: 0; font-size: 12px; color: #777;">90 minutes before take-off go through passport control.</p>
+                            </td>
+                            <td style="padding: 30px; text-align: center; vertical-align: top;border-radius: 20px; background: linear-gradient(90deg, #d5ddf0, #ffffff);">
+                                <img src="https://cdn-icons-png.flaticon.com/512/657/657674.png" 
+                                     alt="60 minutes" width="40" style="display: block; margin: 0 auto 10px auto;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #333;">60 minutes</h4>
+                                <p style="margin: 0; font-size: 12px; color: #777;">60 minutes before take-off be ready at the gate (Premium Economy, Economy Class).</p>
+                            </td>
+                            <td style="padding: 30px; text-align: center; vertical-align: top;border-radius: 20px; background: linear-gradient(90deg, #d5ddf0, #ffffff);">
+                                <img src="https://cdn-icons-png.flaticon.com/512/799/799627.png" 
+                                     alt="45 minutes" width="40" style="display: block; margin: 0 auto 10px auto;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #333;">45 minutes</h4>
+                                <p style="margin: 0; font-size: 12px; color: #777;">45 minutes before take-off be ready at the gate (First Class, Business Class).</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Flight Details -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+                        <tr>
+                            <td>
+                                <h2 style="font-size: 18px; color: #333; margin: 0 0 15px 0;">Flight Details</h2>
+                                <h3 style="color: #ff6600; font-size: 16px; margin: 0 0 10px 0;">Departing Flight</h3>
+                                <p style="font-size: 14px; color: #555; margin: 0 0 15px 0;">Note: The following flight has different class of service</p>
+                                
+                                <!-- Flight Info -->
+                                {{#if (eq flight_type "ONEWAY")}}
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eaf0f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                        <tr>
+                                            <td>
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            {{!-- <img src="{{{flightDetails.slices[0].segments[0].operating_carrier.logo_symbol_url}}}" || "https://w7.pngwing.com/pngs/773/201/png-transparent-airplane-aircraft-flight-logo-airplane-blue-logo-flight-thumbnail.png" 
+                                                                alt="Airline Logo" width="60" height="60" style="display: block; height=60" onerror="this.onerror=null; this.src='https://w7.pngwing.com/pngs/773/201/png-transparent-airplane-aircraft-flight-logo-airplane-blue-logo-flight-thumbnail.png'">
+                                                        --}}
+                                                        <img src="{{{data.flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+     alt="{{data.flightDetails.slices.0.segments.0.operating_carrier.name}} Logo" 
+     width="60" 
+     style="display: block; border: 0; outline: none;"
+     onerror="this.onerror=null; this.src='https://w7.pngwing.com/pngs/773/201/png-transparent-airplane-aircraft-flight-logo-airplane-blue-logo-flight-thumbnail.png';">
+                                                        </td> 
+                                                        <td style="vertical-align: top;">
+                                                            <h4 style="margin: 10px 0 5px 0; font-size: 14px;">{{flightDetails.slices.0.segments.0.operating_carrier.name}}</h4>
+                                                            <p style="margin: 0; font-size: 10px; color: #666;">Flight {{flightDetails.slices.0.segments.0.operating_carrier_flight_number}} | Aircraft: {{flightDetails.slices.0.segments.0.aircraft}} | {{flightDetails.cabinClass}} Class</p>
+                                                        </td>
+                                                        <td style="text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 12px;"><strong>Travel Class:</strong> {{flightDetails.cabinClass}}</p>
+                                                            <p style="margin: 0; font-size: 11px;">Airlines Confirmation [PNR]: {{flightDetails.slices.0.PNR}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 15px;">
+                                                <!-- Flight Timeline -->
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td style="vertical-align: top; width: 30%;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.origin.name}}</p>
+                                                        </td>
+                                                        <td style="vertical-align: middle; width: 40%; text-align: center;">
+                                                            <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center;">
+                                                                        <img src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                            alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center; font-size: 14px; color: #555;">
+                                                                        {{formatDuration flightDetails.slices.0.duration}}
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td> 
+                                                        <td style="vertical-align: top; width: 30%; text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.destination.name}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style=" padding: 5px; border-radius: 8px;  font-family: Arial, sans-serif;">
+                                        <tr>
+                                            <!-- Text Section -->
+                                            <td style="font-size: 12px; color: #333; vertical-align: middle;">
+                                                Check airlines Fare rules. Most airlines charge baggage fees. Check the baggage Fees for complete details.
+                                            </td>
+                                            <!-- Baggage Icons Section -->
+                                            <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🛄 {{flightDetails.slices.0.segments.0.checkedBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">📂 {{flightDetails.slices.0.segments.0.cabinBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🔒 1</span>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                        <tr class="text-align: center;">
+                                            <!-- Icon Section -->
+                                            <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="40" style="" />
+                                            </td> -->
+                                            <!-- Text Section -->
+                                            <td style="vertical-align:bottom; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="30" style="padding:0;margin-bottom: -10px;" />
+
+                                                <span style="vertical-align: center;font-size: 12px; color:  #777; text-align: center;">3h 5m layover</span>
+                                                <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
+                                            </td>
+                                        </tr>
+                                    </table> --}}
+                                {{else}}
+                                {{#if (eq flight_type "ROUNDTRIP")}}
+                                    {{!-- Outbound Journey --}}
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eaf0f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                        <tr>
+                                            <td>
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            <img src="{{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
+                                                        </td>
+                                                        <td style="vertical-align: top;">
+                                                            <h4 style="margin: 10px 0 5px 0; font-size: 14px;">{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.name}}</h4>
+                                                            <p style="margin: 0; font-size: 10px; color: #666;">Flight {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier_flight_number}} | Aircraft: {{flightDetails.itenaries.0.slices.0.segments.0.aircraft}} | {{flightDetails.itenaries.0.cabinClass}} Class</p>
+                                                        </td>
+                                                        <td style="text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 12px;"><strong>Travel Class:</strong> {{flightDetails.itenaries.0.cabinClass}}</p>
+                                                            <p style="margin: 0; font-size: 11px;">Airlines Confirmation [PNR]: {{flightDetails.itenaries.0.slices.0.PNR}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 15px;">
+                                                <!-- Flight Timeline -->
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td style="vertical-align: top; width: 30%;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.itenaries.0.origin.name}}</p>
+                                                        </td>
+                                                        <td style="vertical-align: middle; width: 40%; text-align: center;">
+                                                            <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center;">
+                                                                        <img src="{{{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                            alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center; font-size: 14px; color: #555;">
+                                                                        {{formatDuration flightDetails.itenaries.0.slices.0.duration}}
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td> 
+                                                        <td style="vertical-align: top; width: 30%; text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.itenaries.0.slices.0.segments.0.arriving_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.itenaries.0.slices.0.segments.0.arriving_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.itenaries.0.destination.name}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style=" padding: 5px; border-radius: 8px;  font-family: Arial, sans-serif;">
+                                        <tr>
+                                            <!-- Text Section -->
+                                            <td style="font-size: 12px; color: #333; vertical-align: middle;">
+                                                Check airlines Fare rules. Most airlines charge baggage fees. Check the baggage Fees for complete details.
+                                            </td>
+                                            <!-- Baggage Icons Section -->
+                                            <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🛄 {{flightDetails.itenaries.0.slices.0.segments.0.checkedBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">📂 {{flightDetails.itenaries.0.slices.0.segments.0.cabinBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🔒 1</span>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                        <tr class="text-align: center;">
+                                            <!-- Icon Section -->
+                                            <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="40" style="" />
+                                            </td> -->
+                                            <!-- Text Section -->
+                                            <td style="vertical-align:bottom; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="30" style="padding:0;margin-bottom: -10px;" />
+
+                                                <span style="vertical-align: center;font-size: 12px; color:  #777; text-align: center;">3h 5m layover</span>
+                                                <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
+                                            </td>
+                                        </tr>
+                                    </table> --}}
+
+                                    {{!-- Return Journey --}}
+
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eaf0f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                        <tr>
+                                            <td>
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            <img src="{{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
+                                                        </td>
+                                                        <td style="vertical-align: top;">
+                                                            <h4 style="margin: 10px 0 5px 0; font-size: 14px;">{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.name}}</h4>
+                                                            <p style="margin: 0; font-size: 10px; color: #666;">Flight {{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier_flight_number}} | Aircraft: {{flightDetails.itenaries.1.slices.0.segments.0.aircraft}} | {{flightDetails.itenaries.1.cabinClass}} Class</p>
+                                                        </td>
+                                                        <td style="text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 12px;"><strong>Travel Class:</strong> {{flightDetails.itenaries.1.cabinClass}}</p>
+                                                            <p style="margin: 0; font-size: 11px;">Airlines Confirmation [PNR]: {{flightDetails.itenaries.1.slices.0.PNR}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 15px;">
+                                                <!-- Flight Timeline -->
+                                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tr>
+                                                        <td style="vertical-align: top; width: 30%;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.itenaries.1.slices.0.segments.0.departing_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.itenaries.1.slices.0.segments.0.departing_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.itenaries.1.origin.name}}</p>
+                                                        </td>
+                                                        <td style="vertical-align: middle; width: 40%; text-align: center;">
+                                                            <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center;">
+                                                                        <img src="{{{flightDetails.itenaries.1.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                            alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="padding: 5px 0; text-align: center; font-size: 14px; color: #555;">
+                                                                        {{formatDuration flightDetails.itenaries.1.slices.0.duration}}
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td> 
+                                                        <td style="vertical-align: top; width: 30%; text-align: right;">
+                                                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.itenaries.1.slices.[0].segments.[0].arriving_at}}</p>
+                                                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.itenaries.1.slices.[0].segments.[0].arriving_at}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.itenaries.1.destination.name}}</p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style=" padding: 5px; border-radius: 8px;  font-family: Arial, sans-serif;">
+                                        <tr>
+                                            <!-- Text Section -->
+                                            <td style="font-size: 12px; color: #333; vertical-align: middle;">
+                                                Check airlines Fare rules. Most airlines charge baggage fees. Check the baggage Fees for complete details.
+                                            </td>
+                                            <!-- Baggage Icons Section -->
+                                            <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🛄 {{flightDetails.itenaries.1.slices.0.segments.0.checkedBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">📂 {{flightDetails.itenaries.1.slices.0.segments.0.cabinBaggage}}</span>
+                                                <span style="font-size: 14px; color: #555; margin-left: 10px;">🔒 1</span>
+                                            </td>
+                                        </tr>
+                                        
+                                    </table>
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                        <tr class="text-align: center;">
+                                            <!-- Icon Section -->
+                                            <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="40" style="" />
+                                            </td> -->
+                                            <!-- Text Section -->
+                                            <td style="vertical-align:bottom; text-align: center;">
+                                                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="30" style="padding:0;margin-bottom: -10px;" />
+
+                                                <span style="vertical-align: center;font-size: 12px; color:  #777; text-align: center;">3h 5m layover</span>
+                                                <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
+                                            </td>
+                                        </tr>
+                                    </table> --}}
+
+                                    {{!-- code for multicity --}}
+
+                                    {{else if (eq flight_type "MULTICITY")}}
+
+{{#each flightDetails.itenaries}}
+<div style="margin-bottom: 30px;">
+    <h4 style="color: #333; font-size: 14px; margin: 15px 0;">Flight Segment {{inc @index}}</h4>
+    
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eaf0f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <tr>
+            <td>
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td>
+                            <img src="{{{this.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                 alt="Airline Logo" width="60" style="display: block;">
+                        </td>
+                        <td style="vertical-align: top;">
+                            <h4 style="margin: 10px 0 5px 0; font-size: 14px;">{{this.slices.0.segments.0.operating_carrier.name}}</h4>
+                            <p style="margin: 0; font-size: 10px; color: #666;">Flight {{this.slices.0.segments.0.operating_carrier_flight_number}} | Aircraft: {{this.slices.0.segments.0.aircraft}} | {{this.cabinClass}} Class</p>
+                        </td>
+                        <td style="text-align: right;">
+                            <p style="margin: 0 0 5px 0; font-size: 12px;"><strong>Travel Class:</strong> {{this.cabinClass}}</p>
+                            <p style="margin: 0; font-size: 11px;">Airlines Confirmation [PNR]: {{this.slices.0.PNR}}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding-top: 15px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td style="vertical-align: top; width: 30%;">
+                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate this.slices.0.segments.0.departing_at}}</p>
+                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime this.slices.0.segments.0.departing_at}}</p>
+                            <p style="margin: 0; font-size: 14px; color: #555;">{{this.origin.name}}</p>
+                        </td>
+                        <td style="vertical-align: middle; width: 40%; text-align: center;">
+                            <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 5px 0; text-align: center;">
+                                        <img src="{{{this.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                             alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 5px 0; text-align: center; font-size: 14px; color: #555;">
+                                        {{formatDuration this.slices.0.duration}}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td> 
+                        <td style="vertical-align: top; width: 30%; text-align: right;">
+                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate this.slices.0.segments.0.arriving_at}}</p>
+                            <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime this.slices.0.segments.0.arriving_at}}</p>
+                            <p style="margin: 0; font-size: 14px; color: #555;">{{this.destination.name}}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+        <tr>
+            <td style="font-size: 12px; color: #333; vertical-align: middle;">
+                Check airlines Fare rules. Most airlines charge baggage fees. Check the baggage Fees for complete details.
+            </td>
+            <td style="text-align: right; vertical-align: middle; white-space: nowrap;">
+                <span style="font-size: 14px; color: #555; margin-left: 10px;">🛄 {{this.slices.0.segments.0.checkedBaggage}}</span>
+                <span style="font-size: 14px; color: #555; margin-left: 10px;">📂 {{this.slices.0.segments.0.cabinBaggage}}</span>
+                <span style="font-size: 14px; color: #555; margin-left: 10px;">🔒 1</span>
+            </td>
+        </tr>
+    </table>
+
+    {{#if @last}}
+    {{else}}
+    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px;">
+        <tr>
+            <td style="vertical-align:bottom; text-align: center;">
+                <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="30" style="padding:0;margin-bottom: -10px;" />
+                <span style="vertical-align: center;font-size: 12px; color:  #777; text-align: center;">3h 5m layover</span>
+                <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in {{this.destination.city_name}} ({{this.destination.iata_code}}), you will have to change the FLIGHT</span>
+            </td>
+        </tr>
+    </table> --}}
+    {{/if}}
+</div>
+{{/each}}
+
+
+                                {{/if}}
+                                {{/if}}
+                            </td>
+                        </tr>
+                    </table>
+
+
+                    <!-- Traveler Information -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+                        <tr>
+                            <td>
+                                <h2 style="font-size: 18px; color: #e56232;  margin: 0 0 15px 0;">Traveler Information</h2>
+                                <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+                                    <tr style="background-color: #f9f9f9;">
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">E-Ticket Number</th>
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">PNR Number</th>
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">Status</th>
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">First name</th>
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">Last name</th>
+                                        <th style="text-align: left; font-size: 14px; padding: 10px;">Gender</th>
+                                    </tr>
+                                    {{#each passenger}}
+                                    <tr>
+                                        <td style="padding: 10px; font-size: 14px;">{{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}N/A{{/if}}</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{#if ../subBooking.0.pnr}}{{../subBooking.0.pnr}}{{else}}N/A{{/if}}</td>
+                                        <td style="padding: 10px; font-size: 14px; color: {{#if (eq ../subBooking.0.status 'confirmed')}}green{{else}}red{{/if}};">{{#if ../subBooking.0.status}}{{../subBooking.0.status}}{{else}}NOT FOUND{{/if}}</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{firstName}}</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{lastName}}</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{gender}}</td>
+                                    </tr>
+                                    {{/each}}
+                                </table>
+                                <div style="background: #f1f9ff; border-left: 4px solid #007bff; padding: 10px 15px; margin-top: 10px;">
+                                    <p style="margin: 0; color: rgb(106, 106, 106); font-size: 14px;">Disclaimer: Not all flights offer free meals. Any specific request you may have will be sent to the airline(s). Please contact your airline(s) directly, prior to your departure date, to confirm what meal options may be available and if your other requests can be fulfilled.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                     
+
+                    <!-- Billing Details -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+                        <tr>
+                            <td>
+                                <h2 style="font-size: 18px; color: #e56232;  margin: 0 0 15px 0;">Billing Details</h2>
+                                <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 10px; font-size: 14px;">Base Fare</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{baseFare}} {{currency}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; font-size: 14px;">Taxes and Fees</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{tax_fee_surges}} {{currency}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; font-size: 14px;">Other Charges</td>
+                                        <td style="padding: 10px; font-size: 14px;">{{otherCharges}} {{currency}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; font-size: 14px; font-weight: bold; color: #007bff;">Total Amount</td>
+                                        <td style="padding: 10px; font-size: 14px; font-weight: bold; color: #007bff;">{{totalAmount}} {{currency}}</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Footer Note -->
+                                                     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 0px;">
+                                                        <h2 style="font-size: 18px; color: #e56232;  ">Please Note</h2>
+
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: -20px;">
+                        <tr>
+                            <td>
+                                <div style="background: #f1f9ff; border-left: 4px solid #007bff; padding: 1px;  margin-top: 10px;">
+
+                                <p style="font-size: 14px; color: #555; line-height: 1.5;margin-left: 10px;">
+                                    Fares are not guaranteed until ticketed. Taxes, fees, and baggage charges
+                                    are subject to change and may be additional. For more information, please
+                                    review our <a href="#" style="color: #007bff; text-decoration: none;">Privacy Policy</a> 
+                                    or <a href="#" style="color: #007bff; text-decoration: none;">Contact Us</a>.
+                                </p>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </table>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>
