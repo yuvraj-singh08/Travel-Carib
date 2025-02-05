@@ -327,7 +327,9 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
             }
         })
 
-
+        if(!(minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage)){
+            console.log("This");
+        }
         return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage;
     });
 
@@ -486,6 +488,10 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             }
         }
         const finalAmount = commissionAmount + totalAmount;
+        if(!slices[0].origin){
+            console.log("Slice");
+            console.log(slices);
+        }
         return {
             origin: slices?.[0]?.origin,
             destination: slices?.[slices.length - 1]?.destination,
@@ -868,7 +874,11 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
             route.slices.forEach((slice) => {
                 slice.segments.forEach((segment) => {
                     if (!airlines.includes(segment.operating_carrier.iata_code)) {
-                        const iata_code = segment.operating_carrier.iata_code
+                        const iata_code = segment.operating_carrier.iata_code;
+                        if(iata_code === 'G6'){
+                            console.log("Found: ");
+                            console.log(route);
+                        }
                         airlines.push(iata_code)
                         extendedData.push({
                             id: iata_code,

@@ -412,6 +412,10 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = [], origin: strin
       });
 
       slices.push({
+        origin: segments?.[0]?.origin,
+        destination: segments?.[segments.length - 1]?.destination,
+        departing_at: segments?.[0]?.departing_at,
+        arriving_at: segments?.[segments.length - 1]?.arriving_at,
         segments,
         sourceId: GDS.kiu
       })
