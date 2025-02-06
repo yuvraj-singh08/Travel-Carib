@@ -3,44 +3,75 @@ import path from "path";
 import dotenv from "dotenv";
 import { format } from "date-fns";
 import { generateBookingPdf } from "./pdfService";
+import { getSocials } from "../controllers/adminController";
+import { prisma } from "../prismaClient";
 
 const hbs = require("nodemailer-express-handlebars");
 
 dotenv.config();
 
+type SocialPlatform = {
+  platform:
+    | "facebook"
+    | "instagram"
+    | "youtube"
+    | "x"
+    | "linkedin"
+    | "whatsapp"
+    | "telegram"
+    | "discord"
+    | "tiktok"
+    | "snapchat";
+  url: string;
+  enabled: boolean;
+};
+
 function generateDownloadUrl(bookingId: string): string {
-  
-  return `${process.env.BACKEND || "https://travelcarib.tekniche.xyz" }/email/pdf/${bookingId}`;
+  return `${
+    process.env.BACKEND || "https://travelcarib.tekniche.xyz"
+  }/email/pdf/${bookingId}`;
 }
-
-
+const fetchSocials = async () => {
+  try {
+    const socials = await prisma.socialSettings.findMany();
+    return socials;
+  } catch (error) {
+    console.error("Error fetching socials:", error);
+    throw error;
+  }
+};
 
 export const sendEmail = async (bookingData: any) => {
-  console.log("bookingData",bookingData?.contactDetail?.email);
-  const downloadLink = generateDownloadUrl(bookingData.id)
-  console.log("downloadLink",downloadLink)
+  console.log("bookingData", bookingData?.contactDetail?.email);
+  const downloadLink = generateDownloadUrl(bookingData.id);
+  console.log("downloadLink", downloadLink);
+
+  const socialLinks = await fetchSocials();
+  //@ts-ignore
+  const links: SocialPlatform[] = socialLinks[0].socialPlatforms;
+  console.log("response sociAL", links[0].url);
 
   let processedBookingData = {
     ...bookingData,
     downloadLink,
+    links,
     passenger: (() => {
-      if (!bookingData.passenger) return []; 
+      if (!bookingData.passenger) return [];
       if (typeof bookingData.passenger === "string") {
         try {
-          return JSON.parse(bookingData.passenger); 
+          return JSON.parse(bookingData.passenger);
         } catch (error) {
           console.error("Error parsing passenger data:", error);
-          return []; 
+          return [];
         }
       }
-      return Array.isArray(bookingData.passenger) ? bookingData.passenger : [bookingData.passenger];
+      return Array.isArray(bookingData.passenger)
+        ? bookingData.passenger
+        : [bookingData.passenger];
     })(),
   };
 
-  
-  const pdfBuffer = await generateBookingPdf(processedBookingData);
-
-  
+  // const pdfBuffer = await generateBookingPdf(processedBookingData);
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -72,17 +103,21 @@ export const sendEmail = async (bookingData: any) => {
           return format(date, "EEE, MMMM dd, yyyy");
         },
         formatDuration: function (duration) {
-          return duration.replace("PT", "").replace("H", "h ").replace("M", "m").trim();
+          return duration
+            .replace("PT", "")
+            .replace("H", "h ")
+            .replace("M", "m")
+            .trim();
         },
         eq: (a: any, b: any) => a === b,
         // Add helper to safely access passenger data
         getPassenger: (passengers: any[], index: number) => {
           return passengers && passengers[index] ? passengers[index] : {};
         },
-        
-        inc:(value:any)=>{
-          return parseInt(value) +1;
-        }
+
+        inc: (value: any) => {
+          return parseInt(value) + 1;
+        },
       },
     },
     viewPath: path.resolve("./src/services/views/"),
@@ -91,18 +126,19 @@ export const sendEmail = async (bookingData: any) => {
 
   transporter.use("compile", hbs(handlebarOptions));
 
-  const recipientEmail = processedBookingData.contactDetail?.email || 
-                        (processedBookingData.passenger[0]?.email);
-                        
+  const recipientEmail =
+    processedBookingData.contactDetail?.email ||
+    processedBookingData.passenger[0]?.email;
+
   if (!recipientEmail) {
     throw new Error("Recipient email is missing in booking data");
   }
 
   const mailOptions = {
-    from:"hemant27134@gmail.com", 
+    from: "hemant27134@gmail.com",
     to: bookingData?.contactDetail?.email,
     // to:"hemant27134@gmail.com",
-    bcc:"hemant27134@gmail.com,neeleshishu021@gmail.com",
+    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_6",
     context: processedBookingData,
