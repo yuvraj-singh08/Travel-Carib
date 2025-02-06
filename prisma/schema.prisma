@@ -389,8 +389,10 @@ model OfferPassengers {
   gds_passenger_id       String[]
   multicity_passenger_id String?
   baggageDetails         Json[]
-  offer                  Offer    @relation(fields: [offerId], references: [id])
+  offer                  Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
   offerId                String   @db.ObjectId
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
 }
 
 enum SubBookingStatus {

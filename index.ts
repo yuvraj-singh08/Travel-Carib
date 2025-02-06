@@ -26,6 +26,7 @@ import { prisma } from "./src/prismaClient";
 import { authenticateToken } from "./src/middleware/authmiddleware";
 import { getGdsCreds, updateGdsCreds } from "./src/controllers/gds.controller";
 import HttpError from "./src/utils/httperror";
+import initializeCrons from "./src/crons";
 
 const app = express();
 
@@ -148,5 +149,6 @@ app.post("/send-link", async (req, res) => {
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
+  initializeCrons();
   console.log(`> App running on port ${PORT}  ...`);
 });
