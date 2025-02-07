@@ -23,7 +23,7 @@ class KiuController {
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { OriginLocation, DestinationLocation, DepartureDate, CabinClass, ReturnDate, Passengers } = req.body;
-            const response = await this.kiuClient.searchFlights({ OriginLocation, CabinClass, DestinationLocation, DepartureDate, ReturnDate, Passengers }, "FWE", null);
+            const response = await this.kiuClient.searchFlights({ OriginLocation, CabinClass, DestinationLocation, DepartureDate, ReturnDate, Passengers, tripOrigin: OriginLocation, tripDestination: DestinationLocation }, "FWE", null);
             res.send(response);
         } catch (error) {
             next(error);

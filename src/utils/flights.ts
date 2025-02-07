@@ -191,6 +191,9 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                         commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
                     }
                 }
+                if(totalAmount > 10000){
+                    console.log("Amadeus Price Error");
+                }
                 parsedResponse.push({
                     responseId,
                     routeId,
@@ -477,6 +480,9 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
         });
+        if(totalAmount > 10000){
+            console.log("Route Price is over the limit");
+        }
 
         let commissionAmount = 0;
         if (applicableCommission) {
@@ -730,7 +736,8 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             })
             formattedRoutes.push(...results);
         })
-        const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
+        // const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
+        const possibleRoutes = formattedRoutes;
         return {
             searchManagement,
             possibleRoutes
@@ -875,10 +882,6 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
                 slice.segments.forEach((segment) => {
                     if (!airlines.includes(segment.operating_carrier.iata_code)) {
                         const iata_code = segment.operating_carrier.iata_code;
-                        if(iata_code === 'G6'){
-                            console.log("Found: ");
-                            console.log(route);
-                        }
                         airlines.push(iata_code)
                         extendedData.push({
                             id: iata_code,

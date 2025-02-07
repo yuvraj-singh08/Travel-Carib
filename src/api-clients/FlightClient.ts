@@ -171,6 +171,8 @@ class FlightClient {
                         DestinationLocation: segment.destination,
                         Passengers: params.passengers,
                         CabinClass: params.cabinClass,
+                        tripOrigin: params.originLocation,
+                        tripDestination: params.destinationLocation
                     }, kiuFirewall, kiuCommission)
                 })
             })

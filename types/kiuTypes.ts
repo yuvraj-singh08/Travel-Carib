@@ -9,8 +9,8 @@ export type FlightSearchParams = {
         children: number,
         infants: number
     },
-    tripOrigin?: string;
-    tripDestination?: string;
+    tripOrigin: string;
+    tripDestination: string;
 }
 
 export type PriceRequestBuilderParams = {

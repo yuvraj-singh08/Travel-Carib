@@ -57,6 +57,7 @@ class KiuClient {
 
   async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
     try {
+      await new Promise(resolve => setTimeout(resolve, 1000 * (Math.random())))
       const invalidResponseIndexs = [];
       const DepartureDate = getDateString(params.DepartureDate)
       const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate }, this.mode);
@@ -80,7 +81,7 @@ class KiuClient {
                 let flag = false;
                 let code = null;
                 segment?.bookingAvl?.forEach((bookingAvl) => {
-                  if (parseInt(bookingAvl.quantity) > 0 && ((params.CabinClass === 'economy' || params.CabinClass === 'premium_economy') && (!kiuClasses.business.includes(bookingAvl.code) && !kiuClasses.first.includes(bookingAvl.code))) || cabinClass.includes(bookingAvl.code)) {
+                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants) && (((params.CabinClass === 'economy' || params.CabinClass === 'premium_economy') && (!kiuClasses.business.includes(bookingAvl.code) && !kiuClasses.first.includes(bookingAvl.code))) || cabinClass.includes(bookingAvl.code))) {
                     flag = true;
                     code = bookingAvl.code;
                   }
@@ -104,6 +105,9 @@ class KiuClient {
                 const py = pi?.PricedItinerary?.[0];
                 const itf = py?.AirItineraryPricingInfo?.[0]?.ItinTotalFare?.[0];
                 const total_amount = itf?.TotalFare?.[0]?.$?.Amount;
+                if (!total_amount) {
+                  console.log("KIU Price Error");
+                }
                 if (total_amount) {
                   segmentSum += parseFloat(total_amount);
                 }
@@ -146,6 +150,10 @@ class KiuClient {
 
       return filteredResponse
     } catch (error) {
+      if (error?.response?.status === 509) {
+        console.log("KIU's request limit exceeded");
+        return [];
+      }
       throw error;
     }
   }
