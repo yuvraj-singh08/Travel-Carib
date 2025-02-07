@@ -56,7 +56,11 @@ class FlightController {
         FlightDetails,
         passengerType,
         maxLayovers,
-        passengers: passengers || { adults: 1, children: 0, infants: 0 },
+        passengers: {
+          adults: parseInt(passengers?.adults) || 1,
+          children: parseInt(passengers?.children) || 0,
+          infants: parseInt(passengers?.infants) || 0,
+        },
         sortBy: sortBy || "BEST",
         cabinClass,
         filters,
