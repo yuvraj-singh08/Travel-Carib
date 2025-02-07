@@ -736,8 +736,8 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             })
             formattedRoutes.push(...results);
         })
-        // const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
-        const possibleRoutes = formattedRoutes;
+        const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
+        // const possibleRoutes = formattedRoutes;
         return {
             searchManagement,
             possibleRoutes
