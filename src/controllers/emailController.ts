@@ -3,10 +3,11 @@ import HttpError from "../utils/httperror";
 import { getOffer } from "../services/OfferService";
 import { prisma } from "../prismaClient";
 import { sendEmail } from "../services/emailService";
-import { generateBookingPdf } from "../services/pdfService";
+import { generateNewPdf } from "../services/pdfService";
 
 export const emailSend = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log("called")
         const { bookingId } = req.body;
         if (!bookingId) {
             throw new HttpError("ID not provided", 400);
@@ -25,7 +26,7 @@ export const emailSend = async (req: Request, res: Response, next: NextFunction)
     }
 }
 
-export const downloadTicket = async (req: Request, res: Response) => {
+export const ticketDownload = async (req: Request, res: Response) => {
     try {
       const { bookingId } = req.params;
       
@@ -36,17 +37,18 @@ export const downloadTicket = async (req: Request, res: Response) => {
       });
       console.log("booking",booking);
      
-      const pdfBuffer = await generateBookingPdf({ ...booking, flightDetails: JSON.parse(booking.flightDetails)});
+      const newPdfBuffer = await generateNewPdf({ ...booking, flightDetails: JSON.parse(booking.flightDetails)});
   
       // Set proper headers
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=ticket-${bookingId}.pdf`);
-      res.setHeader('Content-Length', pdfBuffer.length);
+      res.setHeader('Content-Length', newPdfBuffer.length);
   
       // Send the buffer directly
-      res.end(pdfBuffer);
+      res.end(newPdfBuffer);
     } catch (error) {
       console.error('PDF download error:', error);
       res.status(500).send('Error generating PDF ticket');
+      
     }
   };

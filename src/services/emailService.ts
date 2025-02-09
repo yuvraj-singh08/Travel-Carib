@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import path from "path";
 import dotenv from "dotenv";
 import { format } from "date-fns";
-import { generateBookingPdf } from "./pdfService";
+import { generateNewPdf } from "./pdfService";
 import { getSocials } from "../controllers/adminController";
 import { prisma } from "../prismaClient";
 
@@ -71,7 +71,7 @@ export const sendEmail = async (bookingData: any) => {
     })(),
   };
 
-  // const pdfBuffer = await generateBookingPdf(processedBookingData);
+  const pdfBuffer = await generateNewPdf(processedBookingData);
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -110,9 +110,15 @@ export const sendEmail = async (bookingData: any) => {
             .trim();
         },
         eq: (a: any, b: any) => a === b,
+        or: (...args) => {
+          // The last argument is the Handlebars options object, so we exclude it
+          const conditions = args.slice(0, -1);
+          return conditions.some(condition => !!condition);
+      },
         // Add helper to safely access passenger data
         getPassenger: (passengers: any[], index: number) => {
           return passengers && passengers[index] ? passengers[index] : {};
+          
         },
 
         inc: (value: any) => {
@@ -136,17 +142,18 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from: "hemant27134@gmail.com",
-    to: bookingData?.contactDetail?.email,
+    // to: bookingData?.contactDetail?.email,
     // to:"hemant27134@gmail.com",
-    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com",
+    to:"kumarbittu.co@gmail.com",
+    // bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,anshyuve@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_6",
     context: processedBookingData,
-    // attachments: [{
-    //   filename: `ticket-${bookingData.id}.pdf`,
-    //   content: Buffer.from(pdfBuffer),
-    //   contentType: 'application/pdf'
-    // }]
+    attachments: [{
+      filename: `ticket-${bookingData.id}.pdf`,
+      content: Buffer.from(pdfBuffer),
+      contentType: 'application/pdf'
+    }]
   };
   await transporter.sendMail(mailOptions);
 };
