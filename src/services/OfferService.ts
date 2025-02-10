@@ -77,6 +77,9 @@ export async function getOffer(id: string) {
                 passengers: true
             }
         })
+        if(!offer){
+            throw new HttpError("Offer has expired. Try performing a new search", 410);
+        }
         if (offer.passengers.length === 0) {
             if (offer.flightWay === "ONEWAY") {
                 const parsedOffer = JSON.parse(offer.data) as Offer;

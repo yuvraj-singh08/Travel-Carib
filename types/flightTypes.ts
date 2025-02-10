@@ -115,6 +115,7 @@ export type Slice = {
         type: string;
         id: string;
     }[],
+    sliceAmount: string;
     travelerPricings?: any,
 };
 
@@ -181,7 +182,7 @@ export type GdsBaggageType = {
     id: string;
 }
 
-export type UtilBaggageType = Omit<DbBaggageType, 'serviceIds'> & {
+export type UtilBaggageType = Omit<DbBaggageType, 'serviceIds' | 'prices'> & {
     serviceId: string;
 }
 
@@ -192,6 +193,7 @@ export type DbBaggageType = {
     price: number;
     currency: string;
     serviceIds: string[];
+    prices: number[];
 }
 
 
@@ -329,6 +331,7 @@ export interface CreateOrderPassengerBaggageDetails {
     quantity: number;
     price: number;
     serviceIds: string[];
+    prices: number[];
 }
 
 export type DuffelPassengerResponseType = {

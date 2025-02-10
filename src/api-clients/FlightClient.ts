@@ -322,6 +322,7 @@ class FlightClient {
     async bookDuffelFlight(slice: Slice, passengers: PassengerType[], sliceIndex: number) {
         try {
             const services = [];
+            let totalAmount = parseFloat(slice.sliceAmount);
 
             const passengersData = passengers.map((passenger, index) => {
                 let returnValue: CreateOrderPassenger = {
@@ -350,6 +351,7 @@ class FlightClient {
                             id: baggageData.serviceIds[sliceIndex],
                             quantity: baggageData.quantity
                         })
+                        totalAmount += baggageData.prices[sliceIndex];
                     })
                 }
                 return returnValue
@@ -357,7 +359,8 @@ class FlightClient {
             const response = await this.duffelClient.createOrder({
                 passengers: passengersData,
                 offerId: slice.gdsOfferId,
-                services
+                services,
+                totalAmount: ("" + totalAmount.toFixed(2)),
             })
             return response.data.booking_reference;
         } catch (error) {

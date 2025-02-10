@@ -18,4 +18,5 @@ export type DuffelCreateOrderParams = {
     offerId: string
     passengers: CreateOrderPassenger[]
     services: CreateOrderService[]
+    totalAmount: string;
 }

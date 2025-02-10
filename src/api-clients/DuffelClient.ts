@@ -70,12 +70,19 @@ class DuffelClient {
   async createOrder(params: DuffelCreateOrderParams): Promise<any> {
     try {
       const response = await this.client.orders.create({
-        type: "pay_later",
+        type: "instant",
         services: params.services,
         selected_offers: [
           params.offerId
         ],
-        passengers: params.passengers
+        passengers: params.passengers,
+        payments: [
+          {
+            type: "balance",
+            currency: "USD",
+            amount: params.totalAmount
+          }
+        ],
       })
       return response;
     } catch (error) {

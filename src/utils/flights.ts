@@ -70,6 +70,8 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                 result.slices[0].gdsOfferId = result.id;
                 //@ts-ignore
                 result.slices[0].passengers = result.passengers;
+                //@ts-ignore
+                result.slices[0].sliceAmount = result.total_amount;
             })
             const totalAmount = parseFloat(result.total_amount);
             let commissionAmount = 0;

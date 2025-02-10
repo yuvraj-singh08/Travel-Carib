@@ -187,7 +187,7 @@ function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
 
     // Calculate total price and collect service IDs
     let totalPrice = 0;
-    const serviceIds: string[] = [];
+    const serviceIds: string[] = [], prices: number[] = [];
     let isValid = true;
 
     for (const leg of legs) {
@@ -206,6 +206,7 @@ function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
 
       totalPrice += cheapestOption.price;
       serviceIds.push(cheapestOption.serviceId);
+      prices.push(cheapestOption.price);
     }
 
     if (isValid) {
@@ -215,7 +216,8 @@ function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
         maxQuantity: maxCount,
         price: totalPrice,
         currency: "USD", // Assuming currency is consistent across legs
-        serviceIds: serviceIds
+        serviceIds: serviceIds,
+        prices
       });
     }
   }
