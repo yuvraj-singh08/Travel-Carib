@@ -33,7 +33,7 @@
     <![endif]-->
 
     <center style="width: 100%;">
-<div class="page-break">
+       <div class="page-break">
 
         {{#if (eq adminStatus "PENDING_PAYMENT")}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
@@ -75,14 +75,16 @@
                             <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                            <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+
+                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
                         </tr>
                         {{else}}
                         <tr>
                             <td style="padding: 5px 0;">Flight Number: {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.id}}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td>
+                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td> --}}
                         </tr>
                         {{/if}}
                         </table>
@@ -93,7 +95,7 @@
                 </table>
                 </td>
             </tr>
-    {{else if (eq adminStatus "confirmed")}}
+    {{else if (eq adminStatus "TICKETED")}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <tr>
             <td style="padding: 20px; background-color: #f8f9fa;">
@@ -151,7 +153,7 @@
             </table>
             </td>
         </tr>
-    {{else if (eq status "cancelled")}}
+    {{else  if (or (eq adminStatus "FAILED_BOOKING") (eq adminStatus "EXPIRED"))}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <tr>
             <td style="padding: 20px; background-color: #f8f9fa;">
@@ -184,7 +186,7 @@
                         <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                        {{!-- <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
                     </tr>
                     </table>
                     
@@ -247,8 +249,11 @@
        </div>
        <div class="page-break"></div>
 
+                                                                    
+
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="800" style="border-collapse: collapse; background-color: #ffffff; border: 1px solid #ddd;">
             <!-- Header Section -->
+
             <tr>
                 <td style="padding: 20px; background-color: #f0f5ff;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -409,7 +414,10 @@
                                                             <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
                                                                 <tr>
                                                                     <td style="padding: 5px 0; text-align: center;">
-                                                                        <img src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                        <img 
+                                                                        {{!-- src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}"  --}}
+                                                                        src="https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/ZZ.svg" 
+
                                                                             alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
                                                                     </td>
                                                                 </tr>

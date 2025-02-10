@@ -22,7 +22,7 @@ handlebars.registerHelper('getPassenger', (passengers: any[], index: number)=>{
 });
 
 
-export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
+export async function generateNewPdf(bookingData: any): Promise<Buffer> {
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -32,11 +32,11 @@ export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
     const page = await browser.newPage();
     
     // Load and compile template
-    const templatePath = path.join(__dirname,"views",'template_6.hbs');
-    const templateContent = fs.readFileSync(templatePath, 'utf8');
-    const template = handlebars.compile(templateContent);
-    console.log("Using template:", templatePath);
-    console.log("Template content:", template); 
+    const newTemplatePath = path.join(__dirname,"views",'pdf_template.hbs');
+    const newTemplateContent = fs.readFileSync(newTemplatePath, 'utf8');
+    const newTemplate = handlebars.compile(newTemplateContent);
+    console.log("Using template:", newTemplatePath);
+    console.log("Template content:", newTemplate); 
 
     let processedBookingData = {
         ...bookingData,
@@ -54,14 +54,14 @@ export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
         })(),
       };
 
-    const html = template({
+    const newHtml = newTemplate({
       ...processedBookingData,
       formatIsoDate: (isoDate: string) => 
         new Date(isoDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
     });
 
     // Set HTML content with network idle check
-    await page.setContent(html, {
+    await page.setContent(newHtml, {
       waitUntil: 'networkidle0',
       timeout: 30000
     });
@@ -71,7 +71,7 @@ export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Generating PDF with proper settings
-    const pdfBuffer = await page.pdf({
+    const newPdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
       preferCSSPageSize: true,
@@ -84,11 +84,11 @@ export async function generateBookingPdf(bookingData: any): Promise<Buffer> {
     }) as Buffer;
 
     // Validate PDF
-    if (!pdfBuffer || pdfBuffer.length < 1024) {
+    if (!newPdfBuffer || newPdfBuffer.length < 1024) {
       throw new Error('Generated PDF is empty or too small');
     }
 
-    return pdfBuffer;
+    return newPdfBuffer;
   } catch (error) {
     console.error('PDF generation error:', error);
     throw new Error('Failed to generate PDF');
