@@ -239,3 +239,9 @@ function findOptimalCombinations(legs: UtilBaggageType[][]): DbBaggageType[] {
 }
 
 export const capitalizeFirstLetter = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+export const getNextDay = (dateStr) => {
+  let date = new Date(dateStr);
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0]; // Returns in YYYY-MM-DD format
+}

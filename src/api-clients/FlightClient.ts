@@ -7,7 +7,7 @@ import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { getAmadeusOffer, saveData } from "../services/OfferService";
-import customDateFormat, { getPassengerArrays } from "../utils/utils";
+import customDateFormat, { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 
 class FlightClient {
@@ -146,7 +146,40 @@ class FlightClient {
 
             //Duffel Request
             const duffelRequests = duffelPossibleRoutes.map((route) => {
-                return route.map((segment) => {
+                return route.map(async (segment, index) => {
+                    if (index > 0) {
+                        const data = await Promise.all([
+                            this.duffelClient.createOfferRequest({
+                                passengers: duffelPassengersArray,
+                                cabin_class: params.cabinClass,
+                                max_connections: 2,
+                                slices: [
+                                    {
+                                        origin: segment.origin,
+                                        destination: segment.destination,
+                                        departure_date: params.departureDate,
+                                    }
+                                ],
+                            }),
+                            this.duffelClient.createOfferRequest({
+                                passengers: duffelPassengersArray,
+                                cabin_class: params.cabinClass,
+                                max_connections: 2,
+                                slices: [
+                                    {
+                                        origin: segment.origin,
+                                        destination: segment.destination,
+                                        departure_date: getNextDay(params.departureDate),
+                                    }
+                                ],
+                            })
+                        ])
+                        const parsedData = {
+                            ...(data[0].data),
+                            offers: [...(data[0].data.offers), ...(data[1].data.offers)]
+                        }
+                        return { ...data[0], data: parsedData }
+                    }
                     return this.duffelClient.createOfferRequest({
                         passengers: duffelPassengersArray,
                         cabin_class: params.cabinClass,
@@ -164,7 +197,31 @@ class FlightClient {
 
             //Kiu Request
             const kiuRequests = kiuPossibleRoutes.map((route) => {
-                return route.map((segment) => {
+                return route.map(async (segment, i: number) => {
+                    if (i > 0) {
+                        const data = await Promise.all([
+                            this.kiuClient.searchFlights({
+                                DepartureDate: params.departureDate,
+                                OriginLocation: segment.origin,
+                                DestinationLocation: segment.destination,
+                                Passengers: params.passengers,
+                                CabinClass: params.cabinClass,
+                                tripOrigin: params.originLocation,
+                                tripDestination: params.destinationLocation
+                            }, kiuFirewall, kiuCommission),
+                            this.kiuClient.searchFlights({
+                                DepartureDate: getNextDay(params.departureDate),
+                                OriginLocation: segment.origin,
+                                DestinationLocation: segment.destination,
+                                Passengers: params.passengers,
+                                CabinClass: params.cabinClass,
+                                tripOrigin: params.originLocation,
+                                tripDestination: params.destinationLocation
+                            }, kiuFirewall, kiuCommission)
+                        ])
+                        const parsedData = [...data[0], ...data[1]];
+                        return parsedData;
+                    }
                     return this.kiuClient.searchFlights({
                         DepartureDate: params.departureDate,
                         OriginLocation: segment.origin,
@@ -179,10 +236,50 @@ class FlightClient {
 
             let index = 0;
             const amadeusRequests = amaduesPossibleRoutes.map((route) => {
-                return route.map((segment) => {
+                return route.map(async (segment, i: number) => {
+                    if (i > 0) {
+                        let data = await Promise.all([
+                            this.amadeusClient.searchFlights({
+                                departure: (params.departureDate),
+                                locationDeparture: segment.origin,
+                                locationArrival: segment.destination,
+                                adults: params.passengerType,
+                                passengers: amadeusPassengersArray,
+                                cabinClass: params.cabinClass,
+                            }, index++),
+                            this.amadeusClient.searchFlights({
+                                departure: getNextDay(params.departureDate),
+                                locationDeparture: segment.origin,
+                                locationArrival: segment.destination,
+                                adults: params.passengerType,
+                                passengers: amadeusPassengersArray,
+                                cabinClass: params.cabinClass,
+                            }, index++)
+                        ]);
+                        const parsedData: any = { data: [], dictionaries: {} };
+                        data.forEach((singleResponse) => {
+                            parsedData.data = [...(parsedData.data), ...(singleResponse.data)];
+                            parsedData.dictionaries.aircraft = {
+                                ...(parsedData.dictionaries?.aircraft),
+                                ...(singleResponse.dictionaries?.aircraft)
+                            };
+                            parsedData.dictionaries.carriers = {
+                                ...(parsedData.dictionaries?.carriers),
+                                ...(singleResponse.dictionaries?.carriers)
+                            };
+                            parsedData.dictionaries.currencies = {
+                                ...(parsedData.dictionaries?.currencies),
+                                ...(singleResponse.dictionaries?.currencies)
+                            };
+                            parsedData.dictionaries.locations = {
+                                ...(parsedData.dictionaries?.locations),
+                                ...(singleResponse.dictionaries?.locations)
+                            };
+                        })
+                        return parsedData
+                    }
                     return this.amadeusClient.searchFlights({
                         departure: params.departureDate,
-                        arrival: params.departureDate,
                         locationDeparture: segment.origin,
                         locationArrival: segment.destination,
                         adults: params.passengerType,
