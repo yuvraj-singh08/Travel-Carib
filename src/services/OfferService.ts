@@ -77,7 +77,7 @@ export async function getOffer(id: string) {
                 passengers: true
             }
         })
-        if(!offer){
+        if (!offer) {
             throw new HttpError("Offer has expired. Try performing a new search", 410);
         }
         if (offer.passengers.length === 0) {
@@ -160,7 +160,8 @@ export async function getOffer(id: string) {
                                     updatedIds.push([passenger.id])
                                 }
                                 else {
-                                    updatedIds[itenaryIndex].push(passenger.id)
+                                    if (updatedIds[itenaryIndex])
+                                        updatedIds[itenaryIndex].push(passenger.id)
                                 }
                                 return await (prisma.offerPassengers.update({
                                     where: {

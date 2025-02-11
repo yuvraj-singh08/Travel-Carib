@@ -269,6 +269,7 @@ export type Firewall = {
     flightNumber: string,
     from: string,
     to: string,
+    flightSequence?: string,
 }
 
 export interface FlightDate {

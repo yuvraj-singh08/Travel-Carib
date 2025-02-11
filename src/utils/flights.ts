@@ -193,7 +193,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                         commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
                     }
                 }
-                if(totalAmount > 10000){
+                if (totalAmount > 10000) {
                     console.log("Amadeus Price Error");
                 }
                 parsedResponse.push({
@@ -254,7 +254,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
 //     }
 // }
 
-export const filterResponse = (response: Offer[], filters: FilterType) => {
+export const filterResponse = (response: Offer[], filters: FilterType, allFirewall: Firewall[]) => {
     const filteredResponse: Offer[] = response.filter((route) => {
         const minPriceFilter = filters?.MinPrice ? parseFloat(route.total_amount) >= filters.MinPrice : true
         const maxPriceFilter = filters?.MaxPrice ? parseFloat(route.total_amount) <= filters.MaxPrice : true;
@@ -271,6 +271,13 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
                     checkedBaggage = false;
                 }
             })
+        })
+
+        let airlineFirewallFlag = true;
+        allFirewall?.forEach((firewall) => {
+            if (firewall.flightSequence && route.responseId.includes(firewall.flightSequence)) {
+                airlineFirewallFlag = false;
+            }
         })
 
 
@@ -332,10 +339,10 @@ export const filterResponse = (response: Offer[], filters: FilterType) => {
             }
         })
 
-        if(!(minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage)){
+        if (!(airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage)) {
             console.log("This");
         }
-        return minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage;
+        return airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage;
     });
 
     return filteredResponse;
@@ -482,7 +489,7 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
         });
-        if(totalAmount > 10000){
+        if (totalAmount > 10000) {
             console.log("Route Price is over the limit");
         }
 
@@ -496,10 +503,10 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             }
         }
         const finalAmount = commissionAmount + totalAmount;
-        if(!slices[0].origin){
-            console.log("Slice");
-            console.log(slices);
-        }
+        // if(!slices[0].origin){
+        //     console.log("Slice");
+        //     console.log(slices);
+        // }
         return {
             origin: slices?.[0]?.origin,
             destination: slices?.[slices.length - 1]?.destination,

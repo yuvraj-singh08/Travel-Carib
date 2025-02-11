@@ -330,7 +330,7 @@ export const addFirewall = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { title, supplier, code, flightNumber, from, to } = req.body;
+  const { title, supplier, code, flightNumber, flightSequence, from, to } = req.body;
 
   try {
     const firewall = await prisma.firewall.create({
@@ -339,6 +339,7 @@ export const addFirewall = async (
         supplier: supplier,
         code: code,
         flightNumber: flightNumber,
+        flightSequence: flightSequence,
         from: from,
         to: to,
       },

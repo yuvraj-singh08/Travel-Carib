@@ -112,7 +112,7 @@ class FlightClient {
                 let routeId = params.originLocation + params.destinationLocation;
                 kiuFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId === id && !firewall.code) {
+                    if (id !== '' && routeId === id && (!firewall.code && !firewall.flightSequence)) {
                         flag = false;
                     }
                 })
@@ -123,7 +123,7 @@ class FlightClient {
                 let routeId = params.originLocation + params.destinationLocation;
                 amadeusFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId === id && !firewall.code) {
+                    if (id !== '' && routeId === id && (!firewall.code && !firewall.flightSequence)) {
                         flag = false;
                     }
                 })
@@ -134,7 +134,7 @@ class FlightClient {
                 let routeId = params.originLocation + params.destinationLocation;
                 duffelFirewall.forEach((firewall) => {
                     const id = firewall.from + firewall.to;
-                    if (id !== '' && routeId === id && !firewall.code) {
+                    if (id !== '' && routeId === id && (!firewall.code && !firewall.flightSequence)) {
                         flag = false;
                     }
                 })
@@ -251,7 +251,7 @@ class FlightClient {
             const normalizedResponse = normalizeResponse(temp, commission, params.cabinClass)
             const airlinesDetails = getAirlineCodes(normalizedResponse);
             //@ts-ignore
-            const filteredResponse = filterResponse(normalizedResponse, params.filters)
+            const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
             const result = sortedResponse.filter((route, index) => {
                 if (index < 60) {

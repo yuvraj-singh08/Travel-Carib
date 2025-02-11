@@ -220,14 +220,15 @@ enum FlightSupplier {
 }
 
 model firewall {
-  id           String         @id @default(uuid()) @map("_id")
-  title        String
-  supplier     FlightSupplier
-  code         String
-  flightNumber String
-  from         String
-  to           String
-  updateTime   DateTime       @default(now())
+  id             String         @id @default(uuid()) @map("_id")
+  title          String
+  supplier       FlightSupplier
+  code           String
+  flightNumber   String
+  flightSequence String?
+  from           String
+  to             String
+  updateTime     DateTime       @default(now())
 }
 
 model CommissionType {
@@ -391,8 +392,8 @@ model OfferPassengers {
   baggageDetails         Json[]
   offer                  Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
   offerId                String   @db.ObjectId
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 enum SubBookingStatus {
