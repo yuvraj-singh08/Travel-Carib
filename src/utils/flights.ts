@@ -697,7 +697,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
             let flag = true;
             firewall.forEach((firewall) => {
                 const id = firewall.from + firewall.to
-                if (id !== '' && routeId === id && !firewall.code) {
+                if (id !== '' && routeId === id && (!firewall.code && !firewall.flightSequence)) {
                     flag = false;
                 }
             })
