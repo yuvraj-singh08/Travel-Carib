@@ -13,6 +13,13 @@ export const initializeClearOfferDataJob = () => {
                     },
                 },
             });
+            const deletedAmadeus = await prisma.amadeusOffer.deleteMany({
+                where: {
+                    createdAt: {
+                        lt: tenMinutesAgo, // Delete Amadeus offers older than 10 mins
+                    },
+                }
+            })
         })
     } catch (error) {
         console.log("Cron Job failed: ", error.message);
