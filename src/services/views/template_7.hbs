@@ -14,6 +14,14 @@
       page-break-before: always;
     }
   }
+  @media print {
+    .keep-together {
+      page-break-inside: avoid;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  }
 </style>
 </head>
 <body style="margin: 0; padding: 20px 0; background-color: #f8f9fa; font-family: Arial, sans-serif;">
@@ -25,9 +33,10 @@
     <![endif]-->
 
     <center style="width: 100%;">
+       <div class="page-break">
 
-
-        {{#if (eq adminStatus "PENDING_TICKET")}}
+        {{!-- {{#if (eq adminStatus "PENDING_TICKET")}} --}}
+         {{#if (or (eq adminStatus "PENDING_TICKET") (eq adminStatus "PENDING_PAYMENT"))}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
             <tr>
                 <td style="padding: 20px; background-color: #f8f9fa;">
@@ -60,21 +69,23 @@
                         </tr>
                         {{/with}}
                         <tr>
-                            <td style="padding: 5px 0;">Booking ID: {{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}N/A{{/if}}</td>
+                            <td style="padding: 5px 0;">Booking ID: {{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}{{id}}{{/if}}</td>
                         </tr>
                         {{#if (eq flight_type "ONEWAY")}}
                         <tr>
-                            <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
+                            <td style="padding: 5px 0;">Flight Number:  {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                            <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+
+                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
                         </tr>
                         {{else}}
                         <tr>
                             <td style="padding: 5px 0;">Flight Number: {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.id}}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td>
+                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td> --}}
                         </tr>
                         {{/if}}
                         </table>
@@ -85,7 +96,7 @@
                 </table>
                 </td>
             </tr>
-    {{else if (eq adminStatus "confirmed")}}
+    {{else if (eq adminStatus "TICKETED")}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <tr>
             <td style="padding: 20px; background-color: #f8f9fa;">
@@ -143,7 +154,7 @@
             </table>
             </td>
         </tr>
-    {{else if (eq status "cancelled")}}
+    {{else  if (or (eq adminStatus "FAILED_BOOKING") (eq adminStatus "EXPIRED"))}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
         <tr>
             <td style="padding: 20px; background-color: #f8f9fa;">
@@ -176,7 +187,7 @@
                         <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                        {{!-- <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
                     </tr>
                     </table>
                     
@@ -214,17 +225,17 @@
                     <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                     <tr>
                         <td style="padding: 0 5px;">
-                        <a href="#" style="text-decoration: none;">
+                        <a href={{{links.[0].url}}} style="text-decoration: none;">
                             <img title="Facebook" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/facebook-logo-colored.png" alt="Fb" width="32" height="32" style="display: block;">
                         </a>
                         </td>
                         <td style="padding: 0 5px;">
-                        <a href="#" style="text-decoration: none;">
+                        <a href={{{links.[1].url}}} style="text-decoration: none;">
                             <img title="Instagram" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/instagram-logo-colored.png" alt="Ig" width="32" height="32" style="display: block;">
                         </a>
                         </td>
                         <td style="padding: 0 5px;">
-                        <a href="#" style="text-decoration: none;">
+                        <a href={{{links.[3].url}}}style="text-decoration: none;">
                             <img title="X" src="https://ftfioxn.stripocdn.email/content/assets/img/social-icons/logo-colored/x-logo-colored.png" alt="X" width="32" height="32" style="display: block;">
                         </a>
                         </td>
@@ -236,14 +247,14 @@
             </td>
         </tr>
     </table>
+       </div>
+       <div class="page-break"></div>
 
-
-
-
-
+                                                                    
 
         <table align="center" border="0" cellpadding="0" cellspacing="0" width="800" style="border-collapse: collapse; background-color: #ffffff; border: 1px solid #ddd;">
             <!-- Header Section -->
+
             <tr>
                 <td style="padding: 20px; background-color: #f0f5ff;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -260,14 +271,16 @@
                                             <a href="#" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Print Ticket</a>
                                         </td>
                                         <td style="padding: 5px;">
-                                            <a href="#" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Download Ticket</a>
+                                              
+                                            <a href={{downloadLink}} style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Download Ticket</a>
+                                       
                                         </td>
                                         <td style="padding: 5px;">
-                                            <a href="#" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Share Ticket</a>
+                                            <a href="https://api.whatsapp.com/send?text=Hey!%20Here’s%20your%20flight%20ticket.%20Safe%20travels!%20✈️%20{{downloadLink}}" style="display: inline-block; background: #007bff; color: white; text-decoration: none; padding: 8px 5px; border-radius: 5px; font-size: 10px;">Share Ticket</a>
                                         </td>
                                     </tr>
                                 </table>
-                            </td>
+                            </td> 
                         </tr>
                         
                         <!-- Media Query for Small Screens -->
@@ -402,7 +415,10 @@
                                                             <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
                                                                 <tr>
                                                                     <td style="padding: 5px 0; text-align: center;">
-                                                                        <img src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                        <img 
+                                                                        {{!-- src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}"  --}}
+                                                                        src="https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/ZZ.svg" 
+
                                                                             alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
                                                                     </td>
                                                                 </tr>
@@ -439,7 +455,7 @@
                                         </tr>
                                         
                                     </table>
-                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
                                         <tr class="text-align: center;">
                                             <!-- Icon Section -->
                                             <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
@@ -453,7 +469,7 @@
                                                 <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
                                             </td>
                                         </tr>
-                                    </table>
+                                    </table> --}}
                                 {{else}}
                                 {{#if (eq flight_type "ROUNDTRIP")}}
                                     {{!-- Outbound Journey --}}
@@ -529,7 +545,7 @@
                                         </tr>
                                         
                                     </table>
-                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
                                         <tr class="text-align: center;">
                                             <!-- Icon Section -->
                                             <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
@@ -543,7 +559,7 @@
                                                 <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
                                             </td>
                                         </tr>
-                                    </table>
+                                    </table> --}}
 
                                     {{!-- Return Journey --}}
 
@@ -619,7 +635,7 @@
                                         </tr>
                                         
                                     </table>
-                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
+                                    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px; font-family: Arial, sans-serif;">
                                         <tr class="text-align: center;">
                                             <!-- Icon Section -->
                                             <!-- <td style="vertical-align: middle; width: 40px; padding-right: 10px; text-align: center;">
@@ -633,7 +649,7 @@
                                                 <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in Mumbai (BOM), you will have to change the FLIGHT</span>
                                             </td>
                                         </tr>
-                                    </table>
+                                    </table> --}}
 
                                     {{!-- code for multicity --}}
 
@@ -714,7 +730,7 @@
 
     {{#if @last}}
     {{else}}
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px;">
+    {{!-- <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: #e9f7fa; padding: 5px; margin-bottom: 5px; border-radius: 8px;">
         <tr>
             <td style="vertical-align:bottom; text-align: center;">
                 <img src="https://cdn3.iconfinder.com/data/icons/airport-41/32/Artboard_39-512.png" alt="layover" width="30" style="padding:0;margin-bottom: -10px;" />
@@ -722,7 +738,7 @@
                 <span style="vertical-align: center; font-size: 12px; color: #777;text-align: center;">Stopover in {{this.destination.city_name}} ({{this.destination.iata_code}}), you will have to change the FLIGHT</span>
             </td>
         </tr>
-    </table>
+    </table> --}}
     {{/if}}
 </div>
 {{/each}}

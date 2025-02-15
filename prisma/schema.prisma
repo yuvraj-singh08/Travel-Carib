@@ -455,3 +455,8 @@ model AmadeusOffer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+model AirlineLogo{
+  id        String   @id @default(uuid()) @map("_id")
+  iataCode  String
+  url       String
+}
