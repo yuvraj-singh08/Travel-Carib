@@ -431,7 +431,7 @@ class FlightClient {
                     }],
                     email: passenger.email,
                     phone_number: passenger.phoneNumber,
-                    type: passenger.passengerType,
+                    type: passenger.type,
                     id: slice.passengers[index].id,
                     born_on: passenger.dob,
                     family_name: passenger.lastName,

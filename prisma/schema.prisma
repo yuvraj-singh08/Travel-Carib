@@ -417,10 +417,8 @@ model Booking {
   flightDetails  String
   payment        BookPayment[] // Payment id
   passenger      String
-  // address        Json
   baseFare       Float
-  tax_fee_surges Float
-  otherCharges   Float
+  fareSummary    Json
   discount       Json?
   totalAmount    Float
   currency       String
@@ -441,26 +439,6 @@ model gdsCreds {
   testApiSecret       String
   mode                ServiceMode
 }
-
-// model BookingPassenger {
-//   id                  String         @id @default(uuid()) @map("_id")
-//   title               String
-//   firstName           String
-//   lastName            String
-//   gender              String
-//   nationality         String
-//   passportNumber      String
-//   passportExpiryDate  String
-//   issuingCountry      String
-//   passengerType       Passenger_Type
-//   infant_passenger_id String?
-//   email               String
-//   phoneNumber         String
-//   baggageInfo         String
-//   dob                 String
-//   bookingId           String         @db.ObjectId
-//   booking             Booking        @relation(fields: [bookingId], references: [id])
-// }
 
 model SubBooking {
   id        String           @id @default(uuid()) @map("_id")

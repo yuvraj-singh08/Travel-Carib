@@ -319,7 +319,7 @@ export interface PassengerType {
     passportNumber: string;
     passportExpiryDate: string;
     issuingCountry: string;
-    passengerType: DuffelPassengerType;
+    type: DuffelPassengerType;
     infant_passenger_id?: string;
     email: string;
     phoneNumber: string;
