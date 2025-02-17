@@ -33,7 +33,7 @@ class DuffelClient {
 
   async createOfferRequest(offerRequestData: CreateOfferRequest) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000 * (Math.random())))
+      await new Promise(resolve => setTimeout(resolve, 100 * (Math.random())))
       const createdOfferRequest = await this.client.offerRequests.create(offerRequestData);
       return createdOfferRequest
     } catch (error) {

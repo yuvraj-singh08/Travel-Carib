@@ -123,8 +123,8 @@ class AmadeusClient {
           }
         }
       }))
-      const savedResponse = await saveAmadeusResponse(response.data);
-      return { data: savedResponse, dictionaries: response.result.dictionaries };
+      // const savedResponse = await saveAmadeusResponse(response.data);
+      return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       throw error;
     }
