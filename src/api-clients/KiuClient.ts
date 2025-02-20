@@ -81,7 +81,6 @@ class KiuClient {
                 let flag = false;
                 let code = null;
                 segment?.bookingAvl?.forEach((bookingAvl) => {
-                  console.log((params.Passengers.adults + params.Passengers.children + params.Passengers.infants));
                   if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants) && (((params.CabinClass === 'economy' || params.CabinClass === 'premium_economy') && (!kiuClasses.business.includes(bookingAvl.code) && !kiuClasses.first.includes(bookingAvl.code))) || cabinClass.includes(bookingAvl.code))) {
                     flag = true;
                     code = bookingAvl.code;

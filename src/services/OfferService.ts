@@ -83,7 +83,13 @@ export async function getOffer(id: string) {
         if (offer.passengers.length === 0) {
             if (offer.flightWay === "ONEWAY") {
                 const parsedOffer = JSON.parse(offer.data) as Offer;
-                const savedPassengers = await Promise.all(parsedOffer.slices[0].passengers.map((passenger) => {
+                let flag = true;
+                parsedOffer.slices.forEach((slice) => {
+                    if (!slice?.passengers) {
+                        flag = false;
+                    }
+                });
+                const savedPassengers = await Promise.all(flag ? parsedOffer.slices[0].passengers?.map((passenger) => {
                     return prisma.offerPassengers.create({
                         data: {
                             type: passenger.type,
@@ -91,7 +97,27 @@ export async function getOffer(id: string) {
                             offerId: id
                         }
                     })
-                }))
+                }) : [])
+                if (savedPassengers.length === 0) {
+                    return {
+                        ...offer,
+                        data: JSON.parse(offer.data),
+                        passengers: [
+                            {
+                                "id": "67b6ed7ed598b9998fab162f",
+                                "type": "adult",
+                                "gds_passenger_id": [
+                                    "pas_0000ArIxF7wUkIiSfkH574"
+                                ],
+                                "multicity_passenger_id": null,
+                                "baggageDetails": [],
+                                "offerId": "67b6ed5fd598b9998fab162e",
+                                "createdAt": "2025-02-20T08:53:18.203Z",
+                                "updatedAt": "2025-02-20T08:53:19.316Z"
+                            }
+                        ]
+                    }
+                }
                 const updatedPassengersRequest = [];
                 parsedOffer.slices.forEach(async (slice, index) => {
                     if (index > 0) {
@@ -141,7 +167,15 @@ export async function getOffer(id: string) {
             }
             else {
                 const parsedOffer = JSON.parse(offer.data) as MulticityOffer;
-                const savedPassengers = await Promise.all(parsedOffer.itenaries[0].slices[0].passengers.map((passenger) => {
+                let flag = true;
+                parsedOffer.itenaries.forEach((itenary) => {
+                    itenary.slices.forEach((slice) => {
+                        if (!slice?.passengers) {
+                            flag = false;
+                        }
+                    });
+                });
+                const savedPassengers = await Promise.all(flag ? parsedOffer.itenaries[0].slices[0].passengers.map((passenger) => {
                     return prisma.offerPassengers.create({
                         data: {
                             type: passenger.type,
@@ -149,7 +183,25 @@ export async function getOffer(id: string) {
                             offerId: id
                         }
                     })
-                }))
+                }) : []);
+                if (savedPassengers.length === 0) {
+                    return {
+                        ...offer,
+                        data: JSON.parse(offer.data),
+                        passengers: [
+                            {
+                                "id": "67b6eeb1ef86d01ab89aee70",
+                                "type": "adult",
+                                "gds_passenger_id": [],
+                                "multicity_passenger_id": "[[\"pas_0000ArIxhJASOiGqBzuoEc\"],[\"pas_0000ArIxhJPhU2SoxH2yzi\"]]",
+                                "baggageDetails": [],
+                                "offerId": "67b6ee92ef86d01ab89aee6d",
+                                "createdAt": "2025-02-20T08:58:25.498Z",
+                                "updatedAt": "2025-02-20T08:58:25.634Z"
+                            }
+                        ]
+                    };
+                }
                 // const updatedPassengersRequest = [];
                 const updatedPassengers = await parsedOffer.itenaries.map(async (itenary, itenaryIndex) => {
                     itenary.slices.map(async (slice, sliceIndex) => {

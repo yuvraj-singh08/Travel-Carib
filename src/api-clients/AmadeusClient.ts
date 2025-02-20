@@ -66,8 +66,8 @@ class AmadeusClient {
 
       return response.data;
     } catch (error) {
-      console.log(error);
-      throw error;
+      console.log("Price Calendar Error: ", error);
+      return { success: false, message: "No data found" };
     }
   }
 
