@@ -531,14 +531,14 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
 }
 
 export const normalizeMultiResponse = (response: any, cabinClass: string) => {
-    const result = response.map((offer) => {
+    const result = response.map((offers) => {
         let total_amount = 0;
-        offer.forEach((offer) => {
+        offers.forEach((offer) => {
             total_amount += parseFloat(offer.total_amount);
         })
         return {
             total_amount,
-            itenaries: offer,
+            itenaries: offers,
             cabinClass
         }
     })

@@ -83,6 +83,8 @@ export async function getOffer(id: string) {
         if (offer.passengers.length === 0) {
             if (offer.flightWay === "ONEWAY") {
                 const parsedOffer = JSON.parse(offer.data) as Offer;
+                
+                //To prevent kiu offer not having passenger data
                 let flag = true;
                 parsedOffer.slices.forEach((slice) => {
                     if (!slice?.passengers) {
@@ -98,6 +100,8 @@ export async function getOffer(id: string) {
                         }
                     })
                 }) : [])
+
+                //To prevent kiu offer not having passenger data
                 if (savedPassengers.length === 0) {
                     return {
                         ...offer,
@@ -167,6 +171,8 @@ export async function getOffer(id: string) {
             }
             else {
                 const parsedOffer = JSON.parse(offer.data) as MulticityOffer;
+                
+                //To prevent kiu offer not having passenger data
                 let flag = true;
                 parsedOffer.itenaries.forEach((itenary) => {
                     itenary.slices.forEach((slice) => {
@@ -184,6 +190,7 @@ export async function getOffer(id: string) {
                         }
                     })
                 }) : []);
+                //To prevent kiu offer not having passenger data
                 if (savedPassengers.length === 0) {
                     return {
                         ...offer,

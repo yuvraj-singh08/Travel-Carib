@@ -411,25 +411,6 @@ model Offer {
   updatedAt  DateTime          @updatedAt
 }
 
-model Booking {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  contactDetail  Json // email and phone number
-  flightDetails  String
-  payment        BookPayment[] // Payment id
-  passenger      String
-  baseFare       Float
-  fareSummary    Json
-  discount       Json?
-  totalAmount    Float
-  currency       String
-  flight_type    RouteType
-  adminStatus    AdminStatus   @default(PENDING_TICKET)
-  User           User          @relation(fields: [userId], references: [id])
-  userId         String
-  createdAt      DateTime      @default(now())
-  SubBooking     SubBooking[]
-}
-
 model gdsCreds {
   id                  String      @id @default(auto()) @map("_id") @db.ObjectId
   gds                 GDS_TYPE    @unique
@@ -446,7 +427,26 @@ model SubBooking {
   ticket    String?
   pnr       String
   bookingId String           @db.ObjectId
-  booking   Booking          @relation(fields: [bookingId], references: [id])
+  booking   Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade, name: "BookingToSubBooking")
+}
+
+model Booking {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  contactDetail Json
+  flightDetails String
+  payment       BookPayment[]
+  passenger     String
+  baseFare      Float
+  fareSummary   Json
+  discount      Json?
+  totalAmount   Float
+  currency      String
+  flight_type   RouteType
+  adminStatus   AdminStatus   @default(PENDING_TICKET)
+  User          User          @relation(fields: [userId], references: [id])
+  userId        String
+  createdAt     DateTime      @default(now())
+  SubBooking    SubBooking[]  @relation(name: "BookingToSubBooking")
 }
 
 model AmadeusOffer {

@@ -368,3 +368,9 @@ export type SetPassengerIdServiceParams = {
         type: "ADULT" | "CHILD" | "INFANT"
     }[]
 }
+
+export type UpdateSubBookingType = {
+    id: string;
+    status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+    ticket?: string;
+}

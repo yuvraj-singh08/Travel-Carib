@@ -6,6 +6,7 @@ import {
   getBookingById,
   getBookings,
   updateBooking,
+  updateSubBookingController,
 } from "../controllers/bookingController";
 import { authenticateToken } from "../middleware/authmiddleware";
 
@@ -17,5 +18,6 @@ router.post("/add-booking", authenticateToken, addBooking);
 router.post("/update-booking", authenticateToken, updateBooking);
 router.post("/delete-booking", authenticateToken, deleteBooking);
 router.get('/:id', authenticateToken, getBookingById);
+router.put('/:id', authenticateToken, updateSubBookingController);
 
 export default router;

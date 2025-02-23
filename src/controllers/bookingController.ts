@@ -3,6 +3,7 @@ import { prisma } from "../prismaClient";
 import { AuthenticatedRequest } from "../../types/express";
 import { AdminStatus } from "@prisma/client";
 import HttpError from "../utils/httperror";
+import { updateSubBookingService } from "../services/Booking.service";
 
 const adminStatus = {
   TICKETED: "Confirmed",
@@ -155,7 +156,10 @@ export const getBookingById = async (req: AuthenticatedRequest, res: Response, n
     const booking = await prisma.booking.findFirst({
       where: {
         id
-      }
+      },
+      include: {
+        SubBooking: true, // Fetch all associated SubBooking records
+      },
     });
     res.status(200).json({ success: true, data: { ...booking, flightDetails: JSON.parse(booking.flightDetails) } });
   } catch (error) {
@@ -310,3 +314,18 @@ export const updateBooking = async (req: Request, res: Response) => {
       .json({ error: "Failed to update booking", success: false });
   }
 };
+
+
+export const updateSubBookingController = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { status, ticket } = req.body;
+    const { id } = req.params;
+    if (!id) {
+      throw new HttpError("Invalid SubBooking ID", 400);
+    }
+    const updatedBooking = await updateSubBookingService({ status, ticket, id });
+    res.status(201).json({ success: true, data: updatedBooking });
+  } catch (error) {
+    next(error);
+  }
+}
