@@ -18,6 +18,6 @@ router.post("/add-booking", authenticateToken, addBooking);
 router.post("/update-booking", authenticateToken, updateBooking);
 router.post("/delete-booking", authenticateToken, deleteBooking);
 router.get('/:id', authenticateToken, getBookingById);
-router.put('subBooking/:id', authenticateToken, updateSubBookingController);
+router.put('/subBooking/:id', authenticateToken, updateSubBookingController);
 
 export default router;
