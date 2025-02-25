@@ -13,7 +13,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
 
 // Register User
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (req.user.role !== 'ADMIN') {
+    throw new HttpError("Unauthorized", 403);
+  }
   const { email, password, firstName, lastName, role } = req.body;
 
   try {
@@ -35,8 +38,7 @@ export const registerUser = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(500).json({ error: "Failed to create user", success: false });
+    next();
   }
 };
 
