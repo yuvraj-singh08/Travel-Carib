@@ -1,4 +1,4 @@
-import { DbBaggageType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
+import { AggregatedFareBrand, DbBaggageType, FareBrandType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
 import { airlines } from "./airlines";
 
 export function getDifferenceInMinutes(time1: string, time2: string): number {
@@ -244,4 +244,53 @@ export const getNextDay = (dateStr) => {
   let date = new Date(dateStr);
   date.setDate(date.getDate() + 1);
   return date.toISOString().split('T')[0]; // Returns in YYYY-MM-DD format
+}
+
+export function findCommonFareBrands(fareBrandArrays: FareBrandType[][]): AggregatedFareBrand[] {
+  if (!fareBrandArrays.length) return [];
+  if (fareBrandArrays.length === 1) {
+    return fareBrandArrays[0].map(fb => ({
+      ...fb,
+      offerIds: [fb.offerId]
+    }));
+  }
+
+  // Get unique fare brand names from first array
+  const firstArrayBrands = new Set(
+    fareBrandArrays[0].map(fb => fb.fareBrand)
+  );
+
+  // Find common brand names across all arrays
+  const commonBrandNames = Array.from(firstArrayBrands).filter(brandName =>
+    fareBrandArrays.every(array =>
+      array.some(fb => fb.fareBrand === brandName)
+    )
+  );
+
+  // For each common brand, aggregate the data
+  return commonBrandNames.map(brandName => {
+    // Get all occurrences of this brand across all arrays
+    const allOccurrences = fareBrandArrays.flatMap(array =>
+      array.filter(fb => fb.fareBrand === brandName)
+    );
+
+    return {
+      fareBrand: brandName,
+      // Sum of all totalAmounts
+      totalAmount: allOccurrences.reduce(
+        (sum, fb) => sum + fb.totalAmount,
+        0
+      ),
+      // Minimum of all cabinBaggage
+      cabinBaggage: Math.min(
+        ...allOccurrences.map(fb => fb.cabinBaggage)
+      ),
+      // Minimum of all checkedBaggage
+      checkedBaggage: Math.min(
+        ...allOccurrences.map(fb => fb.checkedBaggage)
+      ),
+      // Array of all offerIds
+      offerIds: allOccurrences.map(fb => fb.offerId)
+    };
+  });
 }

@@ -88,10 +88,27 @@ export type Offer = {
     id: string;
     responseId: string;
     cabinBaggage: number;
+    fareBrands: FareBrandType[];
     checkedBaggage: number;
     sourceId: string;
     routeId: string;
 };
+
+export type FareBrandType = {
+    fareBrand: string;
+    totalAmount: number;
+    cabinBaggage: number;
+    checkedBaggage: number;
+    offerId: string;
+}
+
+export interface AggregatedFareBrand {
+    fareBrand: string;
+    totalAmount: number;
+    cabinBaggage: number;
+    checkedBaggage: number;
+    offerIds: string[];
+}
 
 export type Slice = {
     comparison_key: string;
