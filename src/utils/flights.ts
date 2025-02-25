@@ -146,7 +146,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                 if (!flag) {
                     return;
                 }
-                responseId += segment?.carrierCode + segment?.number
+                responseId += segment?.carrierCode + (segment?.number.length === 4 ? segment.number : '0'.repeat(4 - segment?.number.length) + segment?.number)
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
                 for (let i = 0; i < firewall.length; i++) {
                     if (firewall[i].from === origin && firewall[i].to === destination) {
