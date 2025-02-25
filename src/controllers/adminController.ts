@@ -7,6 +7,7 @@ import { handlePrismaError } from "../utils/prismaError";
 import HttpError from "../utils/httperror";
 import { sendOTP } from "../../nodemailer/transporter";
 import { AdminPermissions } from "../../types/adminTypes";
+import { BaggageType } from "@prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
@@ -2395,3 +2396,64 @@ export const updateBooking = async (req: Request, res: Response) => {
       .json({ error: "Failed to update booking", success: false });
   }
 };
+
+export const addBaggageWeight = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { weight, type } = req.body;
+    if (req.user.role !== 'ADMIN') {
+      throw new HttpError("Unauthorized", 403);
+    }
+    if (type !== BaggageType.CABIN && type !== BaggageType.CHECKED) {
+      throw new HttpError("Invalid Baggage Type", 400);
+    }
+    if (!weight) {
+      throw new HttpError("Weight is required", 400);
+    }
+    const updatedBaggage = await prisma.baggageWeight.create({
+      data: { weight, type },
+    });
+    res.status(201).json(updatedBaggage);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const upadteBaggageWeight = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { weight, type } = req.body;
+    if (req.user.role !== 'ADMIN') {
+      throw new HttpError("Unauthorized", 403);
+    }
+    if (type !== BaggageType.CABIN && type !== BaggageType.CHECKED) {
+      throw new HttpError("Invalid Baggage Type", 400);
+    }
+    const id = req.params.id;
+    if (!id) {
+      throw new HttpError("Invalid ID", 400);
+    }
+
+    const payload: any = {};
+    if (weight) {
+      payload.weight = weight;
+    }
+    if (type) {
+      payload.type = type;
+    }
+    const updatedBaggage = await prisma.baggageWeight.update({
+      where: { id },
+      data: payload,
+    });
+    res.status(201).json(updatedBaggage);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const getBaggageWeight = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const baggage = await prisma.baggageWeight.findMany();
+    res.status(200).json(baggage);
+  } catch (error) {
+    next(error);
+  }
+}

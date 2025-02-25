@@ -77,6 +77,9 @@ import {
   forgotPassword,
   verifyOTP,
   getAdminById,
+  addBaggageWeight,
+  getBaggageWeight,
+  upadteBaggageWeight,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authmiddleware";
 
@@ -174,5 +177,10 @@ router.post("/delete-blog", deleteBlog);
 router.get("/bookings", fetchBooking);
 router.post("/update-booking", updateBooking);
 router.post("/delete-booking", deleteBooking);
+
+//Baggage Routes
+router.post("/baggage", authenticateToken, addBaggageWeight);
+router.put("/baggage/:id", authenticateToken, upadteBaggageWeight);
+router.get('/baggage', getBaggageWeight);
 
 export default router;

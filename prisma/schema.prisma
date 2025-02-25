@@ -455,3 +455,14 @@ model AmadeusOffer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum BaggageType {
+  CABIN
+  CHECKED
+}
+
+model BaggageWeight {
+  id     String      @id @default(uuid()) @map("_id")
+  weight String
+  type   BaggageType @unique
+}
