@@ -350,7 +350,7 @@ export const parseKiuResposne = (data: any, kiuFirewall: any = [], origin: strin
           return;
         }
 
-        responseId += `${route?.MarketingAirline[0]?.$?.CompanyShortName}${route?.$?.FlightNumber}`
+        responseId += `${route?.MarketingAirline[0]?.$?.CompanyShortName}${route?.$?.FlightNumber.lenght === 4 ? route?.$?.FlightNumber : '0'.repeat(4 - route?.$?.FlightNumber.length) + route?.$?.FlightNumber}`
         routeId += route?.DepartureAirport?.[0]?.$?.LocationCode + route?.ArrivalAirport?.[0]?.$?.LocationCode + ','
 
         // Convert date strings to Moment.js objects

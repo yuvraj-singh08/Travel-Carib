@@ -129,10 +129,10 @@ export const sendEmail = async (bookingData: any) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      // user: process.env.EMAIL,
-      // pass: process.env.PASSWORD,
-      user: "hemant@adirayglobal.com",
-      pass: "ogmnatcklinhjoyl",
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
+      // user: "hemant@adirayglobal.com",
+      // pass: "ogmnatcklinhjoyl",
     },
   });
 
@@ -213,7 +213,7 @@ export const sendEmail = async (bookingData: any) => {
     from: "hemant27134@gmail.com",
     to: bookingData?.contactDetail?.email,
     // to:"hemant27134@gmail.com",
-    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com",
+    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_7",
     context: processedBookingData,

@@ -14,7 +14,7 @@ export async function sendOTP(email: string, id: string) {
     data: {
       otp: data.otp,
       email: data.email,
-      Admin: {
+      User: {
         connect: {
           id: data.id,
         },

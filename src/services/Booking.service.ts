@@ -1,10 +1,10 @@
-import { CreateBookingServiceParams } from "../../types/flightTypes";
+import { CreateBookingServiceParams, UpdateSubBookingType } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
 
 export const createBookingService = async (params: CreateBookingServiceParams) => {
     try {
         let totalAmount = params.flightData.total_amount;
-        let count = 0 , adult = 0, children = 0, infant = 0;
+        let count = 0, adult = 0, children = 0, infant = 0;
         params.passengers.forEach((passenger) => {
             if (passenger.type === "adult") {
                 adult++;
@@ -18,7 +18,7 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                 count++;
             })
         })
-        
+
         const booking = await prisma.booking.create({
             data: {
                 contactDetail: {
@@ -69,6 +69,27 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
             payment: payment.id,
             success: true,
         });
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const updateSubBookingService = async (params: UpdateSubBookingType) => {
+    try {
+        const payload = {};
+        if (params.status) {
+            payload['status'] = params.status;
+        }
+        if (params.ticket) {
+            payload['ticket'] = params.ticket;
+        }
+        const updatedBooking = await prisma.subBooking.update({
+            where: {
+                id: params.id,
+            },
+            data: payload
+        });
+        return updatedBooking;
     } catch (error) {
         throw error;
     }

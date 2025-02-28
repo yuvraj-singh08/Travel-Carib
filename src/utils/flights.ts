@@ -1,9 +1,9 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
+import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
-import { getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
+import { findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
@@ -95,11 +95,40 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
                     arriving_at,
                     cabinBaggage: sliceCabinBaggage,
                     checkedBaggage: sliceCheckedBaggage,
-                    cabin_class: duffelResponse.data.cabin_class
+                    cabin_class: duffelResponse.data.cabin_class,
+                    fareBrand: result.slices[0].fare_brand_name
                 })
             }
         })
-        return response
+        const uniqueResponses = new Map<string, any[]>();
+        response.forEach((response) => {
+            uniqueResponses.set(response.responseId, [...(uniqueResponses.get(response.responseId) || []), response]);
+        });
+        const result = [];
+        uniqueResponses.forEach((offers, key) => {
+            let totalAmount = 99999999;
+            let fareBrands = [];
+            let offerIndex = 0;
+            offers.forEach((offer, index) => {
+                if (offer.total_amount < totalAmount) {
+                    totalAmount = offer.total_amount
+                    offerIndex = index;
+                }
+                fareBrands.push({
+                    fareBrand: offer.fareBrand,
+                    totalAmount: offer.total_amount,
+                    cabinBaggage: offer.cabinBaggage,
+                    checkedBaggage: offer.checkedBaggage,
+                    offerId: offer.id,
+                })
+            })
+            result.push({
+                ...offers[offerIndex],
+                fareBrands: fareBrands
+            })
+        })
+
+        return result;
     } catch (error) {
         throw error;
     }
@@ -117,7 +146,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
                 if (!flag) {
                     return;
                 }
-                responseId += segment?.carrierCode + segment?.number
+                responseId += segment?.carrierCode + (segment?.number.length === 4 ? segment.number : '0'.repeat(4 - segment?.number.length) + segment?.number)
                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
                 for (let i = 0; i < firewall.length; i++) {
                     if (firewall[i].from === origin && firewall[i].to === destination) {
@@ -483,12 +512,16 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
         }
 
         let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
+        const fareBrandsArray = [];
         offer.forEach((route) => {
             totalAmount = totalAmount + parseFloat(route.total_amount);
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
+            if (route.fareBrands)
+                fareBrandsArray.push(route.fareBrands);
         });
+        const commonFareBrands: AggregatedFareBrand[] = findCommonFareBrands(fareBrandsArray);
         if (totalAmount > 10000) {
             console.log("Route Price is over the limit");
         }
@@ -523,6 +556,7 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
             slices,
             cabinBaggage,
             checkedBaggage,
+            fareBrands: commonFareBrands,
             cabinClass
         };
     })
@@ -531,14 +565,14 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
 }
 
 export const normalizeMultiResponse = (response: any, cabinClass: string) => {
-    const result = response.map((offer) => {
+    const result = response.map((offers) => {
         let total_amount = 0;
-        offer.forEach((offer) => {
+        offers.forEach((offer) => {
             total_amount += parseFloat(offer.total_amount);
         })
         return {
             total_amount,
-            itenaries: offer,
+            itenaries: offers,
             cabinClass
         }
     })

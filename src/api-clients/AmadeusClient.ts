@@ -66,8 +66,8 @@ class AmadeusClient {
 
       return response.data;
     } catch (error) {
-      console.log(error);
-      throw error;
+      console.log("Price Calendar Error: ", error);
+      return { success: false, message: "No data found" };
     }
   }
 
@@ -123,8 +123,8 @@ class AmadeusClient {
           }
         }
       }))
-      const savedResponse = await saveAmadeusResponse(response.data);
-      return { data: savedResponse, dictionaries: response.result.dictionaries };
+      // const savedResponse = await saveAmadeusResponse(response.data);
+      return { data: response.data, dictionaries: response.result.dictionaries };
     } catch (error) {
       throw error;
     }
