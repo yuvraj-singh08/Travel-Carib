@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { generateNewPdf } from "./pdfService";
 import { getSocials } from "../controllers/adminController";
 import { prisma } from "../prismaClient";
+import { uploadImageToS3 } from "../controllers/storageController";
 
 const hbs = require("nodemailer-express-handlebars");
 
@@ -51,6 +52,58 @@ export const sendEmail = async (bookingData: any) => {
   const links: SocialPlatform[] = socialLinks[0].socialPlatforms;
   console.log("response sociAL", links[0].url);
 
+
+  // const processFlightLogos = async (flightData: any): Promise<any> => {
+  //   if (!flightData) return flightData;
+  
+  //   // Handle array case
+  //   if (Array.isArray(flightData)) {
+  //     return Promise.all(flightData.map(async (item) => await processFlightLogos(item)));
+  //   }
+  
+  //   // Handle object case
+  //   if (typeof flightData === 'object') {
+  //     // Check if we're at the operating_carrier level
+  //     if (flightData.operating_carrier?.logo_symbol_url && flightData.operating_carrier?.iata_code) {
+  //       try {
+  //         const newUrl = await uploadImageToS3(
+  //           flightData.operating_carrier.logo_symbol_url,
+  //           flightData.operating_carrier.iata_code
+  //         );
+  //         flightData.operating_carrier.logo_symbol_url = newUrl;
+  //       } catch (error) {
+  //         console.error('Error uploading airline logo:', error);
+  //       }
+  //     }
+  
+  //     // Recursively process object properties
+  //     await Promise.all(Object.keys(flightData).map(async (key) => {
+  //       flightData[key] = await processFlightLogos(flightData[key]);
+  //     }));
+  //   }
+  
+  //   return flightData;
+  // };
+
+
+  // let processedBookingData = {
+  //   ...bookingData,
+  //   downloadLink,
+  //   links,
+  //   passenger: (() => {
+  //     /* existing passenger logic */
+  //   })(),
+  // };
+  
+  // // Process flight details for all possible structures
+  // processedBookingData = {
+  //   ...processedBookingData,
+  //   flightDetails: await processFlightLogos(processedBookingData.flightDetails),
+  // };
+
+
+
+
   let processedBookingData = {
     ...bookingData,
     downloadLink,
@@ -76,14 +129,14 @@ export const sendEmail = async (bookingData: any) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      // user: process.env.EMAIL,
-      // pass: process.env.PASSWORD,
-      user: "hemant@adirayglobal.com",
-      pass: "ogmnatcklinhjoyl",
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
+      // user: "hemant@adirayglobal.com",
+      // pass: "ogmnatcklinhjoyl",
     },
   });
 
-  const handlebarOptions = {
+  const handlebarOptions = { 
     viewEngine: {
       extName: ".hbs",
       partialsDir: path.resolve(__dirname, "./src/services/views/"),
@@ -100,6 +153,8 @@ export const sendEmail = async (bookingData: any) => {
         },
         formatIsoDate: (isoDate: string) => {
           const date = new Date(isoDate);
+          console.log("data in helper",date);
+          
           return format(date, "EEE, MMMM dd, yyyy");
         },
         formatDuration: function (duration) {
@@ -124,6 +179,20 @@ export const sendEmail = async (bookingData: any) => {
         inc: (value: any) => {
           return parseInt(value) + 1;
         },
+
+        uploadLogo: async (url: string, iataCode: string) => {
+          console.log("url in helper")
+          try {
+            const newUrl = await uploadImageToS3(url, iataCode);
+            console.log("url in helper",newUrl)
+            return newUrl;
+          } catch (error) {
+            console.error('Error in uploadLogo helper:', error);
+            return url; // Return the original URL if there's an error
+          }
+        },
+
+
       },
     },
     viewPath: path.resolve("./src/services/views/"),
@@ -142,15 +211,14 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from: "hemant27134@gmail.com",
-    // to: bookingData?.contactDetail?.email,
+    to: bookingData?.contactDetail?.email,
     // to:"hemant27134@gmail.com",
-    to:"kumarbittu.co@gmail.com",
-    // bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,anshyuve@gmail.com",
+    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
     subject: "Your Flight Ticket Confirmation",
-    template: "template_6",
+    template: "template_7",
     context: processedBookingData,
     attachments: [{
-      filename: `ticket-${bookingData.id}.pdf`,
+      filename: `ticket-33${bookingData.id}.pdf`,
       content: Buffer.from(pdfBuffer),
       contentType: 'application/pdf'
     }]

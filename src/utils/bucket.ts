@@ -40,3 +40,49 @@ export const generateUploadUrl = async () => {
     throw error;
   }
 };
+
+
+
+
+import axios from "axios";
+
+
+
+
+
+export const uploadImageFromUrl = async (imageUrl) => {
+  console.log("url in uploadImageFromUrl",imageUrl)
+  const randomId = generateRandomId(5);
+  const imageName = `vuelitos-${randomId}.jpeg`;
+
+  try {
+    // Download image from the provided URL
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const imageBuffer = Buffer.from(response.data);
+
+    const contentType = response.headers["content-type"];
+    // if (!contentType || !contentType.startsWith("image/")) {
+    //   console.log("contentType",contentType);
+      
+    //   throw new Error("Invalid image URL or unsupported image format");
+    // }
+
+    // Upload image to S3
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: imageName,
+      Body: imageBuffer,
+      // ContentType: "image/jpeg",
+      ContentType: contentType,
+
+    });
+
+    const res=await s3Client.send(command);
+    console.log("res in uploadImageFromUrl",res);
+    
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${imageName}`;
+  } catch (error) {
+    console.error("Error uploading image to S3:", error);
+    throw error;
+  }
+};
