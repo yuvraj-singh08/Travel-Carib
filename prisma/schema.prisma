@@ -391,7 +391,7 @@ model OfferPassengers {
   multicity_passenger_id String?
   baggageDetails         Json[]
   offer                  Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  offerId                String   @db.ObjectId
+  offerId                String 
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
@@ -403,7 +403,7 @@ enum SubBookingStatus {
 }
 
 model Offer {
-  id         String            @id @default(auto()) @map("_id") @db.ObjectId
+  id         String            @id @default(uuid()) @map("_id") // UUID with _id mapping
   data       String
   passengers OfferPassengers[]
   flightWay  RouteType

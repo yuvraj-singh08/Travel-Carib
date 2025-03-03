@@ -1,12 +1,15 @@
 import axios, { AxiosInstance } from 'axios';
-import { buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineFlightsWithMinimumLayover, getDateString, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import { buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, getDateString, newbuildFlightSearchRequest, newKiuParser, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
-import { FlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
+import { FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
-import { CommissionType } from '../../types/flightTypes';
+import { CommissionType, Offer } from '../../types/flightTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
 import { capitalizeFirstLetter } from '../utils/utils';
+import HttpError from '../utils/httperror';
+import { maxTime } from 'date-fns/constants';
+import { combineAllRoutes, normalizeResponse } from '../utils/flights';
 
 class KiuClient {
   private endpoint: string;
@@ -155,6 +158,46 @@ class KiuClient {
         return [];
       }
       throw error;
+    }
+  }
+
+  async newSearchFlights(params: NewKiuFlightSearchParams): Promise<any> {
+    try {
+      const requestXML = newbuildFlightSearchRequest(params, this.mode);
+      const response = await this.axiosInstance.post('', {
+        user: this.clientId,
+        password: this.clientSecret,
+        request: requestXML
+      })
+      const parser = new xml2js.Parser();
+      const jsonResponse = await parser.parseStringPromise(response.data) as { KIU_AirAvailRS: KiuJsonResponseType };
+      //@ts-ignore
+      if (jsonResponse?.Root?.Error) {
+        throw new HttpError("Error in KIU response check server log", 500);
+      }
+      const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
+        return OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.map((OriginDestionationOption) => {
+          return newKiuParser(OriginDestionationOption) as Offer;
+        })
+      })
+      const combinedIteneries = combineAllRoutes(itenaries, {minTime: "10", maxTime: "9999999999"});
+      const normalizedResponse = normalizeResponse(combinedIteneries, [], "economy")
+      return normalizedResponse || [];
+    } catch (error) {
+      if (error?.response?.status === 509) {
+        console.log("KIU's request limit exceeded");
+        return [];
+      }
+      console.log(error.message);
+      return [];
+    }
+  }
+
+  async newSearchPrice(params) {
+    try {
+
+    } catch (error) {
+
     }
   }
 

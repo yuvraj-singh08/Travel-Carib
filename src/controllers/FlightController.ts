@@ -8,6 +8,7 @@ import { MulticityOffer, Offer, SubBookingType } from '../../types/flightTypes';
 import { flightTypeValue, GDS, SubBookingStatusValues } from '../../constants/cabinClass';
 import { createBookingService } from '../services/Booking.service';
 import { AuthenticatedRequest } from '../../types/express';
+import redis from '../../config/redis';
 
 class FlightController {
   private flightClient: FlightClientInstance;
@@ -17,6 +18,7 @@ class FlightController {
     this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
     this.multiCitySearch = this.multiCitySearch.bind(this);
     this.BookFlight = this.BookFlight.bind(this);
+    this.newMulticitSearch = this.newMulticitSearch.bind(this);
   }
 
   async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -41,6 +43,32 @@ class FlightController {
         sortBy: sortBy || "BEST"
       })
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async newMulticitSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy, flightWay } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass || !flightWay) {
+        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters, flightWay");
+      }
+      const response = await this.flightClient.newMulticityFlightSearch({
+        FlightDetails,
+        passengerType,
+        maxLayovers,
+        passengers: {
+          adults: parseInt(passengers?.adults) || 1,
+          children: parseInt(passengers?.children) || 0,
+          infants: parseInt(passengers?.infants) || 0,
+        },
+        sortBy: sortBy || "BEST",
+        cabinClass,
+        filters,
+        flightWay
+      })
+      res.json(response);
     } catch (error) {
       next(error);
     }
@@ -228,6 +256,16 @@ class FlightController {
         res.status(200).json(bookingResponse);
       }
 
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getFullData(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.searchKey;
+      const cachedData = JSON.parse(await redis.get(id));
+      res.status(200).json({success: true, data: cachedData});
     } catch (error) {
       next(error);
     }

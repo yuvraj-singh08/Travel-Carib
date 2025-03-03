@@ -11,6 +11,21 @@ export type FlightOfferSearchParams = {
     cabinClass: CabinClass
 }
 
+export type OriginDestination = {
+    id: number,
+    originLocationCode: string,
+    destinationLocationCode: string,
+    departureDateTimeRange: {
+        date: string,
+    }
+}
+
+export type AmadeusNewSearchParams = {
+    passengers: any;
+    originDestinations: OriginDestination[];
+    cabinClass: string;
+}
+
 export type multiCityFlightSearchParams = {
     routeSegments: routeType[],
     departureDate: string,

@@ -19,6 +19,8 @@ async function setupRoutes() {
     router.post('/get-possible-routes', flightController.getPossibleRoutes);
     router.post('/search-round', flightController.getPossibleRoutes);
     router.post('/book', authenticateToken, flightController.BookFlight);
+    router.post('/new-multicity-search', flightController.newMulticitSearch)
+    router.get('/fullData/:searchKey', flightController.getFullData);
 
   } catch (error) {
     console.error('Error initializing FlightController:', error);

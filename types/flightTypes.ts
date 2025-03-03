@@ -112,6 +112,8 @@ export interface AggregatedFareBrand {
 
 export type Slice = {
     comparison_key: string;
+    departing_at?: string;
+    arriving_at?: string;
     ngs_shelf: number;
     destination_type: string;
     origin_type: string;
@@ -136,27 +138,27 @@ export type Slice = {
     travelerPricings?: any,
 };
 
-type Segment = {
-    origin_terminal: string;
-    destination_terminal: string | null;
-    aircraft: string | null;
-    departing_at: string;
-    arriving_at: string;
-    operating_carrier: Carrier;
-    marketing_carrier: Carrier;
-    operating_carrier_flight_number: string;
-    marketing_carrier_flight_number: string;
-    stops: any[];
-    distance: string | null;
-    passengers: SegmentPassenger[];
-    media: any[];
-    duration: string;
-    destination: Location;
-    origin: Location;
-    id: string;
-    checkedBaggage: number;
-    cabinBaggage: number;
-    bookingAvl: any,
+export type Segment = {
+    origin_terminal?: string;
+    destination_terminal?: string | null;
+    aircraft?: string | null;
+    departing_at?: string;
+    arriving_at?: string;
+    operating_carrier?: Carrier;
+    marketing_carrier?: Carrier;
+    operating_carrier_flight_number?: string;
+    marketing_carrier_flight_number?: string;
+    stops?: any[];
+    distance?: string | null;
+    passengers?: SegmentPassenger[];
+    media?: any[];
+    duration?: string;
+    destination?: Location;
+    origin?: Location;
+    id?: string;
+    checkedBaggage?: number;
+    cabinBaggage?: number;
+    bookingAvl?: any,
     segmentPrice?: any
 };
 
@@ -215,18 +217,18 @@ export type DbBaggageType = {
 
 
 type Location = {
-    iata_city_code: string;
-    city_name: string | null;
-    icao_code: string | null;
-    iata_country_code: string;
-    iata_code: string;
-    latitude: number | null;
-    longitude: number | null;
-    city: City | null;
-    time_zone: string | null;
-    type: string;
-    name: string;
-    id: string;
+    iata_city_code?: string;
+    city_name?: string | null;
+    icao_code?: string | null;
+    iata_country_code?: string;
+    iata_code?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    city?: City | null;
+    time_zone?: string | null;
+    type?: string;
+    name?: string;
+    id?: string;
 };
 
 type City = {
@@ -254,12 +256,12 @@ type Passenger = {
 };
 
 type Carrier = {
-    logo_symbol_url: string;
-    logo_lockup_url: string;
-    conditions_of_carriage_url: string;
-    iata_code: string;
-    name: string;
-    id: string;
+    logo_symbol_url?: string;
+    logo_lockup_url?: string;
+    conditions_of_carriage_url?: string;
+    iata_code?: string;
+    name?: string;
+    id?: string;
 };
 
 export type FilterType = {

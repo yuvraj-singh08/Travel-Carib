@@ -9,6 +9,7 @@ class KiuController {
         this.kiuClient = kiuClient;
         this.searchFlights = this.searchFlights.bind(this);
         this.multiCitySearch = this.multiCitySearch.bind(this);
+        this.newSearchFlights = this.newSearchFlights.bind(this);
     }
 
     static async create() {
@@ -25,6 +26,16 @@ class KiuController {
             const { OriginLocation, DestinationLocation, DepartureDate, CabinClass, ReturnDate, Passengers } = req.body;
             const response = await this.kiuClient.searchFlights({ OriginLocation, CabinClass, DestinationLocation, DepartureDate, ReturnDate, Passengers, tripOrigin: OriginLocation, tripDestination: DestinationLocation }, "FWE", null);
             res.send(response);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async newSearchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { OriginDestinationOptions, CabinClass, ReturnDate, Passengers } = req.body;
+            const response = await this.kiuClient.newSearchFlights({ OriginDestinationOptions,CabinClass, ReturnDate, Passengers });
+            res.json(response);
         } catch (error) {
             next(error);
         }

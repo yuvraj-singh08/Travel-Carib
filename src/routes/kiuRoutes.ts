@@ -5,8 +5,8 @@ const router = express.Router();
 
 async function setRoutes() {
     try {
-        const kiuController = await KiuController.create();
-
+        const kiuController = new KiuController({ kiuClient: await KiuController.create() });
+        router.post('/new', kiuController.newSearchFlights);
         router.post('/', kiuController.multiCitySearch);
     } catch (error) {
 

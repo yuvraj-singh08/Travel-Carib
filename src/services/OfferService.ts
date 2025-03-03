@@ -94,7 +94,7 @@ export async function getOffer(id: string) {
                 const savedPassengers = await Promise.all(flag ? parsedOffer.slices[0].passengers?.map((passenger) => {
                     return prisma.offerPassengers.create({
                         data: {
-                            type: passenger.type,
+                            type: passenger.type.toLowerCase(),
                             gds_passenger_id: [passenger.id],
                             offerId: id
                         }
@@ -184,7 +184,7 @@ export async function getOffer(id: string) {
                 const savedPassengers = await Promise.all(flag ? parsedOffer.itenaries[0].slices[0].passengers.map((passenger) => {
                     return prisma.offerPassengers.create({
                         data: {
-                            type: passenger.type,
+                            type: passenger.type.toLowerCase(),
                             multicity_passenger_id: JSON.stringify([[passenger.id]]),
                             offerId: id
                         }

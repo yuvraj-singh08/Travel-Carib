@@ -6,9 +6,12 @@ import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { getAmadeusOffer, saveData } from "../services/OfferService";
-import customDateFormat, { getNextDay, getPassengerArrays } from "../utils/utils";
+import {  saveData } from "../services/OfferService";
+import  { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
+import { getCachedAmadeusOffer } from "../services/caching.service";
+import {v4 as uuidv4} from 'uuid';
+import redis from "../../config/redis";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
@@ -28,6 +31,59 @@ class FlightClient {
             const kiuClient = await KiuClient.create();
 
             return new FlightClient({ duffelClient, amadeusClient, kiuClient });
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async newMulticityFlightSearch({ FlightDetails, passengerType, sortBy, maxLayovers, passengers, cabinClass, filters, flightWay }: MultiCitySearchParams) {
+        try {
+            const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(passengers);
+            const duffelRequest = this.duffelClient.createOfferRequest({
+                passengers: duffelPassengersArray,
+                cabin_class: cabinClass,
+                max_connections: 2,
+                slices: FlightDetails.map((flightLeg) => {
+                    return {
+                        origin: flightLeg.originLocation,
+                        destination: flightLeg.destinationLocation,
+                        departure_date: flightLeg.departureDate,
+                    }
+                }),
+            })
+            const amadeusRequest = this.amadeusClient.newSearchFlights({
+                passengers: amadeusPassengersArray,
+                cabinClass: cabinClass,
+                originDestinations: FlightDetails.map((flightLeg, index) => {
+                    return {
+                        id: index + 1,
+                        originLocationCode: flightLeg.originLocation,
+                        destinationLocationCode: flightLeg.destinationLocation,
+                        departureDateTimeRange: {
+                            date: flightLeg.departureDate
+                        },
+                    }
+                })
+            }, 0)
+            const kiuRequest = this.kiuClient.newSearchFlights({
+                Passengers: passengers,
+                CabinClass: cabinClass,
+                OriginDestinationOptions: FlightDetails.map((flightLeg) => {
+                    return {
+                        OriginLocation: flightLeg.originLocation,
+                        DestinationLocation: flightLeg.destinationLocation,
+                        DepartureDate: flightLeg.departureDate,
+                    }
+                }),
+
+            })
+            const [kiuResponse, amadeusResponse, duffelREsponse] = await Promise.all([
+                kiuRequest,
+                amadeusRequest,
+                duffelRequest
+            ]);
+            return { kiuResponse, amadeusResponse, duffelREsponse };
+
         } catch (error) {
             throw error;
         }
@@ -350,14 +406,17 @@ class FlightClient {
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
-            const result = sortedResponse.filter((route, index) => {
+            const savedData = await saveData(sortedResponse, params.passengers, "ONEWAY");
+            // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
+            const id = uuidv4();
+            redis.set(id, JSON.stringify(savedData));
+            const result = savedData.filter((route, index) => {
                 if (index < 60) {
                     return true;
                 }
                 return false;
             })
-            const savedData = await saveData(result, params.passengers, "ONEWAY");
-            return { flightData: savedData, airlinesDetails };
+            return { flightData: result, airlinesDetails, searchKey: id };
 
         } catch (error) {
             throw (error);
@@ -370,7 +429,7 @@ class FlightClient {
 
     async bookAmadeusFlight(gdsOfferId: string, passengers: PassengerType[]) {
         try {
-            const amadeusOffer = await getAmadeusOffer(gdsOfferId)
+            const amadeusOffer = await getCachedAmadeusOffer(gdsOfferId)
 
             const passengersData = passengers.map((passenger, index) => {
                 let returnValue = {
@@ -408,7 +467,7 @@ class FlightClient {
                 }
                 return returnValue
             })
-            const response = await this.amadeusClient.bookingFlight(amadeusOffer.data, passengersData)
+            const response = await this.amadeusClient.bookingFlight(amadeusOffer, passengersData)
             const PNR = response?.result?.data?.associatedRecords?.filter((record) => record.originSystemCode === 'GDS')?.[0]?.reference;
             return PNR;
         } catch (error) {

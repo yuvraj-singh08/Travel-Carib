@@ -1,8 +1,8 @@
 import Amadeus from 'amadeus'
-import { amadeusClientType, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
+import { amadeusClientType, AmadeusNewSearchParams, FlightOfferSearchParams, multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { amadeusClass } from '../../constants/cabinClass';
-import { saveAmadeusResponse } from '../services/OfferService';
 import { getGdsCreds } from '../services/GdsCreds.service';
+import { cacheAmadeusResponse } from '../services/caching.service';
 
 class AmadeusClient {
   private client: amadeusClientType;
@@ -71,6 +71,38 @@ class AmadeusClient {
     }
   }
 
+  async newSearchFlights(params: AmadeusNewSearchParams, index: number): Promise<any> {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100 * (index)))
+      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
+        currencyCode: process.env.ISOCurrency || "USD",
+        originDestinations: params.originDestinations,
+        travelers: params.passengers,
+        sources: [
+          "GDS"
+        ],
+        searchCriteria: {
+          maxFlightOffers: 50,
+          flightFilters: {
+            cabinRestrictions: [
+              {
+                cabin: amadeusClass[params.cabinClass],
+                coverage: "MOST_SEGMENTS",
+                originDestinationIds: [
+                  1
+                ]
+              }
+            ],
+          }
+        }
+      }))
+      // const savedResponse = await saveAmadeusResponse(response.data);
+      return { data: response.data, dictionaries: response.result.dictionaries };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
     try {
       await new Promise(resolve => setTimeout(resolve, 100 * (index)))
@@ -123,8 +155,8 @@ class AmadeusClient {
           }
         }
       }))
-      // const savedResponse = await saveAmadeusResponse(response.data);
-      return { data: response.data, dictionaries: response.result.dictionaries };
+      const savedResponse = await cacheAmadeusResponse(response.data);
+      return { data: savedResponse, dictionaries: response.result.dictionaries };
     } catch (error) {
       throw error;
     }
@@ -191,7 +223,7 @@ class AmadeusClient {
             'type': 'flight-offers-pricing',
             'flightOffers': [flightOffer],
           }
-        }), { include: 'bags' }
+        }), { include: 'detailed-fare-rules' }
       );
 
       return flightPricingResponse.data;
@@ -206,7 +238,11 @@ class AmadeusClient {
         data: {
           type: "flight-order",
           flightOffers: [amadeusOffer],
-          travelers: passengers
+          travelers: passengers,
+          // ticketingAgreement:{
+          //   option:"DELAY_TO_CANCEL",
+          //   delay:"1D"
+          // }
         },
       }));
       return response;
