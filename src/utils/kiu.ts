@@ -1,5 +1,5 @@
 import { create } from "xmlbuilder2";
-import { FlightSearchParams, KiuJsonResponseType, KiuResponseType, NewKiuFlightSearchParams, OriginDestinationOptionsType, PriceRequestBuilderParams } from "../../types/kiuTypes";
+import { BuildBookingRequestParams, FlightSearchParams, KiuJsonResponseType, KiuResponseType, NewKiuFlightSearchParams, OriginDestinationOptionsType, PriceRequestBuilderParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
 import { GDS } from "../../constants/cabinClass";
@@ -12,7 +12,117 @@ export const getDateString = (date: string) => {
   return dateString;
 }
 
-export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchParams, target: 'Test' | 'Production') => {
+export const buildBookingRequest = (params: BuildBookingRequestParams, target: 'Testing' | 'Production') => {
+  try {
+    const segments = params.segments.map((segment, index: number) => {
+      return {
+        "@DepartureDateTime": moment(segment.departing_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
+        "@ArrivalDateTime": moment(segment.arriving_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
+        "@FlightNumber": segment.operating_carrier_flight_number,
+        "@ResBookDesigCode": segment.ResBookDesigCode,
+        "@SegmentRPH": index + 1,
+        DepartureAirport: {
+          '@LocationCode': segment.origin.iata_code
+        },
+        ArrivalAirport: {
+          '@LocationCode': segment.destination.iata_code
+        },
+        MarketingAirline: {
+          '@Code': segment.operating_carrier.iata_code
+        }
+      }
+    });
+
+    const passengers = params.passengers.map((passenger, index) => {
+      return {
+        PersonName: {
+          "@PTC": "ADT",
+          NamePrefix: passenger.title.toUpperCase(),
+          GivenName: passenger.firstName.toUpperCase(),
+          Surname: passenger.lastName.toUpperCase(),
+        },
+        Document: {
+          "@DocType": "PP",
+          "@DocID": passenger.passportNumber
+        },
+        Telephone: {
+          "@CountryAccessCode": passenger.phoneNumber.substring(1, passenger.phoneNumber.length - 10),
+          "@AreaCityCode": "10",
+          "@PhoneNumber": passenger.phoneNumber.slice(passenger.phoneNumber.length - 10)
+        },
+        Email: passenger.email,
+        TravelerRefNumber: {
+          "@RPH": index + 1
+        }
+      }
+    })
+
+    const currentTime = moment();
+    const departingTime = moment(params.segments[0].departing_at, "YYYY-MM-DD HH:mm:ss");
+
+    // Calculate the time 10 hours from now
+    const timePlus10Hours = currentTime.clone().add(10, 'hours');
+
+    // Calculate the latest permissible time (departure time minus 6 hours)
+    const latestPermissibleTime = departingTime.clone().subtract(6, 'hours');
+
+    // Determine the final time, ensuring it's no later than the latest permissible time
+    const finalTime = moment.min(timePlus10Hours, latestPermissibleTime).format("YYYY-MM-DDTHH:mm:ss");
+
+
+    const timestamp = moment.utc().format('YYYY-MM-DDTHH:mm:ss.S[Z]');
+    const xmlObj = {
+      KIU_AirBookV2RQ: {
+        '@EchoToken': 'GERTESTWS3DOCS',
+        '@Target': target,
+        '@Version': '3.0',
+        '@SequenceNmbr': '1',
+        '@PrimaryLangID': 'en-us',
+        '@TimeStamp': timestamp,
+        "@xmlns:ns": "http://www.opentravel.org/OTA/2003/05/common",
+        "@xmlns:vc": "http://www.w3.org/2007/XMLSchema-versioning",
+        "@xmlns:sch": "http://purl.oclc.org/dsdl/schematron",
+        "@xmlns:fn": "http://www.w3.org/2005/xpath-functions",
+        "@xmlns": "http://www.opentravel.org/OTA/2003/05",
+        "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        "@xsi:schemaLocation": "http://www.opentravel.org/OTA/2003/05",
+        POS: {
+          Source: {
+            '@AgentSine': process.env.AgentSine,
+            '@TerminalID': process.env.TerminalID,
+            '@ISOCountry': process.env.ISOCountry,
+            '@ISOCurrency': process.env.ISOCurrency
+          }
+        },
+        AirItinerary: {
+          OriginDestinationOptions: {
+            OriginDestinationOption: {
+              FlightSegment: segments
+            }
+          }
+        },
+        TravelerInfo: {
+          AirTraveler: passengers
+        },
+        Ticketing: {
+          "@CancelOnExpiryInd": "true",
+          "@TicketTimeLimit": finalTime,
+          "@TimeLimitCity": "UTC"
+        }
+      }
+    };
+    const doc = create(xmlObj);
+    const xml = doc.end({ prettyPrint: true });
+    console.log("Booking Request: ");
+    console.log(xml);
+    return xml;
+
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchParams, target: 'Testing' | 'Production') => {
   const segments = params.routeSegments.map((segment) => {
     return {
       DepartureDateTime: params.departureDate,
@@ -66,7 +176,7 @@ export const bulidMultiCityFlightSearchRequest = (params: multiCityFlightSearchP
   return xml;
 }
 
-export const newbuildFlightSearchRequest = (params: NewKiuFlightSearchParams, target: 'Test' | 'Production') => {
+export const newbuildFlightSearchRequest = (params: NewKiuFlightSearchParams, target: 'Testing' | 'Production') => {
   const xmlObj = {
     KIU_AirAvailRQ: {
       '@EchoToken': '1',
@@ -113,7 +223,7 @@ export const newbuildFlightSearchRequest = (params: NewKiuFlightSearchParams, ta
   return xml;
 }
 
-export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Test' | 'Production') => {
+export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Testing' | 'Production') => {
   const xmlObj = {
     KIU_AirAvailRQ: {
       '@EchoToken': '1',
@@ -158,7 +268,7 @@ export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Te
   return xml;
 }
 
-export const buildFlightPriceRequest = (params: PriceRequestBuilderParams, target: 'Test' | 'Production') => {
+export const buildFlightPriceRequest = (params: PriceRequestBuilderParams, target: 'Testing' | 'Production') => {
   // console.log("Marketing Airline: ", params.MarketingAirline);
   const xmlObj = {
     KIU_AirPriceRQ: {

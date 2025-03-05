@@ -1,3 +1,5 @@
+import { PassengerType, Segment, Slice } from "./flightTypes";
+
 export type FlightSearchParams = {
     OriginLocation: string,
     DestinationLocation: string,
@@ -127,4 +129,15 @@ export type KiuJsonResponseType = {
     };
     Success: string[];
     OriginDestinationInformation: OriginDestinationInformation[];
+}
+
+export type BuildBookingRequestParams = {
+    segments: Segment[],
+    passengers: PassengerType[]
+}
+
+export type BookingRequestParams = {
+    slice: Slice,
+    passengers: PassengerType[],
+
 }

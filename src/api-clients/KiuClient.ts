@@ -1,10 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
-import { buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, getDateString, newbuildFlightSearchRequest, newKiuParser, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, getDateString, newbuildFlightSearchRequest, newKiuParser, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
-import { FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
+import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
-import { CommissionType, Offer } from '../../types/flightTypes';
+import { CommissionType, Offer, Slice } from '../../types/flightTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
 import { capitalizeFirstLetter } from '../utils/utils';
 import HttpError from '../utils/httperror';
@@ -16,9 +16,9 @@ class KiuClient {
   private axiosInstance: AxiosInstance;
   private clientId: string;
   private clientSecret: string;
-  private mode: 'Test' | 'Production';
+  private mode: 'Testing' | 'Production';
 
-  constructor(creds: { clientId: string; clientSecret: string, mode: 'Test' | 'Production' }) {
+  constructor(creds: { clientId: string; clientSecret: string, mode: 'Testing' | 'Production' }) {
     this.clientId = creds.clientId;
     this.clientSecret = creds.clientSecret;
     this.mode = creds.mode;
@@ -44,11 +44,15 @@ class KiuClient {
       if (!creds) {
         throw new Error("Amadeus credentials not found in DB");
       }
+      let mode = capitalizeFirstLetter(creds.mode.toLowerCase())
+      if(mode === "Test"){
+        mode = 'Testing';
+      }
 
       const client = new KiuClient({
         clientId: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
         clientSecret: creds.mode === 'PRODUCTION' ? creds.productionApiSecret : creds.testApiSecret,
-        mode: capitalizeFirstLetter(creds.mode.toLowerCase()) as 'Test' | 'Production',
+        mode:  mode as 'Testing' | 'Production',
       });
 
       return client;
@@ -84,7 +88,9 @@ class KiuClient {
                 let flag = false;
                 let code = null;
                 segment?.bookingAvl?.forEach((bookingAvl) => {
-                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants) && (((params.CabinClass === 'economy' || params.CabinClass === 'premium_economy') && (!kiuClasses.business.includes(bookingAvl.code) && !kiuClasses.first.includes(bookingAvl.code))) || cabinClass.includes(bookingAvl.code))) {
+                  if(flag)
+                    return;
+                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants) ) {
                     flag = true;
                     code = bookingAvl.code;
                   }
@@ -117,6 +123,7 @@ class KiuClient {
 
                 // Update the parsedResponse with the price data
                 parsedResponse[offerIndex].slices[sliceIndex].segments[segmentIndex].segmentPrice = total_amount;
+                parsedResponse[offerIndex].slices[sliceIndex].segments[segmentIndex].ResBookDesigCode = code;
                 return priceResponse;
               })
             );
@@ -180,7 +187,7 @@ class KiuClient {
           return newKiuParser(OriginDestionationOption) as Offer;
         })
       })
-      const combinedIteneries = combineAllRoutes(itenaries, {minTime: "10", maxTime: "9999999999"});
+      const combinedIteneries = combineAllRoutes(itenaries, { minTime: "10", maxTime: "9999999999" });
       const normalizedResponse = normalizeResponse(combinedIteneries, [], "economy")
       return normalizedResponse || [];
     } catch (error) {
@@ -213,6 +220,10 @@ class KiuClient {
       // console.log("Price Response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
+      if(jsonResponse?.KIU_AirPriceRS?.Error){
+        console.log("Error in kiu pricing:");
+        console.log(jsonResponse?.KIU_AirPriceRS?.Error);
+      }
       return jsonResponse
     } catch (error) {
       throw error;
@@ -236,6 +247,25 @@ class KiuClient {
       return jsonResponse;
     } catch (error) {
       throw error
+    }
+  }
+
+  async bookFlight({ slice, passengers }: BookingRequestParams) {
+    try {
+      const request = buildBookingRequest({
+        segments: slice.segments,
+        passengers: passengers,
+      }, this.mode);
+      const response = await this.axiosInstance.post('', {
+        user: this.clientId,
+        password: this.clientSecret,
+        request
+      });
+      const parser = new xml2js.Parser();
+      const jsonResponse = await parser.parseStringPromise(response.data);
+      return jsonResponse;
+    } catch (error) {
+      throw error;
     }
   }
 

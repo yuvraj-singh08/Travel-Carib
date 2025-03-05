@@ -159,6 +159,7 @@ export type Segment = {
     checkedBaggage?: number;
     cabinBaggage?: number;
     bookingAvl?: any,
+    ResBookDesigCode?: string;
     segmentPrice?: any
 };
 

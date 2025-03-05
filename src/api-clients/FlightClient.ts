@@ -6,11 +6,11 @@ import { parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import {  saveData } from "../services/OfferService";
-import  { getNextDay, getPassengerArrays } from "../utils/utils";
+import { saveData } from "../services/OfferService";
+import { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import redis from "../../config/redis";
 
 class FlightClient {
@@ -423,8 +423,18 @@ class FlightClient {
         }
     }
 
-    async bookKiuFlight() {
-
+    async bookKiuFlight(slice: Slice, passengers: PassengerType[]) {
+        try {
+            const response = await this.kiuClient.bookFlight({
+                slice, passengers
+            });
+            const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
+            const pnr = bookingReference?.$?.ID || "Not Available";
+            return pnr;
+        } catch (error) {
+            console.log("KIU Booking Error: ", error);
+            throw (error);
+        }
     }
 
     async bookAmadeusFlight(gdsOfferId: string, passengers: PassengerType[]) {
