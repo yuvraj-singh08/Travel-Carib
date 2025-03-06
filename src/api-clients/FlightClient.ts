@@ -430,6 +430,10 @@ class FlightClient {
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
             const pnr = bookingReference?.$?.ID || "Not Available";
+            if (bookingReference?.KIU_AirPriceRS?.Error) {
+                console.log("Error in kiu pnr:");
+                console.log(bookingReference?.KIU_AirPriceRS?.Error);
+            }
             return pnr;
         } catch (error) {
             console.log("KIU Booking Error: ", error);

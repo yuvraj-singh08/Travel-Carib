@@ -246,12 +246,12 @@ class FlightController {
                 throw new HttpError("Provider not found", 404);
             }
             subBookings.push({
-              pnr: "Not Found",
+              pnr: "Not Found in response",
               status: SubBookingStatusValues.pending,
               ticketNumber: index++,
               supplier: slice.sourceId,
             })
-            return { ...slice, PNR: "Not Found" };
+            return { ...slice, PNR: "Not Found in response" };
           }))
           return { ...itenary, slices: modifiedSlices }
         }))
