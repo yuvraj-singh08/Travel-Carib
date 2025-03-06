@@ -5,7 +5,7 @@ export const cacheAmadeusResponse = (data: any) => {
     try {
         const dataWithResponseId = data.map((amadeusResponse) => {
             const key = uuidv4();
-            redis.set(key, JSON.stringify(amadeusResponse));
+            redis.setex(key, 60 * 40, JSON.stringify(amadeusResponse));
             return {
                 ...amadeusResponse,
                 gdsOfferId: key
