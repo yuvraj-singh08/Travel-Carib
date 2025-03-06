@@ -157,7 +157,8 @@ class FlightController {
               pnr = await this.flightClient.bookKiuFlight(slice, passengers);
               subBookings.push({
                 pnr,
-                status: SubBookingStatusValues.pending
+                status: SubBookingStatusValues.pending,
+                supplier: slice.sourceId
               })
               return {
                 ...slice,
@@ -169,6 +170,7 @@ class FlightController {
               subBookings.push({
                 pnr,
                 status: SubBookingStatusValues.pending,
+                supplier: slice.sourceId
               });
               return {
                 ...slice,
@@ -180,6 +182,7 @@ class FlightController {
               subBookings.push({
                 pnr,
                 status: SubBookingStatusValues.pending,
+                supplier: slice.sourceId
               });
               return {
                 ...slice,
@@ -246,6 +249,7 @@ class FlightController {
               pnr: "Not Found",
               status: SubBookingStatusValues.pending,
               ticketNumber: index++,
+              supplier: slice.sourceId,
             })
             return { ...slice, PNR: "Not Found" };
           }))

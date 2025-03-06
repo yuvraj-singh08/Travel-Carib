@@ -368,6 +368,7 @@ export type SubBookingType = {
     pnr: string;
     status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
     ticket?: string;
+    supplier: string;
 }
 
 export type CreateBookingServiceParams = {

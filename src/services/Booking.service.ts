@@ -47,6 +47,7 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                     bookingId: booking.id,
                     pnr: subBooking.pnr,
                     status: subBooking.status,
+                    supplier: subBooking.supplier
                 },
             })
         }))

@@ -391,7 +391,7 @@ model OfferPassengers {
   multicity_passenger_id String?
   baggageDetails         Json[]
   offer                  Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  offerId                String 
+  offerId                String
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
@@ -426,6 +426,7 @@ model SubBooking {
   status    SubBookingStatus
   ticket    String?
   pnr       String
+  supplier  String
   bookingId String           @db.ObjectId
   booking   Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade, name: "BookingToSubBooking")
 }
