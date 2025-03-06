@@ -385,8 +385,8 @@ class FlightClient {
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        ...(amadeus?.[index2] || []),
-                        ...(duffel?.[index2] || []),
+                        // ...(amadeus?.[index2] || []),
+                        // ...(duffel?.[index2] || []),
                         ...(kiu?.[index2] || [])
                     ])
                 })
@@ -430,6 +430,8 @@ class FlightClient {
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
             const pnr = bookingReference?.$?.ID || "Not Available";
+            console.log("Booking Reference: ");
+            console.log(bookingReference);
             if (bookingReference?.KIU_AirPriceRS?.Error) {
                 console.log("Error in kiu pnr:");
                 console.log(bookingReference?.KIU_AirPriceRS?.Error);
