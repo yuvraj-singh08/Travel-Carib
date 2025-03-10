@@ -13,9 +13,14 @@ handlebars.registerHelper('formatTime', (datetime: string) => {
   const date = new Date(datetime);
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 });
+
+
 handlebars.registerHelper('formatDuration', (duration: string) => 
-  duration.replace('PT', '').replace('H', 'h ').replace('M', 'm').trim()
+  (duration ?? '').replace('PT', '').replace('H', 'h ').replace('M', 'm').trim()
 );
+
+
+
 handlebars.registerHelper('eq', (a, b) => a === b);
 handlebars.registerHelper('getPassenger', (passengers: any[], index: number)=>{
   return passengers && passengers[index] ? passengers[index] : {};
@@ -23,6 +28,7 @@ handlebars.registerHelper('getPassenger', (passengers: any[], index: number)=>{
 
 
 export async function generateNewPdf(bookingData: any): Promise<Buffer> {
+  // console.log("bookingData",bookingData);
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -53,12 +59,15 @@ export async function generateNewPdf(bookingData: any): Promise<Buffer> {
           return Array.isArray(bookingData.passenger) ? bookingData.passenger : [bookingData.passenger];
         })(),
       };
+      // console.log("processedBookingData",processedBookingData);
 
     const newHtml = newTemplate({
       ...processedBookingData,
       formatIsoDate: (isoDate: string) => 
         new Date(isoDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
     });
+
+    console.log("Generated HTML:", newHtml);
 
     // Set HTML content with network idle check
     await page.setContent(newHtml, {

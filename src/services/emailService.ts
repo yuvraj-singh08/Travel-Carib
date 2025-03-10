@@ -158,12 +158,9 @@ export const sendEmail = async (bookingData: any) => {
           return format(date, "EEE, MMMM dd, yyyy");
         },
         formatDuration: function (duration) {
-          return duration
-            .replace("PT", "")
-            .replace("H", "h ")
-            .replace("M", "m")
-            .trim();
+          return (duration ?? "").replace("PT", "").replace("H", "h ").replace("M", "m").trim();
         },
+           
         eq: (a: any, b: any) => a === b,
         or: (...args) => {
           // The last argument is the Handlebars options object, so we exclude it
@@ -212,7 +209,7 @@ export const sendEmail = async (bookingData: any) => {
   const mailOptions = {
     from: "hemant27134@gmail.com",
     to: bookingData?.contactDetail?.email,
-    // to:"hemant27134@gmail.com",
+    // to:"hemant27134@outlook.com",
     bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_7",
