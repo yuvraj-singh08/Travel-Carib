@@ -4,8 +4,18 @@ import { amadeusClass } from '../../constants/cabinClass';
 import { getGdsCreds } from '../services/GdsCreds.service';
 import { cacheAmadeusResponse } from '../services/caching.service';
 
+// Define the request queue item interface
+interface QueueItem {
+  execute: () => Promise<any>;
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+}
+
 class AmadeusClient {
   private client: amadeusClientType;
+  private requestQueue: QueueItem[] = [];
+  private isProcessingQueue: boolean = false;
+  private queueInterval: number = 20; // 250ms between requests to prevent rate limiting
 
   public constructor(creds: {
     clientId: string,
@@ -37,14 +47,61 @@ class AmadeusClient {
     }
   }
 
+  // Method to add a request to the queue
+  private enqueueRequest<T>(executeFunction: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.requestQueue.push({ 
+        execute: executeFunction, 
+        resolve, 
+        reject 
+      });
+      this.processQueue();
+    });
+  }
+
+  // Method to process the request queue
+  private processQueue(): void {
+    if (this.isProcessingQueue || this.requestQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+    
+    const processNextRequest = () => {
+      if (this.requestQueue.length === 0) {
+        this.isProcessingQueue = false;
+        return;
+      }
+
+      const { execute, resolve, reject } = this.requestQueue.shift()!;
+      
+      execute()
+        .then(response => {
+          resolve(response);
+          setTimeout(() => {
+            processNextRequest();
+          }, this.queueInterval);
+        })
+        .catch(error => {
+          reject(error);
+          setTimeout(() => {
+            processNextRequest();
+          }, this.queueInterval);
+        });
+    };
+
+    processNextRequest();
+  }
+
   async citySearch(query: string, subType: string) {
     try {
-      const response = await this.client.referenceData.locations.get({
-        keyword: query,
-        subType: subType
-      });
-
-      return response.body
+      return this.enqueueRequest(() => 
+        this.client.referenceData.locations.get({
+          keyword: query,
+          subType: subType
+        })
+        .then(response => response.body)
+      );
     } catch (error) {
       console.log("Failed to fetch city search", error)
       throw error
@@ -53,110 +110,95 @@ class AmadeusClient {
 
   async priceCalendar(params: { origin: string, destination: string, date1: string, date2: string, oneWay?: boolean }): Promise<any> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 400))
       const payload = {
         origin: params.origin,
         destination: params.destination,
         departureDate: `${params.date1}${params.date2 ? `,${params.date2}` : ''}`,
         oneWay: params.oneWay || false,
       }
-      console.log("Payload: ", payload);
-      const response = await this.client.shopping.flightDates.get(payload)
-      // const priceCalendar = convertToPriceCalendar(response.data);
-
-      return response.data;
+      
+      return this.enqueueRequest(() => {
+        console.log("Payload: ", payload);
+        return this.client.shopping.flightDates.get(payload)
+          .then(response => response.data);
+      });
     } catch (error) {
       console.log("Price Calendar Error: ", error);
       return { success: false, message: "No data found" };
     }
   }
 
-  async newSearchFlights(params: AmadeusNewSearchParams, index: number): Promise<any> {
+  async newSearchFlights(params: AmadeusNewSearchParams): Promise<any> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 100 * (index)))
-      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-        currencyCode: process.env.ISOCurrency || "USD",
-        originDestinations: params.originDestinations,
-        travelers: params.passengers,
-        sources: [
-          "GDS"
-        ],
-        searchCriteria: {
-          maxFlightOffers: 50,
-          flightFilters: {
-            cabinRestrictions: [
-              {
-                cabin: amadeusClass[params.cabinClass],
-                coverage: "MOST_SEGMENTS",
-                originDestinationIds: [
-                  1
-                ]
-              }
-            ],
+      return this.enqueueRequest(() => {
+        return this.client.shopping.flightOffersSearch.post(JSON.stringify({
+          currencyCode: process.env.ISOCurrency || "USD",
+          originDestinations: params.originDestinations,
+          travelers: params.passengers,
+          sources: [
+            "GDS"
+          ],
+          searchCriteria: {
+            maxFlightOffers: 50,
+            flightFilters: {
+              cabinRestrictions: [
+                {
+                  cabin: amadeusClass[params.cabinClass],
+                  coverage: "MOST_SEGMENTS",
+                  originDestinationIds: [
+                    1
+                  ]
+                }
+              ],
+            }
           }
-        }
-      }))
-      // const savedResponse = await saveAmadeusResponse(response.data);
-      return { data: response.data, dictionaries: response.result.dictionaries };
+        }))
+        .then(response => ({ data: response.data, dictionaries: response.result.dictionaries }));
+      });
     } catch (error) {
       throw error;
     }
   }
 
-  async searchFlights(params: FlightOfferSearchParams, index: number): Promise<any> {
+  async searchFlights(params: FlightOfferSearchParams): Promise<any> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 100 * (index)))
-
-      // const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-      //   originDestinations: [
-      //     {
-      //       originLocationCode: params.locationDeparture,
-      //       destinationLocationCode: params.locationArrival,
-      //       departureDateTimeRange: {
-      //         date: params.departure,
-      //         // time: "10:00:00"
-      //       }
-      //     }
-      //   ],
-      //   searchCriteria: {
-      //     addOneWayOffers: true
-      //   },
-      //   adults: 1,
-      // }));
-
-      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-        currencyCode: process.env.ISOCurrency || "USD",
-        originDestinations: [
-          {
-            id: 1,
-            originLocationCode: params.locationDeparture,
-            destinationLocationCode: params.locationArrival,
-            departureDateTimeRange: {
-              date: params.departure,
-            }
-          },
-        ],
-        travelers: params.passengers,
-        sources: [
-          "GDS"
-        ],
-        searchCriteria: {
-          maxFlightOffers: 50,
-          flightFilters: {
-            cabinRestrictions: [
-              {
-                cabin: amadeusClass[params.cabinClass],
-                coverage: "MOST_SEGMENTS",
-                originDestinationIds: [
-                  1
-                ]
+      return this.enqueueRequest(() => {
+        return this.client.shopping.flightOffersSearch.post(JSON.stringify({
+          currencyCode: process.env.ISOCurrency || "USD",
+          originDestinations: [
+            {
+              id: 1,
+              originLocationCode: params.locationDeparture,
+              destinationLocationCode: params.locationArrival,
+              departureDateTimeRange: {
+                date: params.departure,
               }
-            ],
+            },
+          ],
+          travelers: params.passengers,
+          sources: [
+            "GDS"
+          ],
+          searchCriteria: {
+            maxFlightOffers: 50,
+            flightFilters: {
+              cabinRestrictions: [
+                {
+                  cabin: amadeusClass[params.cabinClass],
+                  coverage: "MOST_SEGMENTS",
+                  originDestinationIds: [
+                    1
+                  ]
+                }
+              ],
+            }
           }
-        }
-      }))
-      const savedResponse = await cacheAmadeusResponse(response.data);
-      return { data: savedResponse, dictionaries: response.result.dictionaries };
+        }))
+        .then(async response => {
+          const savedResponse = await cacheAmadeusResponse(response.data);
+          return { data: savedResponse, dictionaries: response.result.dictionaries };
+        });
+      });
     } catch (error) {
       throw error;
     }
@@ -169,83 +211,82 @@ class AmadeusClient {
           id: index + 1,
           originLocationCode: routeSegment.origin,
           destinationLocationCode: routeSegment.destination,
-          // departureDate: new Date().toISOString().split('T')[0],
           departureDateTimeRange: {
             date: departureDate
           },
         }
-      })
-      console.log(index);
-      await new Promise(resolve => setTimeout(resolve, 100 * (index + 1)))
-      console.log("Resolved ", index)
-      const response = await this.client.shopping.flightOffersSearch.post(JSON.stringify({
-        originDestinations: segments,
-        // adults: passengers
-        travelers: [
-          {
-            "id": "1",
-            "travelerType": "ADULT",
-            "fareOptions": [
-              "STANDARD"
-            ]
-          },
-          {
-            "id": "2",
-            "travelerType": "CHILD",
-            "fareOptions": [
-              "STANDARD"
-            ]
-          }
-        ],
-        sources: [
-          "GDS"
-        ],
-      }))
-      return { data: response.data, dictionaries: response.result.dictionaries };
+      });
+      
+      return this.enqueueRequest(() => {
+        console.log("Processing multi-city flight search, index:", index);
+        return this.client.shopping.flightOffersSearch.post(JSON.stringify({
+          originDestinations: segments,
+          travelers: [
+            {
+              "id": "1",
+              "travelerType": "ADULT",
+              "fareOptions": [
+                "STANDARD"
+              ]
+            },
+            {
+              "id": "2",
+              "travelerType": "CHILD",
+              "fareOptions": [
+                "STANDARD"
+              ]
+            }
+          ],
+          sources: [
+            "GDS"
+          ],
+        }))
+        .then(response => ({ data: response.data, dictionaries: response.result.dictionaries }));
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      throw error;
     }
   }
 
   async flightPrice(params: FlightOfferSearchParams): Promise<any> {
     try {
-      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
-        originLocationCode: params.locationDeparture,
-        destinationLocationCode: params.locationArrival,
-        departureDate: params.departure,
-        adults: params.adults,
-      });
-      const flightOffer = flightOffersSearchResponse.data[0];
-      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
-      const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
-        JSON.stringify({
-          'data': {
-            'type': 'flight-offers-pricing',
-            'flightOffers': [flightOffer],
-          }
-        }), { include: 'detailed-fare-rules' }
-      );
+      return this.enqueueRequest(async () => {
+        const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+          originLocationCode: params.locationDeparture,
+          destinationLocationCode: params.locationArrival,
+          departureDate: params.departure,
+          adults: params.adults,
+        });
+        
+        const flightOffer = flightOffersSearchResponse.data[0];
+        const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
+          JSON.stringify({
+            'data': {
+              'type': 'flight-offers-pricing',
+              'flightOffers': [flightOffer],
+            }
+          }), { include: 'detailed-fare-rules' }
+        );
 
-      return flightPricingResponse.data;
+        return flightPricingResponse.data;
+      });
     } catch (error) {
       throw error;
     }
   }
 
-  async bookingFlight(amadeusOffer: any, passengers: any[]) {
+  async bookingFlight(amadeusOffer: any, passengers: any[]): Promise<any> {
     try {
-      const response = await this.client.booking.flightOrders.post(JSON.stringify({
-        data: {
-          type: "flight-order",
-          flightOffers: [amadeusOffer],
-          travelers: passengers,
-          // ticketingAgreement:{
-          //   option:"DELAY_TO_CANCEL",
-          //   delay:"1D"
-          // }
-        },
-      }));
-      return response;
+      return this.enqueueRequest(() => 
+        this.client.booking.flightOrders.post(JSON.stringify({
+          data: {
+            type: "flight-order",
+            flightOffers: [amadeusOffer],
+            travelers: passengers,
+          },
+        }))
+      );
     } catch (error) {
       throw error;
     }
@@ -253,30 +294,32 @@ class AmadeusClient {
 
   async testBookingApi(params: FlightOfferSearchParams, passengers) {
     try {
-      const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
-        originLocationCode: params.locationDeparture,
-        destinationLocationCode: params.locationArrival,
-        departureDate: params.departure,
-        adults: params.adults,
+      return this.enqueueRequest(async () => {
+        const flightOffersSearchResponse = await this.client.shopping.flightOffersSearch.get({
+          originLocationCode: params.locationDeparture,
+          destinationLocationCode: params.locationArrival,
+          departureDate: params.departure,
+          adults: params.adults,
+        });
+        
+        const flightOffer = flightOffersSearchResponse.data[0];
+        const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
+          JSON.stringify({
+            'data': {
+              'type': 'flight-offers-pricing',
+              'flightOffers': [flightOffer]
+            }
+          }), { include: 'credit-card-fees,detailed-fare-rules' }
+        );
+        
+        return this.client.booking.flightOrders.post(JSON.stringify({
+          data: {
+            type: "flight-order",
+            flightOffers: [flightPricingResponse.data.flightOffers[0]],
+            travelers: passengers
+          },
+        }));
       });
-      const flightOffer = flightOffersSearchResponse.data[0];
-      // const flightOffer = flightOffersSearchResponse.data.reduce((min, offer) => offer.price < min.price ? offer : min);
-      const flightPricingResponse = await this.client.shopping.flightOffers.pricing.post(
-        JSON.stringify({
-          'data': {
-            'type': 'flight-offers-pricing',
-            'flightOffers': [flightOffer]
-          }
-        }), { include: 'credit-card-fees,detailed-fare-rules' }
-      );
-      const response = await this.client.booking.flightOrders.post(JSON.stringify({
-        data: {
-          type: "flight-order",
-          flightOffers: [flightPricingResponse.data.flightOffers[0]],
-          travelers: passengers
-        },
-      }));
-      return response;
     } catch (error) {
       throw error;
     }

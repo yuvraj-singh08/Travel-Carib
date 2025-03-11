@@ -1,5 +1,5 @@
-import axios, { AxiosInstance } from 'axios';
-import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, getDateString, newbuildFlightSearchRequest, newKiuParser, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
 import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
@@ -8,8 +8,17 @@ import { CommissionType, Offer, Slice } from '../../types/flightTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
 import { capitalizeFirstLetter } from '../utils/utils';
 import HttpError from '../utils/httperror';
-import { maxTime } from 'date-fns/constants';
-import { combineAllRoutes, normalizeResponse } from '../utils/flights';
+
+interface Payload {
+  user: string;
+  password: string;
+  request: string;
+}
+interface QueueItem {
+  payload: Payload;
+  resolve: (value: AxiosResponse) => void;
+  reject: (error: any) => void;
+}
 
 class KiuClient {
   private endpoint: string;
@@ -17,6 +26,9 @@ class KiuClient {
   private clientId: string;
   private clientSecret: string;
   private mode: 'Testing' | 'Production';
+  private requestQueue: QueueItem[] = [];
+  private isProcessingQueue: boolean = false;
+  private queueInterval: number = 20; // 50ms between requests
 
   constructor(creds: { clientId: string; clientSecret: string, mode: 'Testing' | 'Production' }) {
     this.clientId = creds.clientId;
@@ -45,14 +57,14 @@ class KiuClient {
         throw new Error("Amadeus credentials not found in DB");
       }
       let mode = capitalizeFirstLetter(creds.mode.toLowerCase())
-      if(mode === "Test"){
+      if (mode === "Test") {
         mode = 'Testing';
       }
 
       const client = new KiuClient({
         clientId: creds.mode === 'PRODUCTION' ? creds.productionApiKey : creds.testApiKey,
         clientSecret: creds.mode === 'PRODUCTION' ? creds.productionApiSecret : creds.testApiSecret,
-        mode:  mode as 'Testing' | 'Production',
+        mode: mode as 'Testing' | 'Production',
       });
 
       return client;
@@ -62,17 +74,65 @@ class KiuClient {
     }
   }
 
+  private enqueueRequest(payload: Payload): Promise<AxiosResponse> {
+    return new Promise((resolve, reject) => {
+      this.requestQueue.push({ payload, resolve, reject });
+      this.processQueue();
+    });
+  }
+
+  // Method to process the request queue
+  private processQueue(): void {
+    if (this.isProcessingQueue || this.requestQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    const processNextRequest = () => {
+      if (this.requestQueue.length === 0) {
+        this.isProcessingQueue = false;
+        return;
+      }
+
+      const { payload, resolve, reject } = this.requestQueue.shift()!;
+
+      this.axiosInstance.post('',payload)
+        .then(response => {
+          resolve(response);
+          setTimeout(() => {
+            processNextRequest();
+          }, this.queueInterval);
+        })
+        .catch(error => {
+          reject(error);
+          setTimeout(() => {
+            processNextRequest();
+          }, this.queueInterval);
+        });
+    };
+
+    processNextRequest();
+  }
+
+  // Queued version of axios post
+  private async queuedPost(requestXML: string): Promise<AxiosResponse> {
+    const config = {
+      user: this.clientId,
+      password: this.clientSecret,
+      request: requestXML
+    };
+
+    return this.enqueueRequest(config);
+  }
+
   async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000 * (Math.random())))
       const invalidResponseIndexs = [];
       const DepartureDate = getDateString(params.DepartureDate)
       const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate }, this.mode);
-      const response = await this.axiosInstance.post('', {
-        user: this.clientId,
-        password: this.clientSecret,
-        request: requestXML
-      })
+      const response = await this.queuedPost(requestXML);
       // console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
@@ -88,9 +148,9 @@ class KiuClient {
                 let flag = false;
                 let code = null;
                 segment?.bookingAvl?.forEach((bookingAvl) => {
-                  if(flag)
+                  if (flag)
                     return;
-                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants) ) {
+                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants)) {
                     flag = true;
                     code = bookingAvl.code;
                   }
@@ -171,15 +231,12 @@ class KiuClient {
   async newSearchFlights(params: NewKiuFlightSearchParams): Promise<any> {
     try {
       const requestXML = newbuildFlightSearchRequest(params, this.mode);
-      const response = await this.axiosInstance.post('', {
-        user: this.clientId,
-        password: this.clientSecret,
-        request: requestXML
-      })
+      const response = await this.queuedPost(requestXML);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data) as { KIU_AirAvailRS: KiuJsonResponseType };
       //@ts-ignore
       if (jsonResponse?.Root?.Error) {
+        console.log(jsonResponse);
         throw new HttpError("Error in KIU response check server log", 500);
       }
       const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
@@ -187,15 +244,15 @@ class KiuClient {
           return newKiuParser(OriginDestionationOption) as Offer;
         })
       })
-      const combinedIteneries = combineAllRoutes(itenaries, { minTime: "10", maxTime: "9999999999" });
-      const normalizedResponse = normalizeResponse(combinedIteneries, [], "economy")
+      const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
+      const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy")
       return normalizedResponse || [];
     } catch (error) {
       if (error?.response?.status === 509) {
         console.log("KIU's request limit exceeded");
         return [];
       }
-      console.log(error.message);
+      console.log(error);
       return [];
     }
   }
@@ -212,15 +269,11 @@ class KiuClient {
     try {
       const requestXML = buildFlightPriceRequest(params, this.mode);
       // console.log("Price Request: ", requestXML);
-      const response = await this.axiosInstance.post('', {
-        user: this.clientId,
-        password: this.clientSecret,
-        request: requestXML
-      })
+      const response = await this.queuedPost(requestXML);
       // console.log("Price Response: ", response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
-      if(jsonResponse?.KIU_AirPriceRS?.Error){
+      if (jsonResponse?.KIU_AirPriceRS?.Error) {
         console.log("Error in kiu pricing:");
         console.log(jsonResponse?.KIU_AirPriceRS?.Error);
       }
@@ -233,11 +286,7 @@ class KiuClient {
   async multiCitySearch({ routeSegments, departureDate, passengers }: multiCityFlightSearchParams): Promise<any> {
     try {
       const requestXML = bulidMultiCityFlightSearchRequest({ routeSegments, departureDate, passengers }, this.mode);
-      const response = await this.axiosInstance.post('', {
-        user: this.clientId,
-        password: this.clientSecret,
-        request: requestXML
-      })
+      const response = await this.queuedPost(requestXML);
       // console.log(response.data);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
@@ -256,11 +305,7 @@ class KiuClient {
         segments: slice.segments,
         passengers: passengers,
       }, this.mode);
-      const response = await this.axiosInstance.post('', {
-        user: this.clientId,
-        password: this.clientSecret,
-        request
-      });
+      const response = await this.queuedPost(request);
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
       return jsonResponse;

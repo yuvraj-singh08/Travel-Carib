@@ -4,6 +4,8 @@ import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
 import { GDS } from "../../constants/cabinClass";
 import { Offer, Segment, Slice } from "../../types/flightTypes";
+import { capitalizeFirstLetter, getDifferenceInMinutes } from "./utils";
+import HttpError from "./httperror";
 
 export const getDateString = (date: string) => {
   const newDate = new Date(date);
@@ -205,9 +207,6 @@ export const newbuildFlightSearchRequest = (params: NewKiuFlightSearchParams, ta
           }
         }
       }),
-      TravelPreferences: {
-        '@MaxStopsQuantity': '4'
-      },
       TravelerInfoSummary: {
         AirTravelerAvail: {
           PassengerTypeQuantity: {
@@ -221,6 +220,88 @@ export const newbuildFlightSearchRequest = (params: NewKiuFlightSearchParams, ta
   const doc = create(xmlObj);
   const xml = doc.end({ prettyPrint: true });
   return xml;
+}
+
+export const combineKiuRoutes = (iteneries: Offer[][], minConnectionTime: number): Offer[][] => {
+  try {
+    let result: Offer[][] = iteneries[0].map(route => [route]);
+
+    for (let i = 1; i < iteneries.length; i++) {
+      const nextSegmentRoutes = iteneries[i];
+      const newResult: (Offer)[][] = [];
+
+      for (const currentRoute of result) {
+        for (const nextRoute of nextSegmentRoutes) {
+          if (nextRoute.total_amount === undefined) {
+            console.log(nextRoute.total_amount);
+          }
+          // Ensure that the time difference is sufficient between current route and next route
+          const lastSegmentOfCurrentRoute = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
+          const lastSegmentLength = lastSegmentOfCurrentRoute?.length;
+          const differenceInMinutes = getDifferenceInMinutes(
+            lastSegmentOfCurrentRoute?.[lastSegmentLength - 1].arriving_at,
+            nextRoute?.slices?.[0]?.segments?.[0]?.departing_at
+          );
+
+          // Check the time gap is more than the allowed transfer time
+
+          if (differenceInMinutes > minConnectionTime) {
+            // Sum the total_amount of the currentRoute and nextRoute
+            // const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0)
+            //   + (parseFloat(nextRoute.total_amount) || 0);
+
+            // Add the combined route with updated total_amount
+            // newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
+            newResult.push([...currentRoute, nextRoute]);
+          }
+
+        }
+      }
+
+      result = newResult;
+    }
+
+    return result;
+  } catch (error) {
+    console.error(error);
+    throw new HttpError("Error combining routes: " + error.message, 500);
+  }
+}
+
+export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) => {
+   const result = response.map((offer) => {
+          let slices = [];
+          let stops = 0;
+          let responseId = "";
+          let routeId = "";
+          offer.forEach((route) => {
+              slices.push(...(route.slices));
+              responseId += route?.responseId
+              routeId += route?.routeId
+          })
+          slices.forEach((slice) => {
+              stops += slice?.segments?.length - 1 || 0;
+          })
+          if (slices?.length > 1) {
+              stops += 1
+          }
+  
+          return {
+              origin: slices?.[0]?.origin,
+              destination: slices?.[slices.length - 1]?.destination,
+              departing_at: slices?.[0]?.departing_at,
+              arriving_at: slices?.[slices.length - 1]?.arriving_at,
+              responseId,
+              routeId,
+              stops,
+              // duration: offer[0].duration,
+              // base_currency: offer[0].base_currency,
+              // tax_currency: offer[0].tax_currency,
+              slices,
+              cabinClass
+          };
+      })
+      return result;
 }
 
 export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Testing' | 'Production') => {
@@ -253,11 +334,14 @@ export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Te
       TravelPreferences: {
         '@MaxStopsQuantity': '4'
       },
+      CabinPref: {
+        '@Cabin': capitalizeFirstLetter(params.CabinClass.toLowerCase())
+      },
       TravelerInfoSummary: {
         AirTravelerAvail: {
           PassengerTypeQuantity: {
             '@Code': 'ADT',
-            '@Quantity': params.Passengers
+            '@Quantity': params.Passengers.adults
           }
         }
       }
