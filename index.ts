@@ -20,6 +20,7 @@ import paymentRoutes from "./src/routes/paymentRoutes";
 import amadeusRoutes from './src/routes/amadeusRoutes';
 import offerRoutes from './src/routes/offer.routes';
 import emailRouter from "./src/routes/emailRoute";
+import CoTravellerRouter from './src/routes/CoTraveller.router';
 import { AuthenticatedRequest } from "./types/express";
 import { main } from "./mail/transporter";
 import { prisma } from "./src/prismaClient";
@@ -97,6 +98,7 @@ app.use("/payment", paymentRoutes);
 app.use('/offer', offerRoutes);
 app.use('/amadeus', amadeusRoutes);
 app.use("/email", emailRouter);
+app.use('/co-traveller', CoTravellerRouter)
 app.post('/gds/creds/update', authenticateToken, updateGdsCreds);
 app.get('/gds/creds', authenticateToken, getGdsCreds);
 app.use(

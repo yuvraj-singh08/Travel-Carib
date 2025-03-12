@@ -43,12 +43,19 @@ model Flight {
 }
 
 model CoTraveler {
-  id          String @id @default(uuid()) @map("_id")
-  name        String
-  dob         String
-  email       String
-  passportNo  String
-  phoneNumber String
+  id             String  @id @default(uuid()) @map("_id")
+  title          String
+  firstName      String
+  lastName       String
+  dob            String
+  nationality    String
+  gender         String
+  email          String
+  passportNo     String
+  phoneNumber    String
+  passportExpiry String
+  User           User?   @relation(fields: [userId], references: [id], onDelete: Cascade, name: "UserToTraveler")
+  userId         String?
 }
 
 model User {
@@ -68,7 +75,7 @@ model User {
   password        String?
   passportDetails Json?
   isBlocked       Boolean            @default(false)
-  coTraveler      Json[]
+  coTraveler      CoTraveler[]       @relation(name: "UserToTraveler")
   frequentlyFlyer Json?
   booked          Booking[]
   provider        String

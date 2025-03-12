@@ -1,121 +1,81 @@
-import { Request, Response } from "express";
-import CoTraveller from "../../models/coTravellersSchema";
-import User from "../../models/userModel";
-import PassportDetail from "../../models/passportDetailModel";
-import {
-  CoTravellersInput,
-  FrequentFlyerDetailInput,
-} from "../../types/userTypes";
-import { PassportDetailInput } from "../../types/userTypes";
+import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
-import Flyer from "../../models/FlyerDetailModel";
 import { prisma } from "../prismaClient";
+import { coTravellerSchema } from "../schemas/CoTraveller.schema";
+import { addCoTravelerService, deleteCotravellerService, updateCoTravelerService } from "../services/CoTraveler.service";
+import HttpError from "../utils/httperror";
 
 // Add CoTraveller
 export const addCoTraveller = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
-  const TravellerData: CoTravellersInput = req.body;
   const userId = req.user?.id;
+  if (!userId) {
+    throw new HttpError("UserId not found", 404);
+  }
 
   try {
-    const user = await prisma.coTraveler.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const { travellerData } = req.body;
+    if (!travellerData) {
+      throw new HttpError("No Traveller Data Provided", 400);
     }
-
-    const newCoTraveller = await prisma.coTraveler.create({
-      data: {
-        name: TravellerData.name,
-        dob: TravellerData.dob,
-        email: TravellerData.email,
-        passportNo: TravellerData.passportNo,
-        phoneNumber: TravellerData.phoneNumber,
-      },
-    });
-
-    return res
-      .status(201)
-      .json({
-        message: "Co-traveller created",
-        newCoTraveller: newCoTraveller,
-      });
+    const validatedData = coTravellerSchema.parse(travellerData);
+    //@ts-ignore
+    const newTraveller = await addCoTravelerService(userId, validatedData);
+    res.status(201).json({ success: true, data: newTraveller })
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error adding co-traveller", error });
+    next(error);
   }
 };
 
-// Update passport detail
-export const UpdatePassportDetail = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const PassportData: PassportDetailInput = req.body;
-  const userId = req.user?.id;
+export const updateCoTraveller = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    // const passportDetail = await PassportDetail.findOne({ userId });
-    const newPassportDetail = new PassportDetail({
-      userId: userId,
-      passportNumber: PassportData.passportNumber,
-      issuingCountry: PassportData.issuingCountry,
-      expiryDate: PassportData.expiryDate,
-      passportImage: PassportData.passportImage,
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new HttpError("UserId not found", 404);
+    }
+    const { id } = req.params;
+    const { travellerData } = req.body;
+    const validatedData = coTravellerSchema.parse(travellerData);
+    const updatedCoTraveller = await updateCoTravelerService(id, travellerData);
+    res.status(200).json({ success: true, data: updatedCoTraveller });
 
-      //@ts-ignore
-      //   user: req.user?_id
-    });
-
-    await newPassportDetail.save();
-    return res.status(201).json(newPassportDetail);
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error updating passport details", error });
+    next(error);
   }
-};
+}
 
-// Delete CoTraveller
-// export const deleteCoTraveller = async (req: Request, res: Response) => {
-//   const { id } = req.params;
-
-//   try {
-//     const coTraveller = await CoTraveller.findById(id);
-
-//     if (!coTraveller) {
-//       return res.status(404).json({ message: 'CoTraveller not found' });
-//     }
-
-//     await coTraveller.remove();
-//     return res.status(200).json({ message: 'CoTraveller deleted successfully' });
-//   } catch (error) {
-//     return res.status(500).json({ message: 'Error deleting co-traveller', error });
-//   }
-// };
-
-//Add Frequent flyer Details
-export const AddFrequentFlyer = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const FlyerData: FrequentFlyerDetailInput = req.body;
-  const userId = req.user?.id;
+export const getCoTravellers = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const newFlyer = new Flyer({
-      userId: userId,
-      frequentFlyerNumber: FlyerData.frequentFlyerNumber,
-      airlines: FlyerData.airlines,
-    });
-    await newFlyer.save();
-    return res.status(201).json(newFlyer);
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new HttpError("UserId not found", 404);
+    }
+    const coTravellers = await prisma.coTraveler.findFirst({ where: { userId } });
+    res.status(200).json({ success: true, data: coTravellers });
   } catch (error) {
-    return res.status(500).json({ message: "Error adding new flyer", error });
+    next(error);
   }
-};
+}
+
+export const getCoTravellerByPassport = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { passportNumber } = req.params;
+    const coTraveller = await prisma.coTraveler.findFirst({ where: { passportNo: passportNumber } });
+    res.status(200).json({ success: true, data: coTraveller });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const deleteCoTraveller = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const deleted = await deleteCotravellerService(id);
+    res.status(200).json({ success: true, data: deleted });
+  } catch (error) {
+    next(error);
+  }
+}

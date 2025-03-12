@@ -31,8 +31,6 @@ import {
 } from "../controllers/passengerController";
 import {
   addCoTraveller,
-  AddFrequentFlyer,
-  UpdatePassportDetail,
 } from "../controllers/CoTravellerController";
 
 const router = Router();
@@ -49,8 +47,6 @@ router.post("/update-password", authenticateToken, changePassword);
 router.post("/allprofile", authenticateToken, updateUser);
 router.post("/traveller", authenticateToken, addCoTraveller);
 router.post("/del-traveller", authenticateToken, deleteCoTraveller);
-router.post("/passport", authenticateToken, UpdatePassportDetail);
-router.post("/flyer", authenticateToken, AddFrequentFlyer);
 router.get("/", getAllUsers);
 router.get("/:id", authenticateToken, getUserById);
 
