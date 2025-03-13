@@ -64,7 +64,7 @@ class FlightClient {
                         },
                     }
                 })
-            }, 0)
+            })
             const kiuRequest = this.kiuClient.newSearchFlights({
                 Passengers: passengers,
                 CabinClass: cabinClass,
@@ -302,7 +302,7 @@ class FlightClient {
                                 adults: params.passengerType,
                                 passengers: amadeusPassengersArray,
                                 cabinClass: params.cabinClass,
-                            }, index++),
+                            }),
                             this.amadeusClient.searchFlights({
                                 departure: getNextDay(params.departureDate),
                                 locationDeparture: segment.origin,
@@ -310,7 +310,7 @@ class FlightClient {
                                 adults: params.passengerType,
                                 passengers: amadeusPassengersArray,
                                 cabinClass: params.cabinClass,
-                            }, index++)
+                            })
                         ]);
                         const parsedData: any = { data: [], dictionaries: {} };
                         data.forEach((singleResponse) => {
@@ -341,7 +341,7 @@ class FlightClient {
                         adults: params.passengerType,
                         passengers: amadeusPassengersArray,
                         cabinClass: params.cabinClass,
-                    }, index++)
+                    })
                 })
             })
 

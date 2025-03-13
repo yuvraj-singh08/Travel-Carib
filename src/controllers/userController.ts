@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-import User from "../../models/userModel";
 import { AuthenticatedRequest } from "../../types/express";
 import { prisma } from "../prismaClient";
 import { sendOTP } from "../../nodemailer/transporter";
