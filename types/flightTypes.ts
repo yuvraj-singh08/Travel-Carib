@@ -39,6 +39,20 @@ export type MultiCitySearchParams = {
     flightWay?: "ONEWAY" | "ROUNDTRIP" | "MULTICITY"
 }
 
+export type NewMultiCitySearchParams = {
+    FlightDetails: FlightLeg[],
+    passengerType: string,
+    sortBy: 'BEST' | 'FAST' | 'CHEAP',
+    maxLayovers: number,
+    passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
+    cabinClass: 'first' | 'business' | 'economy' | 'premium_economy';
+    filters?: FilterType
+}
+
 export type routeType = {
     origin: string,
     destination: string

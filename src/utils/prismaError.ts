@@ -15,7 +15,7 @@ export const handlePrismaError = (error: any) => {
       }
       
       // Fallback for other validation errors
-      return new HttpError('Invalid input format - Please check your data types', 400);
+      return new HttpError(error.message, 400);
     }
     
     if (error.code?.startsWith('P2')) {

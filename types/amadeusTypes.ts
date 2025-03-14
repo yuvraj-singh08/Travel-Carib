@@ -24,6 +24,7 @@ export type AmadeusNewSearchParams = {
     passengers: any;
     originDestinations: OriginDestination[];
     cabinClass: string;
+    originDestinationIds: number[]
 }
 
 export type multiCityFlightSearchParams = {

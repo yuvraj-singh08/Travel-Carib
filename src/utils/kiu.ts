@@ -557,9 +557,9 @@ export const combineRoute = (route1: any, route2: any) => {
 
 export const newKiuParser = (data: OriginDestinationOptionsType) => {
   try {
-    let resposneId = "";
+    let responseId = "";
     const segments = data?.FlightSegment.map((segment): Segment => {
-      resposneId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber;
+      responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber;
       return {
         origin: {
           iata_code: segment?.DepartureAirport?.[0]?.$?.LocationCode
@@ -592,7 +592,7 @@ export const newKiuParser = (data: OriginDestinationOptionsType) => {
           sourceId: GDS.kiu
         }
       ],
-      resposneId,
+      responseId,
       sourceId: GDS.kiu,
     }
   } catch (error) {
