@@ -17,6 +17,7 @@ export const addCoTravelerService = async (userId: string, coTravellerData: CoTr
 
 export const updateCoTravelerService = async (id: string, coTravellerData: Partial<CoTraveller>) => {
     try {
+        
         const coTraveller = await prisma.coTraveler.update({
             where: { id: id },
             data: coTravellerData,
