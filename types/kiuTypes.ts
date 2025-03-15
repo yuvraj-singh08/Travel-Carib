@@ -23,7 +23,6 @@ export type OriginDestinationOption = {
 
 export type NewKiuFlightSearchParams = {
     OriginDestinationOptions: OriginDestinationOption[],
-    ReturnDate?: string,
     CabinClass: string,
     Passengers: {
         adults: number,

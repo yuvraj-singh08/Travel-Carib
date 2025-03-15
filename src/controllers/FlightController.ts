@@ -19,6 +19,32 @@ class FlightController {
     this.multiCitySearch = this.multiCitySearch.bind(this);
     this.BookFlight = this.BookFlight.bind(this);
     this.newMulticitSearch = this.newMulticitSearch.bind(this);
+    this.searchFlights = this.searchFlights.bind(this);
+  }
+
+  async searchFlights(req: Request, res: Response, next: NextFunction): Promise<any> {
+    try {
+      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
+        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
+      }
+      const response = await this.flightClient.searchFlights({
+        FlightDetails,
+        passengerType,
+        maxLayovers,
+        passengers: {
+          adults: parseInt(passengers?.adults) || 1,
+          children: parseInt(passengers?.children) || 0,
+          infants: parseInt(passengers?.infants) || 0,
+        },
+        sortBy: sortBy || "BEST",
+        cabinClass,
+        filters,
+      });
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
   }
 
   async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -50,9 +76,9 @@ class FlightController {
 
   async newMulticitSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy, flightWay } = req.body;
-      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass || !flightWay) {
-        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters, flightWay");
+      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
+        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
       }
       const response = await this.flightClient.newMulticityFlightSearch({
         FlightDetails,
@@ -66,7 +92,6 @@ class FlightController {
         sortBy: sortBy || "BEST",
         cabinClass,
         filters,
-        flightWay
       })
       res.json(response);
     } catch (error) {
@@ -276,7 +301,7 @@ class FlightController {
     try {
       const id = req.params.searchKey;
       const cachedData = JSON.parse(await redis.get(id));
-      res.status(200).json({success: true, data: cachedData});
+      res.status(200).json({ success: true, data: cachedData });
     } catch (error) {
       next(error);
     }

@@ -34,7 +34,7 @@ class KiuController {
     async newSearchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { OriginDestinationOptions, CabinClass, ReturnDate, Passengers } = req.body;
-            const response = await this.kiuClient.newSearchFlights({ OriginDestinationOptions,CabinClass, ReturnDate, Passengers });
+            const response = await this.kiuClient.newSearchFlights({ OriginDestinationOptions,CabinClass, Passengers });
             res.json(response);
         } catch (error) {
             next(error);

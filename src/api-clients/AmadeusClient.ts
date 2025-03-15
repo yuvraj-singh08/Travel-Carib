@@ -145,7 +145,7 @@ class AmadeusClient {
                 {
                   cabin: amadeusClass[params.cabinClass],
                   coverage: "MOST_SEGMENTS",
-                  originDestinationIds: [
+                  originDestinationIds: params.originDestinationIds || [
                     1
                   ]
                 }

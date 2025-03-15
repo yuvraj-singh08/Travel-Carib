@@ -240,6 +240,10 @@ class KiuClient {
         throw new HttpError("Error in KIU response check server log", 500);
       }
       const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
+        //@ts-ignores
+        if(OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t"){
+          return []
+        }
         return OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.map((OriginDestionationOption) => {
           return newKiuParser(OriginDestionationOption) as Offer;
         })
