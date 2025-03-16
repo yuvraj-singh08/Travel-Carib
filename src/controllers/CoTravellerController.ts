@@ -36,8 +36,10 @@ export const updateCoTraveller = async (req: AuthenticatedRequest, res: Response
     if (!userId) {
       throw new HttpError("UserId not found", 404);
     }
-    const { id } = req.params;
-    const { travellerData } = req.body;
+    const { id,...travellerData } = req.body.travellerData;
+    console.log(id);
+    console.log(travellerData);
+    delete travellerData.id;
     const validatedData = coTravellerSchema.parse(travellerData);
     const updatedCoTraveller = await updateCoTravelerService(id, travellerData);
     res.status(200).json({ success: true, data: updatedCoTraveller });
@@ -53,7 +55,22 @@ export const getCoTravellers = async (req: AuthenticatedRequest, res: Response, 
     if (!userId) {
       throw new HttpError("UserId not found", 404);
     }
-    const coTravellers = await prisma.coTraveler.findFirst({ where: { userId } });
+    const coTravellers = await prisma.coTraveler.findMany({ where: { userId } });
+    res.status(200).json({ success: true, data: coTravellers });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+export const getCoTravellersById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id;
+    const id = req.params.id;
+    if (!userId) {
+      throw new HttpError("UserId not found", 404);
+    }
+    const coTravellers = await prisma.coTraveler.findMany({ where: { userId ,id:id} });
     res.status(200).json({ success: true, data: coTravellers });
   } catch (error) {
     next(error);
