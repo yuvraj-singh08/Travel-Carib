@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, buildNewPriceRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
-import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
+import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams, PriceRequestParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
 import { CommissionType, Offer, Slice } from '../../types/flightTypes';
@@ -97,7 +97,7 @@ class KiuClient {
 
       const { payload, resolve, reject } = this.requestQueue.shift()!;
 
-      this.axiosInstance.post('',payload)
+      this.axiosInstance.post('', payload)
         .then(response => {
           resolve(response);
           setTimeout(() => {
@@ -224,7 +224,8 @@ class KiuClient {
         console.log("KIU's request limit exceeded");
         return [];
       }
-      throw error;
+      console.log(error);
+      return []
     }
   }
 
@@ -239,17 +240,47 @@ class KiuClient {
         console.log(jsonResponse);
         throw new HttpError("Error in KIU response check server log", 500);
       }
+      const RPH = kiuClasses?.[`${params.CabinClass}`]
       const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
         //@ts-ignores
-        if(OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t"){
+        if (OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t") {
           return []
         }
         return OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.map((OriginDestionationOption) => {
-          return newKiuParser(OriginDestionationOption) as Offer;
+          return newKiuParser(OriginDestionationOption, RPH) as Offer;
         })
       })
       const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
       const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy")
+      // normalizedResponse.forEach((response) => {
+      //   const fareOptions: any = [];
+      //   response.slices.forEach((slice) => {
+      //     slice.segments.forEach(async (segment) => {
+      //       segment.ResBookDesigCode.forEach(async (code) => {
+      //         const price = await this.newSearchPrice({
+      //           OriginDestinationOptions: [
+      //             {
+      //               FlightSegments: [
+      //                 {
+      //                   OriginLocation: segment.origin.iata_code,
+      //                   DestinationLocation: segment.destination.iata_city_code,
+      //                   DepartureDateTime: segment.departing_at,
+      //                   ArrivalDateTime: segment.arriving_at,
+      //                   MarketingAirline: segment.marketing_carrier.iata_code,
+      //                   FlightNumber: segment.marketing_carrier_flight_number,
+      //                   ResBookDesigCode: code,
+      //                   CabinType: params.CabinClass,
+      //                   RPH: RPH
+      //                 }
+      //               ]
+      //             }
+      //           ],
+      //           Passengers: params.Passengers
+      //         })
+      //       })
+      //     })
+      //   })
+      // })
       return normalizedResponse || [];
     } catch (error) {
       if (error?.response?.status === 509) {
@@ -261,11 +292,20 @@ class KiuClient {
     }
   }
 
-  async newSearchPrice(params) {
+  async newSearchPrice(params: PriceRequestParams) {
     try {
-
+      const requestXML = buildNewPriceRequest(params, this.mode)
+      const response = await this.queuedPost(requestXML);
+      // console.log("Price Response: ", response.data);
+      const parser = new xml2js.Parser();
+      const jsonResponse = await parser.parseStringPromise(response.data);
+      if (jsonResponse?.KIU_AirPriceRS?.Error) {
+        console.log("Error in kiu pricing:");
+        console.log(jsonResponse?.KIU_AirPriceRS?.Error);
+      }
+      return jsonResponse
     } catch (error) {
-
+      throw error;
     }
   }
 

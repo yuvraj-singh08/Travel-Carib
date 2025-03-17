@@ -294,3 +294,58 @@ export function findCommonFareBrands(fareBrandArrays: FareBrandType[][]): Aggreg
     };
   });
 }
+
+export function reorganizeFareCodes(data: string[][]): string[][] {
+  if (!data || data.length === 0) return [];
+  
+  // Find all unique codes across all segments
+  const allCodes = new Set<string>();
+  data.forEach(segment => {
+    segment.forEach(code => {
+      allCodes.add(code);
+    });
+  });
+  
+  // Create a frequency map for each code
+  const codeFrequency = {};
+  allCodes.forEach(code => {
+    codeFrequency[code] = 0;
+  });
+  
+  // Count total occurrences of each code across all positions
+  data.forEach(segment => {
+    segment.forEach(code => {
+      codeFrequency[code]++;
+    });
+  });
+  
+  // Sort codes by frequency (descending)
+  const sortedCodes = Object.keys(codeFrequency).sort((a, b) => 
+    codeFrequency[b] - codeFrequency[a]
+  );
+  
+  // Reorganize each segment based on code frequency
+  const result = data.map(segment => {
+    // Create a copy of the segment to avoid modifying the original
+    const segmentCopy = [...segment];
+    const newSegment = [];
+    
+    // First add codes from the sorted list that exist in this segment
+    sortedCodes.forEach(code => {
+      const index = segmentCopy.indexOf(code);
+      if (index !== -1) {
+        newSegment.push(code);
+        // Remove the code to handle duplicates correctly
+        segmentCopy.splice(index, 1);
+      }
+    });
+    
+    // Add any remaining codes that weren't in our sorted list
+    // (This should not happen with the current implementation but added for robustness)
+    newSegment.push(...segmentCopy);
+    
+    return newSegment;
+  });
+  
+  return result;
+}

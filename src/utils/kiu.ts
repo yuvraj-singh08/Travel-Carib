@@ -1,10 +1,10 @@
 import { create } from "xmlbuilder2";
-import { BuildBookingRequestParams, FlightSearchParams, KiuJsonResponseType, KiuResponseType, NewKiuFlightSearchParams, OriginDestinationOptionsType, PriceRequestBuilderParams } from "../../types/kiuTypes";
+import { BuildBookingRequestParams, FlightSearchParams, KiuJsonResponseType, KiuResponseType, NewKiuFlightSearchParams, OriginDestinationOptionsType, PriceRequestBuilderParams, PriceRequestParams } from "../../types/kiuTypes";
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
 import { GDS } from "../../constants/cabinClass";
 import { Offer, Segment, Slice } from "../../types/flightTypes";
-import { capitalizeFirstLetter, getDifferenceInMinutes } from "./utils";
+import { capitalizeFirstLetter, getDifferenceInMinutes, reorganizeFareCodes } from "./utils";
 import HttpError from "./httperror";
 
 export const getDateString = (date: string) => {
@@ -269,39 +269,57 @@ export const combineKiuRoutes = (iteneries: Offer[][], minConnectionTime: number
 }
 
 export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) => {
-   const result = response.map((offer) => {
-          let slices = [];
-          let stops = 0;
-          let responseId = "";
-          let routeId = "";
-          offer.forEach((route) => {
-              slices.push(...(route.slices));
-              responseId += route?.responseId
-              routeId += route?.routeId
-          })
-          slices.forEach((slice) => {
-              stops += slice?.segments?.length - 1 || 0;
-          })
-          if (slices?.length > 1) {
-              stops += 1
-          }
-  
-          return {
-              origin: slices?.[0]?.origin,
-              destination: slices?.[slices.length - 1]?.destination,
-              departing_at: slices?.[0]?.departing_at,
-              arriving_at: slices?.[slices.length - 1]?.arriving_at,
-              responseId,
-              routeId,
-              stops,
-              // duration: offer[0].duration,
-              // base_currency: offer[0].base_currency,
-              // tax_currency: offer[0].tax_currency,
-              slices,
-              cabinClass
-          };
-      })
-      return result;
+  const result = response.map((offer) => {
+    let slices: Slice[] = [];
+    let stops = 0;
+    let responseId = "";
+    let routeId = "";
+    offer.forEach((route) => {
+      slices.push(...(route.slices));
+      responseId += route?.responseId
+      routeId += route?.routeId
+    })
+    slices.forEach((slice) => {
+      stops += slice?.segments?.length - 1 || 0;
+    })
+    if (slices?.length > 1) {
+      stops += 1
+    }
+
+    // const slicesWithBookingCode = slices.map((slice) => {
+    //   let codesArray: string[][] = [];
+    //   slice.segments.forEach((segment) => {
+    //     codesArray.push(segment.ResBookDesigCode)
+    //   })
+    //   const reorganizedFareCodes = reorganizeFareCodes(codesArray);
+    //   let minLength = reorganizedFareCodes[0].length;
+    //   slice.segments.forEach((segment, index) => {
+    //     segment.bookingAvl = reorganizedFareCodes[index];
+    //     if (reorganizedFareCodes[index].length < minLength)
+    //       minLength = reorganizedFareCodes[index].length
+    //   })
+    //   return {
+    //     ...slice,
+    //     minLength
+    //   }
+    // })
+
+    return {
+      origin: slices?.[0]?.origin,
+      destination: slices?.[slices.length - 1]?.destination,
+      departing_at: slices?.[0]?.departing_at,
+      arriving_at: slices?.[slices.length - 1]?.arriving_at,
+      responseId,
+      routeId,
+      stops,
+      // duration: offer[0].duration,
+      // base_currency: offer[0].base_currency,
+      // tax_currency: offer[0].tax_currency,
+      slices,
+      cabinClass
+    };
+  })
+  return result;
 }
 
 export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Testing' | 'Production') => {
@@ -350,6 +368,99 @@ export const buildFlightSearchRequest = (params: FlightSearchParams, target: 'Te
   const doc = create(xmlObj);
   const xml = doc.end({ prettyPrint: true });
   return xml;
+}
+
+export const buildNewPriceRequest = (params: PriceRequestParams, target: 'Testing' | 'Production') => {
+  const originDestinationOptions = params.OriginDestinationOptions.map((option) => {
+    const flightSegments = option.FlightSegments.map((flightSegment) => {
+      return {
+        '@DepartureDateTime': flightSegment.DepartureDateTime,
+        '@ArrivalDateTime': flightSegment.ArrivalDateTime,
+        '@ResBookDesigCode': flightSegment.ResBookDesigCode, // Use param value or default
+        '@FlightNumber': flightSegment.FlightNumber,
+        DepartureAirport: {
+          '@LocationCode': flightSegment.OriginLocation // Change OriginLocation to DepartureAirport
+        },
+        ArrivalAirport: {
+          '@LocationCode': flightSegment.DestinationLocation // Change DestinationLocation to ArrivalAirport
+        },
+        MarketingAirline: {
+          '@Code': flightSegment.MarketingAirline
+        },
+        MarketingCabin: { // Add MarketingCabin with CabinType and RPH
+          '@CabinType': flightSegment.CabinType, // Default value, can be parameterized
+          '@RPH': flightSegment.RPH
+        }
+      }
+    });
+    return {
+      FlightSegment: flightSegments
+    }
+  })
+  const xmlObj = {
+    KIU_AirPriceRQ: {
+      '@EchoToken': '1',
+      '@Target': target,
+      '@Version': '3.0',
+      '@SequenceNmbr': '1',
+      '@PrimaryLangID': 'en-us',
+      '@TimeStamp': new Date().toISOString(),  // Add TimeStamp here
+      POS: {
+        Source: {
+          '@AgentSine': process.env.AgentSine,
+          '@TerminalID': process.env.TerminalID,
+          '@ISOCountry': process.env.ISOCountry,
+          '@ISOCurrency': process.env.ISOCurrency,
+          RequestorID: {
+            '@Type': '5' // Add RequestorID
+          },
+          BookingChannel: {
+            '@Type': '1' // Add BookingChannel
+          }
+        }
+      },
+      AirItinerary: {
+        OriginDestinationOptions: {
+          OriginDestinationOption: originDestinationOptions
+        }
+      },
+      TravelerInfoSummary: {
+        AirTravelerAvail: {
+          PassengerTypeQuantity: [//  (ADT: Adult, CNN: Minor, INF: Infant)
+            {
+              '@Code': 'CNN',
+              '@Quantity': params.Passengers.children
+            },
+            {
+              '@Code': 'ADT',
+              '@Quantity': params.Passengers.adults
+            },
+          ]
+        }
+      }
+    }
+  };
+
+  const doc = create(xmlObj);
+  const xml = doc.end({ prettyPrint: true });
+  return xml;
+}
+
+export const findCommonCodes = (data: string[][]) => {
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Convert first array to a Set
+  let commonChars = new Set(data[0]);
+
+  // Intersect with each subsequent array
+  for (let i = 1; i < data.length; i++) {
+    commonChars = new Set([...commonChars].filter(char => data[i].includes(char)));
+  }
+
+  // Convert back to an array
+  return Array.from(commonChars);
 }
 
 export const buildFlightPriceRequest = (params: PriceRequestBuilderParams, target: 'Testing' | 'Production') => {
@@ -555,7 +666,7 @@ export const combineRoute = (route1: any, route2: any) => {
   }
 }
 
-export const newKiuParser = (data: OriginDestinationOptionsType) => {
+export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) => {
   try {
     let responseId = "";
     const segments = data?.FlightSegment.map((segment): Segment => {
@@ -579,6 +690,7 @@ export const newKiuParser = (data: OriginDestinationOptionsType) => {
         marketing_carrier_flight_number: segment?.$?.FlightNumber,
         duration: segment?.$?.JourneyDuration,
         passengers: [],
+        ResBookDesigCode: segment.BookingClassAvail.filter((data) => (parseInt(data.$.RPH) === RPH && parseInt(data.$.ResBookDesigQuantity) > 0)).map((data) => data.$.ResBookDesigCode),
       }
     });
     return {

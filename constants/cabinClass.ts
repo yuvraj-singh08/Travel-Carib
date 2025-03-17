@@ -1,10 +1,17 @@
 import { SubBookingStatus } from "@prisma/client"
 
+// export const kiuClasses = {
+//     economy: ['H', 'Y', 'T', 'K', 'N', 'V'],
+//     premium_economy: ['M'],
+//     business: ['J', 'C'],
+//     first: ['P', 'F']
+// }
+
 export const kiuClasses = {
-    economy: ['H', 'Y', 'T', 'K', 'N', 'V'],
-    premium_economy: ['M'],
-    business: ['J', 'C'],
-    first: ['P', 'F']
+    economy: 1 , 
+    premium_economy: 1, 
+    business: 2, 
+    first: 3, 
 }
 
 export const GDS = {
