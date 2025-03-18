@@ -43,8 +43,9 @@ class FlightClient {
                 FlightDetails, cabinClass
             });
             const cachedResponse = await redis.get(id);
+            const parsedResponse = JSON.parse(cachedResponse).filter((_,index) => index<200)
             if (cachedResponse) {
-                return JSON.parse(cachedResponse);
+                return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
             }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
@@ -78,7 +79,7 @@ class FlightClient {
             const sortedResponse = sortResponse(normalizedResponse, sortBy);
             const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
             redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
-            return { flightData: savedData, airlinesDetails: [], searchKey: id };
+            return { flightData: savedData.filter((_,index) => index<200), airlinesDetails: [], searchKey: id };
         } catch (error) {
             throw error;
         }
