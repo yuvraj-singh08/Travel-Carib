@@ -6,7 +6,7 @@ import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { saveData } from "../services/OfferService";
+import { saveData, saveSearchResponses } from "../services/OfferService";
 import { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
@@ -76,17 +76,9 @@ class FlightClient {
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
             const sortedResponse = sortResponse(normalizedResponse, sortBy);
-            const savedData = await saveData(sortedResponse, passengers, "ONEWAY");
-            // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
-
+            const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
             redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
-            const result = savedData.filter((route, index) => {
-                if (index < 60) {
-                    return true;
-                }
-                return false;
-            })
-            return { flightData: result, airlinesDetails: [], searchKey: id };
+            return { flightData: savedData, airlinesDetails: [], searchKey: id };
         } catch (error) {
             throw error;
         }
@@ -696,7 +688,7 @@ class FlightClient {
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
-            const savedData = await saveData(sortedResponse, params.passengers, "ONEWAY");
+            const savedData = saveSearchResponses(sortedResponse, params.passengers, "ONEWAY");
             // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
             const id = uuidv4();
             redis.set(id, JSON.stringify(savedData));

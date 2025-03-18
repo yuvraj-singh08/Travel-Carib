@@ -69,18 +69,15 @@ class DuffelClient {
 
       const { execute, resolve, reject } = this.requestQueue.shift()!;
       
+      setTimeout(() => {
+        processNextRequest();
+      }, this.queueInterval);
       execute()
         .then(response => {
           resolve(response);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         })
         .catch(error => {
           reject(error);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         });
     };
 

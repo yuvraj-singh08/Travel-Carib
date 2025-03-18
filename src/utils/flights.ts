@@ -730,10 +730,12 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
         let stops = 0;
         let responseId = "";
         let routeId = "";
+        let fareOptions = [];
         offer.forEach((route) => {
             slices.push(...(route.slices));
             responseId += route?.responseId
             routeId += route?.routeId
+            fareOptions.push(route.fareOptions);
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -773,7 +775,8 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
             slices,
             cabinBaggage,
             checkedBaggage,
-            cabinClass
+            cabinClass,
+            fareOptions
         };
     })
     return result;

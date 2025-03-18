@@ -97,18 +97,15 @@ class KiuClient {
 
       const { payload, resolve, reject } = this.requestQueue.shift()!;
 
+      setTimeout(() => {
+        processNextRequest();
+      }, this.queueInterval);
       this.axiosInstance.post('', payload)
         .then(response => {
           resolve(response);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         })
         .catch(error => {
           reject(error);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         });
     };
 

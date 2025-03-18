@@ -105,6 +105,7 @@ export type Offer = {
     checkedBaggage: number;
     sourceId: string;
     routeId: string;
+    fareOptions: any;
 };
 
 export type FareBrandType = {
