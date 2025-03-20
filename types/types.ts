@@ -51,3 +51,21 @@ export interface FareOption {
     arriving_at: string;
     fareBrands: FareBrandType[]
 }
+
+export interface CommomBaggageType {
+    quantity?: string;
+    weight?: string;
+    unit?: string;
+}
+
+export interface KiuPassengerBaggageData {
+    cabinBaggage?: CommomBaggageType;
+    checkedBaggage?: CommomBaggageType;
+    handBaggage?: CommomBaggageType;
+}
+
+export interface KiuBaggageData {
+    adultBaggage?: KiuPassengerBaggageData;
+    childBaggage?: KiuPassengerBaggageData;
+    infantBaggage?: KiuPassengerBaggageData;
+}

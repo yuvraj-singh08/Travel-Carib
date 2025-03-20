@@ -271,6 +271,7 @@ export const combineKiuRoutes = (iteneries: Offer[][], minConnectionTime: number
 export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) => {
   const result = response.map((offer) => {
     let slices: Slice[] = [];
+    const fareOptions = [];
     let stops = 0;
     let responseId = "";
     let routeId = "";
@@ -278,6 +279,14 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       slices.push(...(route.slices));
       responseId += route?.responseId
       routeId += route?.routeId
+      if (route.fareBrands)
+        fareOptions.push({
+            fareBrands: route.fareBrands,
+            origin: route.slices[0].origin,
+            destination: route.slices[0].destination,
+            departing_at: route.slices[0].departing_at,
+            arriving_at: route.slices[0].arriving_at,
+        });
     })
     slices.forEach((slice) => {
       stops += slice?.segments?.length - 1 || 0;
@@ -312,6 +321,8 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       responseId,
       routeId,
       stops,
+      fareBrands: offer[0].fareBrands,
+      fareOptions:fareOptions,
       // duration: offer[0].duration,
       // base_currency: offer[0].base_currency,
       // tax_currency: offer[0].tax_currency,
@@ -405,6 +416,7 @@ export const buildNewPriceRequest = (params: PriceRequestParams, target: 'Testin
       '@SequenceNmbr': '1',
       '@PrimaryLangID': 'en-us',
       '@TimeStamp': new Date().toISOString(),  // Add TimeStamp here
+      '@IncludeBaggageAllowance': '1',
       POS: {
         Source: {
           '@AgentSine': process.env.AgentSine,
@@ -434,6 +446,10 @@ export const buildNewPriceRequest = (params: PriceRequestParams, target: 'Testin
             {
               '@Code': 'ADT',
               '@Quantity': params.Passengers.adults
+            },
+            {
+              '@Code': 'INF',
+              '@Quantity': params.Passengers.infants
             },
           ]
         }
@@ -669,8 +685,12 @@ export const combineRoute = (route1: any, route2: any) => {
 export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) => {
   try {
     let responseId = "";
-    const segments = data?.FlightSegment.map((segment): Segment => {
+    let validSegment: boolean = true;
+    const segments = data?.FlightSegment.map((segment, index): Segment => {
       responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber;
+      if(index > 0){
+        validSegment = false;
+      }
       return {
         origin: {
           iata_code: segment?.DepartureAirport?.[0]?.$?.LocationCode
@@ -693,6 +713,10 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
         ResBookDesigCode: segment.BookingClassAvail.filter((data) => (parseInt(data.$.RPH) === RPH && parseInt(data.$.ResBookDesigQuantity) > 0)).map((data) => data.$.ResBookDesigCode),
       }
     });
+    //@ts-ignore
+    if(validSegment === false){
+      return false;
+    }
     return {
       slices: [
         {

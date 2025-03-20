@@ -1,5 +1,6 @@
 import { CabinClass, DuffelPassengerGender, DuffelPassengerTitle, DuffelPassengerType } from "@duffel/api/types"
 import { $Enums } from "@prisma/client"
+import { KiuBaggageData } from "./types"
 
 export type FlightOfferSearchParams = {
     originLocation: string,
@@ -109,18 +110,19 @@ export type Offer = {
 };
 
 export type FareBrandType = {
+    baggageData?: KiuBaggageData;
     fareBrand: string;
     totalAmount: number;
-    cabinBaggage: number;
-    checkedBaggage: number;
+    cabinBaggage?: number;
+    checkedBaggage?: number;
     offerId: string;
 }
 
 export interface AggregatedFareBrand {
     fareBrand: string;
     totalAmount: number;
-    cabinBaggage: number;
-    checkedBaggage: number;
+    cabinBaggage?: number;
+    checkedBaggage?: number;
     offerIds: string[];
 }
 

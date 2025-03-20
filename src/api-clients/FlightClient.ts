@@ -76,7 +76,7 @@ class FlightClient {
 
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
-            const sortedResponse = sortResponse(normalizedResponse, sortBy);
+            const sortedResponse = sortResponse([...normalizedResponse, ...multiCityFlightSearch], sortBy);
             const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
             redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
             return { flightData: savedData?.filter((_,index) => index<200), airlinesDetails: [], searchKey: id };
@@ -365,7 +365,10 @@ class FlightClient {
                 amadeusRequest,
                 duffelRequest
             ]);
-            return { kiuResponse, amadeusResponse, duffelResponse };
+            const parsedDuffelResponse = (duffelResponse.data.offers);
+            // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
+
+            return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 
         } catch (error) {
             throw error;

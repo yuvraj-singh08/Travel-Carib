@@ -1,6 +1,6 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType, Slice } from "../../types/flightTypes";
+import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType, Segment, Slice } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
@@ -194,6 +194,150 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
         throw error;
     }
 }
+
+// export const amadeusMultiCityResponseParser = (amadeusResponse: AmadeusResponseType) => {
+//     try {
+//         let parsedResponse = [];
+//         amadeusResponse?.data?.forEach((result) => {
+//             let responseId = "";
+//             let routeId = "";
+//             let segments = [];
+//             let flag = true;
+//             const slices = result.itineraries.map((itinerary) => {
+//                 const segments = itinerary.segments.map((segment): Partial<Segment> => {
+//                     return {
+//                         origin: {
+//                             iata_code: segment.departure.iataCode,
+//                         },
+//                         destination: {
+//                             iata_code: segment. arrival.iataCode,
+//                         },
+//                         departing_at: segment.departure.at,
+//                         arriving_at: segment.arrival.at,
+//                         aircraft: segment.aircraft.code,
+
+//                     }
+//                 })
+//             })
+//             result?.itineraries?.[0]?.segments?.forEach((segment, segmentIndex) => {
+//                 if (!flag) {
+//                     return;
+//                 }
+//                 responseId += segment?.carrierCode + (segment?.number.length === 4 ? segment.number : '0'.repeat(4 - segment?.number.length) + segment?.number)
+//                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
+//                 for (let i = 0; i < firewall.length; i++) {
+//                     if (firewall[i].from === origin && firewall[i].to === destination) {
+//                         if ((segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
+//                             if (!firewall[i].flightNumber) {
+//                                 flag = false;
+//                                 break;
+//                             }
+//                             else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+//                                 flag = false;
+//                                 break;
+//                             }
+//                         }
+//                     }
+//                     else if (!firewall[i]?.from && (segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
+//                         if (!firewall[i].flightNumber) {
+//                             flag = false;
+//                             break;
+//                         }
+//                         else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+//                             flag = false;
+//                             break;
+//                         }
+//                     }
+//                 }
+//                 const checkedBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCheckedBags?.quantity || 0;
+//                 //@ts-ignore
+//                 const cabinBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCabinBags?.quantity || 0;
+//                 segments.push({
+//                     departing_at: segment?.departure?.at,
+//                     arriving_at: segment?.arrival?.at,
+//                     aircraft: {
+//                         iata_code: segment?.aircraft?.code,
+//                         name: amadeusResponse?.dictionaries?.aircraft?.[segment?.aircraft?.code],
+//                     },
+//                     operating_carrier_flight_number: segment?.number,
+//                     marketing_carrier_flight_number: segment?.number,
+//                     operating_carrier: {
+//                         iata_code: segment?.operating?.carrierCode || segment?.carrierCode,
+//                         name: amadeusResponse?.dictionaries?.carriers?.[segment?.operating?.carrierCode]
+//                     },
+//                     flight_number: segment?.aircraft?.code,
+//                     destination: {
+//                         iata_code: segment?.arrival?.iataCode,
+//                         iata_city_code: amadeusResponse?.dictionaries?.locations?.[segment?.arrival?.iataCode]?.cityCode,
+//                         iata_country_code: amadeusResponse?.dictionaries?.locations?.[segment?.arrival?.iataCode]?.countryCode
+//                     },
+//                     origin: {
+//                         iata_code: segment?.departure?.iataCode,
+//                         iata_city_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.cityCode,
+//                         iata_country_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.countryCode
+//                     },
+//                     duration: segment?.duration,
+//                     checkedBaggage,
+//                     cabinBaggage
+//                     // departure_airport: segment?.departure?.airport?.code,
+//                     // arrival_airport: segment?.arrival?.airport?.code,
+//                 })
+//             })
+
+//             const n = result?.itineraries?.[0]?.segments?.length;
+//             const departing_at = segments?.[0]?.departing_at;
+//             const arriving_at = segments?.[n - 1]?.arriving_at;
+
+//             if (flag) {
+//                 const totalAmount = parseFloat(result?.price?.total);
+//                 let commissionAmount = 0;
+//                 if (commission) {
+//                     if (commission.feeType === 'FIXED') {
+//                         commissionAmount = parseFloat(commission.commissionFees);
+//                     }
+//                     else {
+//                         commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
+//                     }
+//                 }
+//                 if (totalAmount > 10000) {
+//                     console.log("Amadeus Price Error");
+//                 }
+//                 parsedResponse.push({
+//                     responseId,
+//                     routeId,
+//                     sourceId: GDS.amadeus,
+//                     departing_at: segments?.[0]?.departing_at,
+//                     arriving_at: segments?.[segments?.length - 1]?.arriving_at,
+//                     total_amount: commissionAmount + totalAmount,
+//                     commissionAmount,
+//                     slices: [
+//                         {
+//                             origin: segments?.[0]?.origin,
+//                             destination: segments?.[n - 1]?.destination,
+//                             departing_at,
+//                             arriving_at,
+//                             segments: segments,
+//                             sourceId: GDS.amadeus,
+//                             gdsOfferId: result.gdsOfferId,
+//                             travelerPricings: result.travelerPricings,
+//                             passengers: result.travelerPricings.map((traveller) => {
+//                                 return {
+//                                     id: traveller.travelerId,
+//                                     type: traveller.travelerType
+//                                 }
+//                             })
+//                         }
+//                     ],
+//                 })
+//             }
+//         })
+//         return parsedResponse
+
+//     } catch (error) {
+//         console.log("Error while parsing");
+//         throw error
+//     }
+// }
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType, origin: string, destination: string) => {
     try {
