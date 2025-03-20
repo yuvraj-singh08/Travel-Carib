@@ -24,13 +24,12 @@ class FlightController {
 
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
-      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
+      const { FlightDetails, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !cabinClass) {
         throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
       }
       const response = await this.flightClient.searchFlights({
         FlightDetails,
-        passengerType,
         maxLayovers,
         passengers: {
           adults: parseInt(passengers?.adults) || 1,
@@ -76,13 +75,12 @@ class FlightController {
 
   async newMulticitSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
-      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass) {
+      const { FlightDetails, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
+      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !cabinClass) {
         throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
       }
       const response = await this.flightClient.newMulticityFlightSearch({
         FlightDetails,
-        passengerType,
         maxLayovers,
         passengers: {
           adults: parseInt(passengers?.adults) || 1,

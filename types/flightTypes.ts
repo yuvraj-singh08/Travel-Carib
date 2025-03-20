@@ -1,5 +1,6 @@
 import { CabinClass, DuffelPassengerGender, DuffelPassengerTitle, DuffelPassengerType } from "@duffel/api/types"
 import { $Enums } from "@prisma/client"
+import { KiuBaggageData } from "./types"
 
 export type FlightOfferSearchParams = {
     originLocation: string,
@@ -41,7 +42,6 @@ export type MultiCitySearchParams = {
 
 export type NewMultiCitySearchParams = {
     FlightDetails: FlightLeg[],
-    passengerType: string,
     sortBy: 'BEST' | 'FAST' | 'CHEAP',
     maxLayovers: number,
     passengers: {
@@ -106,21 +106,23 @@ export type Offer = {
     checkedBaggage: number;
     sourceId: string;
     routeId: string;
+    fareOptions: any;
 };
 
 export type FareBrandType = {
+    baggageData?: KiuBaggageData;
     fareBrand: string;
     totalAmount: number;
-    cabinBaggage: number;
-    checkedBaggage: number;
+    cabinBaggage?: number;
+    checkedBaggage?: number;
     offerId: string;
 }
 
 export interface AggregatedFareBrand {
     fareBrand: string;
     totalAmount: number;
-    cabinBaggage: number;
-    checkedBaggage: number;
+    cabinBaggage?: number;
+    checkedBaggage?: number;
     offerIds: string[];
 }
 
@@ -149,6 +151,7 @@ export type Slice = {
         id: string;
     }[],
     sliceAmount: string;
+    selfTransfer?: boolean;
     travelerPricings?: any,
 };
 
@@ -172,9 +175,10 @@ export type Segment = {
     id?: string;
     checkedBaggage?: number;
     cabinBaggage?: number;
-    bookingAvl?: any,
-    ResBookDesigCode?: string;
-    segmentPrice?: any
+    bookingAvl?: string[],
+    ResBookDesigCode?: string[];
+    segmentPrice?: any;
+    selfTransferSegment?: boolean;
 };
 
 type SegmentPassenger = {
@@ -231,7 +235,7 @@ export type DbBaggageType = {
 }
 
 
-type Location = {
+export type Location = {
     iata_city_code?: string;
     city_name?: string | null;
     icao_code?: string | null;

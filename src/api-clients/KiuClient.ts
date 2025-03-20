@@ -1,13 +1,14 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, buildNewPriceRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
-import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceRequestBuilderParams } from '../../types/kiuTypes';
+import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceFlightSegment, PriceRequestBuilderParams, PriceRequestParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
-import { CommissionType, Offer, Slice } from '../../types/flightTypes';
+import { CommissionType, FareBrandType, Offer, Slice } from '../../types/flightTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
 import { capitalizeFirstLetter } from '../utils/utils';
 import HttpError from '../utils/httperror';
+import { KiuBaggageData } from '../../types/types';
 
 interface Payload {
   user: string;
@@ -97,18 +98,15 @@ class KiuClient {
 
       const { payload, resolve, reject } = this.requestQueue.shift()!;
 
-      this.axiosInstance.post('',payload)
+      setTimeout(() => {
+        processNextRequest();
+      }, this.queueInterval);
+      this.axiosInstance.post('', payload)
         .then(response => {
           resolve(response);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         })
         .catch(error => {
           reject(error);
-          setTimeout(() => {
-            processNextRequest();
-          }, this.queueInterval);
         });
     };
 
@@ -224,7 +222,8 @@ class KiuClient {
         console.log("KIU's request limit exceeded");
         return [];
       }
-      throw error;
+      console.log(error);
+      return []
     }
   }
 
@@ -239,18 +238,126 @@ class KiuClient {
         console.log(jsonResponse);
         throw new HttpError("Error in KIU response check server log", 500);
       }
+      const RPH = kiuClasses?.[`${params.CabinClass}`]
       const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
         //@ts-ignores
-        if(OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t"){
+        if (OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t") {
           return []
         }
-        return OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.map((OriginDestionationOption) => {
-          return newKiuParser(OriginDestionationOption) as Offer;
+        const data: Offer[] = [];
+        OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.forEach((OriginDestionationOption) => {
+          const parsedValue = newKiuParser(OriginDestionationOption, RPH) as Offer | false;
+          if (parsedValue === false) {
+            return;
+          }
+          data.push(parsedValue);
         })
+        return data;
       })
+
+      await Promise.allSettled(itenaries.map(async (itinerary) => {
+        const offerPromises = await Promise.allSettled(itinerary.map(async (offer) => {
+          const fareBrands: FareBrandType[] = [];
+          const fareCodePromises = await Promise.allSettled(offer.slices[0].segments[0].ResBookDesigCode.map(async (code) => {
+            const priceResponse = await this.newSearchPrice({
+              OriginDestinationOptions: [
+                {
+                  FlightSegments: offer.slices[0].segments.map((segment) => {
+                    return {
+                      OriginLocation: segment.origin.iata_code,
+                      DestinationLocation: segment.destination.iata_code,
+                      DepartureDateTime: segment.departing_at,
+                      ArrivalDateTime: segment.arriving_at,
+                      CabinType: 'economy',
+                      FlightNumber: segment.marketing_carrier_flight_number,
+                      MarketingAirline: segment.marketing_carrier.iata_code,
+                      ResBookDesigCode: code,
+                      RPH: RPH
+                    }
+                  })
+                }
+              ],
+              Passengers: params.Passengers
+            });
+            fareBrands.push({
+              baggageData: priceResponse.baggageData,
+              fareBrand: code,
+              offerId: "fewf",
+              totalAmount: priceResponse.totalPrice
+            })
+
+          }))
+          offer.fareBrands = fareBrands;
+        }))
+      }))
+
       const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
-      const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy")
-      return normalizedResponse || [];
+      const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy") as unknown as Offer[] | any[];
+      await Promise.allSettled(normalizedResponse.map(async (offer, index) => {
+        const originDestinationOptions = offer.slices.map((slice) => {
+          const FlightSegments = slice.segments.map((segment): PriceFlightSegment => {
+            const flightSegment: PriceFlightSegment = {
+              OriginLocation: segment.origin.iata_code,
+              DestinationLocation: segment.destination.iata_code,
+              DepartureDateTime: segment.departing_at,
+              ArrivalDateTime: segment.arriving_at,
+              CabinType: params.CabinClass,
+              FlightNumber: segment.marketing_carrier_flight_number,
+              MarketingAirline: segment.marketing_carrier.iata_code,
+              ResBookDesigCode: segment.ResBookDesigCode[0],
+              RPH: RPH
+            }
+            return flightSegment;
+          });
+          return {
+            FlightSegments: FlightSegments
+          }
+        });
+        const priceResponse = await this.newSearchPrice({
+          OriginDestinationOptions: originDestinationOptions,
+          Passengers: params.Passengers,
+        })
+        console.log("Price Response: ", priceResponse);
+        if (priceResponse.error === true) {
+          normalizedResponse[index].invalidResponse = true;
+        }
+        else{
+          normalizedResponse[index].invalidResponse = false;
+          normalizedResponse[index].total_amount = priceResponse.totalPrice;
+        }
+        return priceResponse;
+      }))
+
+      // normalizedResponse.forEach((response) => {
+      //   const fareOptions: any = [];
+      //   response.slices.forEach((slice) => {
+      //     slice.segments.forEach(async (segment) => {
+      //       segment.ResBookDesigCode.forEach(async (code) => {
+      //         const price = await this.newSearchPrice({
+      //           OriginDestinationOptions: [
+      //             {
+      //               FlightSegments: [
+      //                 {
+      //                   OriginLocation: segment.origin.iata_code,
+      //                   DestinationLocation: segment.destination.iata_city_code,
+      //                   DepartureDateTime: segment.departing_at,
+      //                   ArrivalDateTime: segment.arriving_at,
+      //                   MarketingAirline: segment.marketing_carrier.iata_code,
+      //                   FlightNumber: segment.marketing_carrier_flight_number,
+      //                   ResBookDesigCode: code,
+      //                   CabinType: params.CabinClass,
+      //                   RPH: RPH
+      //                 }
+      //               ]
+      //             }
+      //           ],
+      //           Passengers: params.Passengers
+      //         })
+      //       })
+      //     })
+      //   })
+      // })
+      return normalizedResponse.filter((offer: any) => !offer.invalidResponse) || [];
     } catch (error) {
       if (error?.response?.status === 509) {
         console.log("KIU's request limit exceeded");
@@ -261,11 +368,58 @@ class KiuClient {
     }
   }
 
-  async newSearchPrice(params) {
+  async newSearchPrice(params: PriceRequestParams) {
     try {
-
+      const requestXML = buildNewPriceRequest(params, this.mode)
+      const response = await this.queuedPost(requestXML);
+      // console.log("Price Response: ", response.data);
+      const parser = new xml2js.Parser();
+      const jsonResponse = await parser.parseStringPromise(response.data);
+      if (jsonResponse?.KIU_AirPriceRS?.Error) {
+        console.log("Price Request: ");
+        console.log(requestXML);
+        console.log("Error in kiu pricing:");
+        console.log(jsonResponse?.KIU_AirPriceRS?.Error);
+        return { error: true };
+      }
+      const totalPrice = jsonResponse?.KIU_AirPriceRS?.PricedItineraries?.[0]?.PricedItinerary?.[0]?.AirItineraryPricingInfo?.[0]?.ItinTotalFare?.[0]?.TotalFare?.[0]?.$?.Amount;
+      const fareBreakdown = jsonResponse?.KIU_AirPriceRS?.PricedItineraries?.[0]?.PricedItinerary?.[0]?.AirItineraryPricingInfo?.[0]?.PTC_FareBreakdowns?.[0]?.PTC_FareBreakdown;
+      const baggageData: KiuBaggageData = {};
+      fareBreakdown.forEach((fareData) => {
+        const passengerCode = fareData.PassengerTypeQuantity?.[0]?.$?.Code;
+        const baggageDetails = fareData.BaggageAllowance?.[0];
+        const checkedBaggage = {
+          quantity: baggageDetails?.ChequedBaggage?.[0]?.Pieces?.[0] || '0',
+          weight: baggageDetails?.ChequedBaggage?.[0]?.Weight?.[0] || '0',
+          unit: (baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0]) || "Kg"
+        }
+        const cabinBaggage = {
+          quantity: baggageDetails?.CabinBaggage?.[0]?.Pieces?.[0] || '0',
+          weight: baggageDetails?.CabinBaggage?.[0]?.Weight?.[0] || '0',
+          unit: (baggageDetails?.CabinBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.CabinBaggage?.[0]?.Unit?.[0]) || 'Kg'
+        }
+        const handBaggage = {
+          quantity: baggageDetails?.HandBaggage ? '1' : '0',
+        }
+        if (passengerCode === "ADT") {
+          baggageData.adultBaggage = {
+            checkedBaggage, cabinBaggage, handBaggage
+          }
+        }
+        else if (passengerCode === "CNN") {
+          baggageData.childBaggage = {
+            checkedBaggage, cabinBaggage, handBaggage
+          }
+        }
+        else if (passengerCode === "INF") {
+          baggageData.infantBaggage = {
+            checkedBaggage, cabinBaggage, handBaggage
+          }
+        }
+      })
+      return { totalPrice, baggageData, error: false }
     } catch (error) {
-
+      throw error;
     }
   }
 

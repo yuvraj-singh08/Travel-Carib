@@ -23,7 +23,7 @@ export type OriginDestinationOption = {
 
 export type NewKiuFlightSearchParams = {
     OriginDestinationOptions: OriginDestinationOption[],
-    CabinClass: string,
+    CabinClass: 'economy' | 'premium_economy' | 'business' | 'first',
     Passengers: {
         adults: number,
         children: number,
@@ -49,11 +49,36 @@ export type PriceRequestBuilderParams = {
     ResBookDesigCode: string
 }
 
+export type PriceFlightSegment = {
+    OriginLocation: string,
+    DestinationLocation: string,
+    DepartureDateTime: string,
+    ArrivalDateTime: string,
+    MarketingAirline: string,
+    FlightNumber: string,
+    ResBookDesigCode: string,
+    CabinType: string,
+    RPH: number
+}
+
+export type PriceOriginDestinationOption = {
+    FlightSegments: PriceFlightSegment[]
+}
+
+export type PriceRequestParams = {
+    OriginDestinationOptions: PriceOriginDestinationOption[]
+    Passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
+}
+
 export type bookingClassType = {
     $: {
         ResBookDesigCode: string,
-        ResBookDesigQuantity: number,
-        RPH: number
+        ResBookDesigQuantity: string,
+        RPH: string
     }
 }
 

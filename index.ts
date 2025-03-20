@@ -43,7 +43,8 @@ app.use(
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("The server is working fine and running on port 8000");
+  console.log(req.ip); 
+  res.send(`The server is working fine and running on port 8000 and request was made from : ${req.ip}`);
 });
 
 app.post('/server/restart', authenticateToken, (req: AuthenticatedRequest, res: Response, next) => {

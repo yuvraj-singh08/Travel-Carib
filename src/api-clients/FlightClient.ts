@@ -1,12 +1,12 @@
 import { FlightSupplier } from "@prisma/client";
 import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
-import { parseKiuResposne } from "../utils/kiu";
+import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { saveData } from "../services/OfferService";
+import { saveData, saveSearchResponses } from "../services/OfferService";
 import { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
@@ -37,16 +37,49 @@ class FlightClient {
         }
     }
 
-    async searchFlights({ FlightDetails, passengerType, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
+    async searchFlights({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
         try {
-            const manualLayoverSearch = await this.manualLayoverSearch({
-                origin: FlightDetails[0].originLocation,
-                destination: FlightDetails[0].destinationLocation,
-                departureDate: FlightDetails[0].departureDate,
-                passengers,
-                cabinClass
-            })
-            return manualLayoverSearch;
+            const id = JSON.stringify({
+                FlightDetails, cabinClass
+            });
+            const cachedResponse = await redis.get(id);
+            if (cachedResponse) {
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+                return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            }
+            let manualLayoverSearch, multiCityFlightSearch;
+            if (FlightDetails.length > 1) {
+                [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
+                    Promise.all(FlightDetails.map((flightDetail) => {
+                        return this.manualLayoverSearch({
+                            origin: flightDetail.originLocation,
+                            destination: flightDetail.destinationLocation,
+                            departureDate: flightDetail.departureDate,
+                            passengers,
+                            cabinClass
+                        })
+                    })),
+                    this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
+                ])
+            }
+            else {
+                manualLayoverSearch = await Promise.all(FlightDetails.map((flightDetail) => {
+                    return this.manualLayoverSearch({
+                        origin: flightDetail.originLocation,
+                        destination: flightDetail.destinationLocation,
+                        departureDate: flightDetail.departureDate,
+                        passengers,
+                        cabinClass
+                    })
+                }));
+            }
+
+            const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
+            const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
+            const sortedResponse = sortResponse([...normalizedResponse, ...multiCityFlightSearch], sortBy);
+            const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
+            redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
+            return { flightData: savedData?.filter((_,index) => index<200), airlinesDetails: [], searchKey: id };
         } catch (error) {
             throw error;
         }
@@ -277,14 +310,13 @@ class FlightClient {
             })
 
             const normalizedResponse = mapCombinedResponseToOfferType(temp)
-            const airlinesDetails = getAirlineCodes(normalizedResponse);
             return normalizedResponse;
         } catch (error) {
             throw error;
         }
     }
 
-    async newMulticityFlightSearch({ FlightDetails, passengerType, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
+    async newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
         try {
             const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(passengers);
             const duffelRequest = this.duffelClient.createOfferRequest({
@@ -333,7 +365,10 @@ class FlightClient {
                 amadeusRequest,
                 duffelRequest
             ]);
-            return { kiuResponse, amadeusResponse, duffelResponse };
+            const parsedDuffelResponse = (duffelResponse.data.offers);
+            // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
+
+            return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 
         } catch (error) {
             throw error;
@@ -657,7 +692,7 @@ class FlightClient {
             //@ts-ignore
             const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
-            const savedData = await saveData(sortedResponse, params.passengers, "ONEWAY");
+            const savedData = saveSearchResponses(sortedResponse, params.passengers, "ONEWAY");
             // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
             const id = uuidv4();
             redis.set(id, JSON.stringify(savedData));

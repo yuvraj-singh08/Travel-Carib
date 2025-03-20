@@ -1,6 +1,6 @@
 import { DuffelResponse, OfferRequest } from "@duffel/api/types";
 import { routesData } from "../../constants/flightRoutes";
-import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType } from "../../types/flightTypes";
+import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType, Segment, Slice } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
 import { findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
@@ -105,7 +105,7 @@ export const amadeusResponseParser = (amadeusResponse: AmadeusResponseType) => {
 }
 
 export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest>) => {
-  try {
+    try {
         let response = []
         duffelResponse.data.offers.forEach((result) => {
             let responseId = "";
@@ -117,7 +117,7 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
             result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
                 responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
-        
+
                 const baggages = segment?.passengers?.[0]?.baggages
                 //@ts-ignore
                 // if (segment?.passengers?.[0]?.baggages?.filter((baggage) => baggage.type === "checked")?.quantity == undefined) {
@@ -194,6 +194,150 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
         throw error;
     }
 }
+
+// export const amadeusMultiCityResponseParser = (amadeusResponse: AmadeusResponseType) => {
+//     try {
+//         let parsedResponse = [];
+//         amadeusResponse?.data?.forEach((result) => {
+//             let responseId = "";
+//             let routeId = "";
+//             let segments = [];
+//             let flag = true;
+//             const slices = result.itineraries.map((itinerary) => {
+//                 const segments = itinerary.segments.map((segment): Partial<Segment> => {
+//                     return {
+//                         origin: {
+//                             iata_code: segment.departure.iataCode,
+//                         },
+//                         destination: {
+//                             iata_code: segment. arrival.iataCode,
+//                         },
+//                         departing_at: segment.departure.at,
+//                         arriving_at: segment.arrival.at,
+//                         aircraft: segment.aircraft.code,
+
+//                     }
+//                 })
+//             })
+//             result?.itineraries?.[0]?.segments?.forEach((segment, segmentIndex) => {
+//                 if (!flag) {
+//                     return;
+//                 }
+//                 responseId += segment?.carrierCode + (segment?.number.length === 4 ? segment.number : '0'.repeat(4 - segment?.number.length) + segment?.number)
+//                 routeId += segment.departure.iataCode + segment.arrival.iataCode + ',';
+//                 for (let i = 0; i < firewall.length; i++) {
+//                     if (firewall[i].from === origin && firewall[i].to === destination) {
+//                         if ((segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
+//                             if (!firewall[i].flightNumber) {
+//                                 flag = false;
+//                                 break;
+//                             }
+//                             else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+//                                 flag = false;
+//                                 break;
+//                             }
+//                         }
+//                     }
+//                     else if (!firewall[i]?.from && (segment?.operating?.carrierCode === firewall[i]?.code || segment?.carrierCode === firewall[i]?.code)) {
+//                         if (!firewall[i].flightNumber) {
+//                             flag = false;
+//                             break;
+//                         }
+//                         else if (firewall[i].flightNumber === (segment?.number || segment?.aircraft?.code)) {
+//                             flag = false;
+//                             break;
+//                         }
+//                     }
+//                 }
+//                 const checkedBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCheckedBags?.quantity || 0;
+//                 //@ts-ignore
+//                 const cabinBaggage = result?.travelerPricings?.[0]?.fareDetailsBySegment?.[segmentIndex]?.includedCabinBags?.quantity || 0;
+//                 segments.push({
+//                     departing_at: segment?.departure?.at,
+//                     arriving_at: segment?.arrival?.at,
+//                     aircraft: {
+//                         iata_code: segment?.aircraft?.code,
+//                         name: amadeusResponse?.dictionaries?.aircraft?.[segment?.aircraft?.code],
+//                     },
+//                     operating_carrier_flight_number: segment?.number,
+//                     marketing_carrier_flight_number: segment?.number,
+//                     operating_carrier: {
+//                         iata_code: segment?.operating?.carrierCode || segment?.carrierCode,
+//                         name: amadeusResponse?.dictionaries?.carriers?.[segment?.operating?.carrierCode]
+//                     },
+//                     flight_number: segment?.aircraft?.code,
+//                     destination: {
+//                         iata_code: segment?.arrival?.iataCode,
+//                         iata_city_code: amadeusResponse?.dictionaries?.locations?.[segment?.arrival?.iataCode]?.cityCode,
+//                         iata_country_code: amadeusResponse?.dictionaries?.locations?.[segment?.arrival?.iataCode]?.countryCode
+//                     },
+//                     origin: {
+//                         iata_code: segment?.departure?.iataCode,
+//                         iata_city_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.cityCode,
+//                         iata_country_code: amadeusResponse?.dictionaries?.locations?.[segment?.departure?.iataCode]?.countryCode
+//                     },
+//                     duration: segment?.duration,
+//                     checkedBaggage,
+//                     cabinBaggage
+//                     // departure_airport: segment?.departure?.airport?.code,
+//                     // arrival_airport: segment?.arrival?.airport?.code,
+//                 })
+//             })
+
+//             const n = result?.itineraries?.[0]?.segments?.length;
+//             const departing_at = segments?.[0]?.departing_at;
+//             const arriving_at = segments?.[n - 1]?.arriving_at;
+
+//             if (flag) {
+//                 const totalAmount = parseFloat(result?.price?.total);
+//                 let commissionAmount = 0;
+//                 if (commission) {
+//                     if (commission.feeType === 'FIXED') {
+//                         commissionAmount = parseFloat(commission.commissionFees);
+//                     }
+//                     else {
+//                         commissionAmount = (totalAmount * parseFloat(commission.commissionFees)) / 100.00;
+//                     }
+//                 }
+//                 if (totalAmount > 10000) {
+//                     console.log("Amadeus Price Error");
+//                 }
+//                 parsedResponse.push({
+//                     responseId,
+//                     routeId,
+//                     sourceId: GDS.amadeus,
+//                     departing_at: segments?.[0]?.departing_at,
+//                     arriving_at: segments?.[segments?.length - 1]?.arriving_at,
+//                     total_amount: commissionAmount + totalAmount,
+//                     commissionAmount,
+//                     slices: [
+//                         {
+//                             origin: segments?.[0]?.origin,
+//                             destination: segments?.[n - 1]?.destination,
+//                             departing_at,
+//                             arriving_at,
+//                             segments: segments,
+//                             sourceId: GDS.amadeus,
+//                             gdsOfferId: result.gdsOfferId,
+//                             travelerPricings: result.travelerPricings,
+//                             passengers: result.travelerPricings.map((traveller) => {
+//                                 return {
+//                                     id: traveller.travelerId,
+//                                     type: traveller.travelerType
+//                                 }
+//                             })
+//                         }
+//                     ],
+//                 })
+//             }
+//         })
+//         return parsedResponse
+
+//     } catch (error) {
+//         console.log("Error while parsing");
+//         throw error
+//     }
+// }
 
 export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, firewall: any = [], commission: CommissionType, origin: string, destination: string) => {
     try {
@@ -648,14 +792,94 @@ export function combineMultiCityRoutes(routeArrays: Offer[][]): Offer[][] {
 
 export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
     const result = response.map((offer) => {
-        let slices = [];
+        let serverSlices = [];
         let stops = 0;
         let responseId = "";
         let routeId = "";
         offer.forEach((route) => {
+            serverSlices.push(...(route.slices));
+            responseId += route?.responseId
+            routeId += route?.routeId
+        })
+        serverSlices.forEach((slice) => {
+            stops += slice?.segments?.length - 1 || 0;
+        })
+        if (serverSlices?.length > 1) {
+            stops += 1
+        }
+        const offerLength = offer.length
+        const lastOfferSlicesLenght = offer[offerLength - 1].slices.length
+        const slice: Partial<Slice> = {
+            origin: offer?.[0]?.slices?.[0]?.origin,
+            destination: offer?.[offerLength - 1]?.slices?.[lastOfferSlicesLenght - 1]?.destination,
+            departing_at: offer?.[0]?.slices?.[0]?.departing_at,
+            arriving_at: offer?.[offerLength - 1]?.slices?.[lastOfferSlicesLenght - 1].arriving_at,
+            segments: [],
+            passengers: [],
+            selfTransfer: offer.length > 1,
+        };
+
+        let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
+        const fareOptions = [];
+        offer.forEach((route, index) => {
+            totalAmount = totalAmount + parseFloat(route.total_amount);
+            totalCommission = totalCommission + (route.commissionAmount);
+            cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
+            checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
+            if(index > 0){
+                route.slices[0].segments[0].selfTransferSegment = true;
+            }
+            slice.segments.push(...(route.slices[0].segments))
+
+            if (route.fareBrands)
+                fareOptions.push({
+                    fareBrands: route.fareBrands,
+                    origin: route.slices[0].origin,
+                    destination: route.slices[0].destination,
+                    departing_at: route.slices[0].departing_at,
+                    arriving_at: route.slices[0].arriving_at,
+                });
+        });
+        if (totalAmount > 10000) {
+            console.log("Route Price is over the limit");
+        }
+
+        let commissionAmount = 0;
+        const finalAmount = commissionAmount + totalAmount;
+        return {
+            origin: serverSlices?.[0]?.origin,
+            destination: serverSlices?.[serverSlices.length - 1]?.destination,
+            departing_at: serverSlices?.[0]?.departing_at,
+            arriving_at: serverSlices?.[serverSlices.length - 1]?.arriving_at,
+            responseId,
+            commissionAmount: commissionAmount || totalCommission,
+            routeId,
+            stops,
+            // duration: offer[0].duration,
+            total_amount: finalAmount,
+            // base_currency: offer[0].base_currency,
+            // tax_currency: offer[0].tax_currency,
+            slices: [slice],
+            cabinBaggage,
+            checkedBaggage,
+            fareOptions,
+        };
+    })
+    return result;
+}
+
+export const newNormalizeResponse = (response: Offer[][], cabinClass: string) => {
+    const result = response.map((offer) => {
+        let slices = [];
+        let stops = 0;
+        let responseId = "";
+        let routeId = "";
+        let fareOptions = [];
+        offer.forEach((route) => {
             slices.push(...(route.slices));
             responseId += route?.responseId
             routeId += route?.routeId
+            fareOptions.push(route.fareOptions);
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -665,22 +889,20 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
         }
 
         let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
-        const fareBrandsArray = [];
         offer.forEach((route) => {
             totalAmount = totalAmount + parseFloat(route.total_amount);
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
-            if (route.fareBrands)
-                fareBrandsArray.push(route.fareBrands);
         });
-        const commonFareBrands: AggregatedFareBrand[] = findCommonFareBrands(fareBrandsArray);
-        if (totalAmount > 10000) {
-            console.log("Route Price is over the limit");
-        }
 
         let commissionAmount = 0;
+       
         const finalAmount = commissionAmount + totalAmount;
+        if(!slices[0].origin){
+            console.log("Slice");
+            console.log(slices);
+        }
         return {
             origin: slices?.[0]?.origin,
             destination: slices?.[slices.length - 1]?.destination,
@@ -697,11 +919,14 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             slices,
             cabinBaggage,
             checkedBaggage,
-            fareBrands: commonFareBrands,
+            cabinClass,
+            fareOptions
         };
     })
     return result;
+
 }
+
 
 export const normalizeResponse = (response: Offer[][], commission: CommissionType[], cabinClass: string) => {
     const result = response.map((offer) => {

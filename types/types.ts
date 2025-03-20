@@ -1,10 +1,12 @@
+import { FareBrandType, Location } from "./flightTypes";
+
 export interface RouteOptionParams {
     origin: string;
     destination: string;
 }
 
 export type RouteOptionResponse = {
-    possibleRoutes:RouteOptionParams[][];
+    possibleRoutes: RouteOptionParams[][];
     searchManagement: any
 }
 
@@ -40,4 +42,30 @@ export interface ManualLayoverSearchParams {
     cabinClass: 'first' | 'business' | 'economy' | 'premium_economy';
     departureDate: string;
 
+}
+
+export interface FareOption {
+    origin: Location,
+    destination: Location,
+    departing_at: string;
+    arriving_at: string;
+    fareBrands: FareBrandType[]
+}
+
+export interface CommomBaggageType {
+    quantity?: string;
+    weight?: string;
+    unit?: string;
+}
+
+export interface KiuPassengerBaggageData {
+    cabinBaggage?: CommomBaggageType;
+    checkedBaggage?: CommomBaggageType;
+    handBaggage?: CommomBaggageType;
+}
+
+export interface KiuBaggageData {
+    adultBaggage?: KiuPassengerBaggageData;
+    childBaggage?: KiuPassengerBaggageData;
+    infantBaggage?: KiuPassengerBaggageData;
 }

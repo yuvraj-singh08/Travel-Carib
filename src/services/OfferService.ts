@@ -1,5 +1,6 @@
 import { GDS } from "../../constants/cabinClass";
 import { DuffelPassengerResponseType, MulticityOffer, Offer, SetPassengerIdServiceParams } from "../../types/flightTypes";
+import { v4 as uuidv4 } from "uuid";
 import DuffelClient from "../api-clients/DuffelClient";
 import { prisma } from "../prismaClient"
 import HttpError from "../utils/httperror";
@@ -23,6 +24,29 @@ export async function saveData(data: any, passengers: { adults: number, children
         return response;
     } catch (error) {
         console.log(error);
+        throw error;
+    }
+}
+
+export function saveSearchResponses(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
+    try {
+        const dataWithId = data.map((item) => {
+            const id = uuidv4();
+            const response = prisma.offer.create({
+                data: {
+                    id,
+                    data: JSON.stringify(item),
+                    flightWay
+                }
+            })
+            return {
+                ...item,
+                id,
+            }
+        });
+        return dataWithId;
+    } catch (error) {
+        console.log("Error Saving Response");
         throw error;
     }
 }
@@ -83,7 +107,7 @@ export async function getOffer(id: string) {
         if (offer.passengers.length === 0) {
             if (offer.flightWay === "ONEWAY") {
                 const parsedOffer = JSON.parse(offer.data) as Offer;
-                
+
                 //To prevent kiu offer not having passenger data
                 let flag = true;
                 parsedOffer.slices.forEach((slice) => {
@@ -171,7 +195,7 @@ export async function getOffer(id: string) {
             }
             else {
                 const parsedOffer = JSON.parse(offer.data) as MulticityOffer;
-                
+
                 //To prevent kiu offer not having passenger data
                 let flag = true;
                 parsedOffer.itenaries.forEach((itenary) => {
