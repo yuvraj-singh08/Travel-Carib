@@ -59,7 +59,7 @@ class FlightClient {
                             cabinClass
                         })
                     })),
-                    this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
+                    await this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
                 ])
             }
             else {
@@ -76,7 +76,11 @@ class FlightClient {
 
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
-            const sortedResponse = sortResponse([...normalizedResponse, ...multiCityFlightSearch], sortBy);
+            let temp = normalizedResponse;
+            if (FlightDetails.length > 1){
+                temp = [...normalizedResponse, ...multiCityFlightSearch];
+            }
+            const sortedResponse = sortResponse(temp, sortBy);
             const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
             redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
             return { flightData: savedData?.filter((_,index) => index<200), airlinesDetails: [], searchKey: id };
