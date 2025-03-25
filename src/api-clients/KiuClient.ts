@@ -287,6 +287,7 @@ class KiuClient {
             })
 
           }))
+          fareBrands.sort((a,b) => a.totalAmount - b.totalAmount);
           offer.fareBrands = fareBrands;
         }))
       }))
