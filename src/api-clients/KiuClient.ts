@@ -288,6 +288,7 @@ class KiuClient {
 
           }))
           fareBrands.sort((a,b) => a.totalAmount - b.totalAmount);
+          console.log("Sorted Fare brands", fareBrands);
           offer.fareBrands = fareBrands;
         }))
       }))

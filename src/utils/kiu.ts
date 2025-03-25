@@ -321,7 +321,7 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       responseId,
       routeId,
       stops,
-      fareBrands: offer[0].fareBrands,
+      fareBrands: offer.map((data) => data.fareBrands),
       fareOptions:fareOptions,
       // duration: offer[0].duration,
       // base_currency: offer[0].base_currency,
