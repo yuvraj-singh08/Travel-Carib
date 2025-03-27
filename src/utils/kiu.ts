@@ -322,6 +322,7 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       routeId,
       stops,
       fareBrands: offer.map((data) => data.fareBrands),
+      fareOptionGDS: "KIU",
       fareOptions:fareOptions,
       // duration: offer[0].duration,
       // base_currency: offer[0].base_currency,
@@ -441,15 +442,15 @@ export const buildNewPriceRequest = (params: PriceRequestParams, target: 'Testin
           PassengerTypeQuantity: [//  (ADT: Adult, CNN: Minor, INF: Infant)
             {
               '@Code': 'CNN',
-              '@Quantity': params.Passengers.children
+              '@Quantity': params.Passengers.children || 0
             },
             {
               '@Code': 'ADT',
-              '@Quantity': params.Passengers.adults
+              '@Quantity': params.Passengers.adults || 0
             },
             {
               '@Code': 'INF',
-              '@Quantity': params.Passengers.infants
+              '@Quantity': params.Passengers.infants || 0
             },
           ]
         }

@@ -69,3 +69,14 @@ export interface KiuBaggageData {
     childBaggage?: KiuPassengerBaggageData;
     infantBaggage?: KiuPassengerBaggageData;
 }
+
+export interface getCustomFarePrice {
+    fareOptionGDS: "KIU" | "DUFFEL" | "AMADEUS",
+    offerId: string,
+    choices: string[];
+    passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    }
+}

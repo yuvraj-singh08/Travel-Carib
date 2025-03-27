@@ -32,13 +32,13 @@ export function saveSearchResponses(data: any, passengers: { adults: number, chi
     try {
         const dataWithId = data.map((item) => {
             const id = uuidv4();
-            const response = prisma.offer.create({
+            prisma.offer.create({
                 data: {
                     id,
                     data: JSON.stringify(item),
                     flightWay
                 }
-            })
+            }).catch(error => console.error("Error saving offer:", error)); // Catch errors to prevent crashes
             return {
                 ...item,
                 id,

@@ -22,6 +22,7 @@ async function setupRoutes() {
     router.post('/new-multicity-search', flightController.newMulticitSearch)
     router.get('/fullData/:searchKey', flightController.getFullData);
     router.post('/searchFlights', flightController.searchFlights);
+    router.post('/getCustomFarePrice', flightController.getCustomFarePriceController);
 
   } catch (error) {
     console.error('Error initializing FlightController:', error);

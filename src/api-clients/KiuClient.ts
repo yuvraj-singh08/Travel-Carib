@@ -290,7 +290,7 @@ class KiuClient {
           fareBrands.sort((a, b) => a.totalAmount - b.totalAmount);
           console.log("Sorted Fare brands", fareBrands);
           offer.fareBrands = fareBrands;
-          offer.total_amount = `${fareBrands[0].totalAmount}`;
+          offer.total_amount = fareBrands[0].totalAmount;
         }))
       }))
 
@@ -326,7 +326,7 @@ class KiuClient {
         }
         else {
           normalizedResponse[index].invalidResponse = false;
-          normalizedResponse[index].total_amount = priceResponse.totalPrice;
+          normalizedResponse[index].total_amount = parseFloat(priceResponse.totalPrice);
         }
         return priceResponse;
       }))

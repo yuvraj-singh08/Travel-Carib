@@ -86,7 +86,7 @@ export type Offer = {
     total_currency: string;
     created_at: string;
     live_mode: boolean;
-    total_amount: string;
+    total_amount: number;
     slices: Slice[];
     passengers: Passenger[];
     departing_at: string,

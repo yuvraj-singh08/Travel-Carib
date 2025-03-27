@@ -20,6 +20,7 @@ class FlightController {
     this.BookFlight = this.BookFlight.bind(this);
     this.newMulticitSearch = this.newMulticitSearch.bind(this);
     this.searchFlights = this.searchFlights.bind(this);
+    this.getCustomFarePriceController = this.getCustomFarePriceController.bind(this);
   }
 
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -169,6 +170,7 @@ class FlightController {
         throw new HttpError("Offer not found", 404);
       }
 
+      //@ts-ignore
       if (data.flightWay === flightTypeValue.oneway) {
         const offer = data.data as Offer;
         const subBookings: SubBookingType[] = [];
@@ -300,6 +302,16 @@ class FlightController {
       const id = req.params.searchKey;
       const cachedData = JSON.parse(await redis.get(id));
       res.status(200).json({ success: true, data: cachedData });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCustomFarePriceController(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { offerId, choices, fareOptionGDS, passengers } = req.body;
+      const priceResponse = await this.flightClient.getCustomFarePrice({ offerId, choices, fareOptionGDS, passengers });
+      res.status(200).json({ success: true, data: priceResponse });
     } catch (error) {
       next(error);
     }
