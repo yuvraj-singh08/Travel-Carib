@@ -287,16 +287,17 @@ class KiuClient {
             })
 
           }))
-          fareBrands.sort((a,b) => a.totalAmount - b.totalAmount);
+          fareBrands.sort((a, b) => a.totalAmount - b.totalAmount);
           console.log("Sorted Fare brands", fareBrands);
           offer.fareBrands = fareBrands;
+          offer.total_amount = `${fareBrands[0].totalAmount}`;
         }))
       }))
 
       const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
       const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy") as unknown as Offer[] | any[];
-      await Promise.allSettled(normalizedResponse.map(async (offer, index) => {
-        const originDestinationOptions = offer.slices.map((slice) => {
+      await Promise.all(normalizedResponse.map(async (offer, index) => {
+        const originDestinationOptions = offer.slices.map((slice, sliceIndex) => {
           const FlightSegments = slice.segments.map((segment): PriceFlightSegment => {
             const flightSegment: PriceFlightSegment = {
               OriginLocation: segment.origin.iata_code,
@@ -306,7 +307,7 @@ class KiuClient {
               CabinType: params.CabinClass,
               FlightNumber: segment.marketing_carrier_flight_number,
               MarketingAirline: segment.marketing_carrier.iata_code,
-              ResBookDesigCode: segment.ResBookDesigCode[0],
+              ResBookDesigCode: offer.fareOptions[sliceIndex].fareBrands[0].fareBrand,
               RPH: RPH
             }
             return flightSegment;
@@ -323,7 +324,7 @@ class KiuClient {
         if (priceResponse.error === true) {
           normalizedResponse[index].invalidResponse = true;
         }
-        else{
+        else {
           normalizedResponse[index].invalidResponse = false;
           normalizedResponse[index].total_amount = priceResponse.totalPrice;
         }

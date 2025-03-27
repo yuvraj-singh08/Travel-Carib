@@ -1441,3 +1441,19 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
         return { airlines: [], extendedData: [] };
     }
 }
+
+export const parseMulticityKiuResponse = (response: Offer[]) => {
+    try {
+        response.forEach((offer) => {
+            const fareOptions = [];
+            offer.fareOptions.forEach((fareOption) => {
+                fareOptions.push([fareOption]);
+            })
+            offer.fareOptions = fareOptions;
+        });
+        return response;
+    } catch (error) {
+        console.log(error);
+        return [];
+    }
+}
