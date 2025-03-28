@@ -86,6 +86,7 @@ export type Offer = {
     total_currency: string;
     created_at: string;
     live_mode: boolean;
+    fareOptionGDS?: string;
     total_amount: number;
     slices: Slice[];
     passengers: Passenger[];
@@ -357,6 +358,10 @@ export interface PassengerType {
     passportNumber: string;
     passportExpiryDate: string;
     issuingCountry: string;
+    contactDetails: {
+        email: string
+        phoneNumber: string;
+    }
     type: DuffelPassengerType;
     infant_passenger_id?: string;
     email: string;

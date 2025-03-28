@@ -13,7 +13,7 @@ import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
 import redis from "../../config/redis";
 import { getCustomFarePrice, ManualLayoverSearchParams } from "../../types/types";
-import { PriceFlightSegment } from "../../types/kiuTypes";
+import { BookingRequestParams, PriceFlightSegment } from "../../types/kiuTypes";
 import { kiuClasses } from "../../constants/cabinClass";
 import HttpError from "../utils/httperror";
 
@@ -720,6 +720,7 @@ class FlightClient {
     async bookKiuFlight(slice: Slice, passengers: PassengerType[]) {
         try {
             const response = await this.kiuClient.bookFlight({
+                //@ts-ignore
                 slice, passengers
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
@@ -869,6 +870,16 @@ class FlightClient {
         } catch (error) {
             throw error;
         }
+    }
+
+    async newBookKiuFlight({slices, kiuPassengers,choices, passengers}: BookingRequestParams){
+        const response = await this.kiuClient.bookFlight({
+            slices,
+            choices,
+            passengers,
+            kiuPassengers
+        });
+        return response;
     }
 
 }

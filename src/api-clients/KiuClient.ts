@@ -331,35 +331,6 @@ class KiuClient {
         return priceResponse;
       }))
 
-      // normalizedResponse.forEach((response) => {
-      //   const fareOptions: any = [];
-      //   response.slices.forEach((slice) => {
-      //     slice.segments.forEach(async (segment) => {
-      //       segment.ResBookDesigCode.forEach(async (code) => {
-      //         const price = await this.newSearchPrice({
-      //           OriginDestinationOptions: [
-      //             {
-      //               FlightSegments: [
-      //                 {
-      //                   OriginLocation: segment.origin.iata_code,
-      //                   DestinationLocation: segment.destination.iata_city_code,
-      //                   DepartureDateTime: segment.departing_at,
-      //                   ArrivalDateTime: segment.arriving_at,
-      //                   MarketingAirline: segment.marketing_carrier.iata_code,
-      //                   FlightNumber: segment.marketing_carrier_flight_number,
-      //                   ResBookDesigCode: code,
-      //                   CabinType: params.CabinClass,
-      //                   RPH: RPH
-      //                 }
-      //               ]
-      //             }
-      //           ],
-      //           Passengers: params.Passengers
-      //         })
-      //       })
-      //     })
-      //   })
-      // })
       return normalizedResponse.filter((offer: any) => !offer.invalidResponse) || [];
     } catch (error) {
       if (error?.response?.status === 509) {
@@ -460,11 +431,12 @@ class KiuClient {
     }
   }
 
-  async bookFlight({ slice, passengers }: BookingRequestParams) {
+  async bookFlight({ slices, choices,kiuPassengers, passengers }: BookingRequestParams) {
     try {
       const request = buildBookingRequest({
-        segments: slice.segments,
+        slices,
         passengers: passengers,
+        choices,
       }, this.mode);
       const response = await this.queuedPost(request);
       const parser = new xml2js.Parser();
