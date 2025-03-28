@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { AuthenticatedRequest } from "../../types/express";
-import { prisma } from "../prismaClient";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { handlePrismaError } from "../utils/prismaError";
@@ -8,11 +7,11 @@ import HttpError from "../utils/httperror";
 import { sendOTP } from "../../nodemailer/transporter";
 import { AdminPermissions } from "../../types/adminTypes";
 import { BaggageType } from "@prisma/client";
+import { prisma } from "../prismaClient";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
 
-// Register User
 export const registerUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   if (req.user.role !== 'ADMIN') {
     throw new HttpError("Unauthorized", 403);
@@ -2459,3 +2458,56 @@ export const getBaggageWeight = async (req: Request, res: Response, next: NextFu
     next(error);
   }
 }
+
+
+
+
+// Create a new fare setting
+export const createFareSetting = async (req, res) => {
+  console.log(req.body);
+    try {
+        const { airlineCodes, fareCodes, refundable, changeable, checkedBags } = req.body;
+        const newSetting = await prisma.fareSetting.create({
+            data: { airlineCodes, fareCodes, refundable, changeable },
+        });
+        res.status(201).json(newSetting);
+    } catch (error) {
+        res.status(500).json({ error: "Error creating fare setting", details: error.message });
+    }
+};
+
+// Get all fare settings
+export const getAllFareSettings = async (req, res) => {
+    try {
+        const settings = await prisma.fareSetting.findMany();
+        res.json(settings);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching fare settings" });
+    }
+};
+
+// Update a fare setting
+export const updateFareSetting = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { airlineCodes, fareCodes, refundable, changeable } = req.body;
+        const updatedSetting = await prisma.fareSetting.update({
+            where: { id },
+            data: { airlineCodes, fareCodes, refundable, changeable },
+        });
+        res.json(updatedSetting);
+    } catch (error) {
+        res.status(500).json({ error: "Error updating fare setting", details: error.message });
+    }
+};
+
+// Delete a fare setting
+export const deleteFareSetting = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.fareSetting.delete({ where: { id } });
+        res.json({ message: "Fare setting deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Error deleting fare setting", details: error.message });
+    }
+};

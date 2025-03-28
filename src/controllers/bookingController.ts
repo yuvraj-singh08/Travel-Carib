@@ -187,7 +187,6 @@ export const fetchBooking = async (
     pageSize = 10,
     searchKey,
     status,
-
   }: {
     to: string,
     from: string,
@@ -217,7 +216,6 @@ export const fetchBooking = async (
         gte: fromDate,
         lte: toDate,
       };
-
     }
     if (status) {
       whereClause.adminStatus = status;

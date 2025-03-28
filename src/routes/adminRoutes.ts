@@ -80,6 +80,10 @@ import {
   addBaggageWeight,
   getBaggageWeight,
   upadteBaggageWeight,
+  deleteFareSetting,
+  updateFareSetting,
+  getAllFareSettings,
+  createFareSetting,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authmiddleware";
 
@@ -182,5 +186,11 @@ router.post("/delete-booking", authenticateToken, deleteBooking);
 router.post("/baggage", authenticateToken, addBaggageWeight);
 router.put("/baggage/:id", authenticateToken, upadteBaggageWeight);
 router.get('/baggage', getBaggageWeight);
+
+//fare settings routes
+router.post("/createFareSetting", createFareSetting);
+router.get("/getAllFareSettings ", getAllFareSettings);
+router.put("updateFareSetting/:id", updateFareSetting);
+router.delete("deleteFareSetting/:id", deleteFareSetting);
 
 export default router;

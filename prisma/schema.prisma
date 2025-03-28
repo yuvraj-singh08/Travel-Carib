@@ -474,3 +474,13 @@ model BaggageWeight {
   weight String
   type   BaggageType @unique
 }
+
+model FareSetting {
+  id           String   @id @default(uuid()) @map("_id")
+  airlineCodes String[] // Array of airline codes
+  fareCodes    String[] // Array of fare codes
+  refundable   String
+  changeable   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
