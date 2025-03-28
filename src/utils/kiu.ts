@@ -16,24 +16,30 @@ export const getDateString = (date: string) => {
 
 export const buildBookingRequest = (params: BuildBookingRequestParams, target: 'Testing' | 'Production') => {
   try {
-    const segments = params.segments.map((segment, index: number) => {
-      return {
-        "@DepartureDateTime": moment(segment.departing_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
-        "@ArrivalDateTime": moment(segment.arriving_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
-        "@FlightNumber": segment.operating_carrier_flight_number,
-        "@ResBookDesigCode": segment.ResBookDesigCode,
-        "@SegmentRPH": index + 1,
-        DepartureAirport: {
-          '@LocationCode': segment.origin.iata_code
-        },
-        ArrivalAirport: {
-          '@LocationCode': segment.destination.iata_code
-        },
-        MarketingAirline: {
-          '@Code': segment.operating_carrier.iata_code
+    const slices = params.slices.map((slice, sliceIndex) => {
+      const segments = slice.segments.map((segment, index: number) => {
+        return {
+          "@DepartureDateTime": moment(segment.departing_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
+          "@ArrivalDateTime": moment(segment.arriving_at, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DDTHH:mm:ss"),
+          "@FlightNumber": segment.operating_carrier_flight_number,
+          "@ResBookDesigCode": params.choices[sliceIndex],
+          "@SegmentRPH": index + 1,
+          DepartureAirport: {
+            '@LocationCode': segment.origin.iata_code
+          },
+          ArrivalAirport: {
+            '@LocationCode': segment.destination.iata_code
+          },
+          MarketingAirline: {
+            '@Code': segment.operating_carrier.iata_code
+          }
         }
+      });
+
+      return {
+        FlightSegment: segments
       }
-    });
+    })
 
     const passengers = params.passengers.map((passenger, index) => {
       return {
@@ -48,11 +54,11 @@ export const buildBookingRequest = (params: BuildBookingRequestParams, target: '
           "@DocID": passenger.passportNumber
         },
         Telephone: {
-          "@CountryAccessCode": passenger.phoneNumber.substring(1, passenger.phoneNumber.length - 10),
+          "@CountryAccessCode": passenger.contactDetails.phoneNumber.substring(1, passenger.contactDetails.phoneNumber.length - 10),
           "@AreaCityCode": "10",
-          "@PhoneNumber": passenger.phoneNumber.slice(passenger.phoneNumber.length - 10)
+          "@PhoneNumber": passenger.contactDetails.phoneNumber.slice(passenger.contactDetails.phoneNumber.length - 10)
         },
-        Email: passenger.email,
+        Email: passenger.contactDetails.email,
         TravelerRefNumber: {
           "@RPH": index + 1
         }
@@ -60,7 +66,7 @@ export const buildBookingRequest = (params: BuildBookingRequestParams, target: '
     })
 
     const currentTime = moment();
-    const departingTime = moment(params.segments[0].departing_at, "YYYY-MM-DD HH:mm:ss");
+    const departingTime = moment(params.slices[0].segments[0].departing_at, "YYYY-MM-DD HH:mm:ss");
 
     // Calculate the time 10 hours from now
     const timePlus10Hours = currentTime.clone().add(10, 'hours');
@@ -98,9 +104,7 @@ export const buildBookingRequest = (params: BuildBookingRequestParams, target: '
         },
         AirItinerary: {
           OriginDestinationOptions: {
-            OriginDestinationOption: {
-              FlightSegment: segments
-            }
+            OriginDestinationOption: slices
           }
         },
         TravelerInfo: {
@@ -281,11 +285,11 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       routeId += route?.routeId
       if (route.fareBrands)
         fareOptions.push({
-            fareBrands: route.fareBrands,
-            origin: route.slices[0].origin,
-            destination: route.slices[0].destination,
-            departing_at: route.slices[0].departing_at,
-            arriving_at: route.slices[0].arriving_at,
+          fareBrands: route.fareBrands,
+          origin: route.slices[0].origin,
+          destination: route.slices[0].destination,
+          departing_at: route.slices[0].departing_at,
+          arriving_at: route.slices[0].arriving_at,
         });
     })
     slices.forEach((slice) => {
@@ -321,8 +325,9 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       responseId,
       routeId,
       stops,
-      fareBrands: offer[0].fareBrands,
-      fareOptions:fareOptions,
+      fareBrands: offer.map((data) => data.fareBrands),
+      fareOptionGDS: "KIU",
+      fareOptions: fareOptions,
       // duration: offer[0].duration,
       // base_currency: offer[0].base_currency,
       // tax_currency: offer[0].tax_currency,
@@ -441,15 +446,15 @@ export const buildNewPriceRequest = (params: PriceRequestParams, target: 'Testin
           PassengerTypeQuantity: [//  (ADT: Adult, CNN: Minor, INF: Infant)
             {
               '@Code': 'CNN',
-              '@Quantity': params.Passengers.children
+              '@Quantity': params.Passengers.children || 0
             },
             {
               '@Code': 'ADT',
-              '@Quantity': params.Passengers.adults
+              '@Quantity': params.Passengers.adults || 0
             },
             {
               '@Code': 'INF',
-              '@Quantity': params.Passengers.infants
+              '@Quantity': params.Passengers.infants || 0
             },
           ]
         }
@@ -688,7 +693,7 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
     let validSegment: boolean = true;
     const segments = data?.FlightSegment.map((segment, index): Segment => {
       responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber;
-      if(index > 0){
+      if (index > 0) {
         validSegment = false;
       }
       return {
@@ -714,7 +719,7 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
       }
     });
     //@ts-ignore
-    if(validSegment === false){
+    if (validSegment === false) {
       return false;
     }
     return {

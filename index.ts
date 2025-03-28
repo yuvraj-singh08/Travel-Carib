@@ -35,7 +35,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ["*", "https://flight-booking-frontend-admin.vercel.app", "https://flight-booking-frontend-website.vercel.app", "http://localhost:5173", "http://localhost:5174"], // Allow all origins
+    origin: ["*", "https://www.vuelitos.com", "https://flight-booking-frontend-admin.vercel.app", "https://flight-booking-frontend-website.vercel.app", "http://localhost:5173", "http://localhost:5174"], // Allow all origins
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -43,7 +43,7 @@ app.use(
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  console.log(req.ip); 
+  console.log(req.ip);
   res.send(`The server is working fine and running on port 8000 and request was made from : ${req.ip}`);
 });
 

@@ -1,18 +1,21 @@
 import { FlightSupplier } from "@prisma/client";
 import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { saveData, saveSearchResponses } from "../services/OfferService";
+import { getOffer, saveData, saveSearchResponses } from "../services/OfferService";
 import { getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
 import redis from "../../config/redis";
-import { ManualLayoverSearchParams } from "../../types/types";
+import { getCustomFarePrice, ManualLayoverSearchParams } from "../../types/types";
+import { BookingRequestParams, PriceFlightSegment } from "../../types/kiuTypes";
+import { kiuClasses } from "../../constants/cabinClass";
+import HttpError from "../utils/httperror";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
@@ -42,11 +45,11 @@ class FlightClient {
             const id = JSON.stringify({
                 FlightDetails, cabinClass
             });
-            const cachedResponse = await redis.get(id);
-            if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
-                return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
-            }
+            // const cachedResponse = await redis.get(id);
+            // if (cachedResponse) {
+            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+            //     return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            // }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -59,7 +62,7 @@ class FlightClient {
                             cabinClass
                         })
                     })),
-                    this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
+                    await this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
                 ])
             }
             else {
@@ -76,10 +79,14 @@ class FlightClient {
 
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
-            const sortedResponse = sortResponse([...normalizedResponse, ...multiCityFlightSearch], sortBy);
+            let temp = normalizedResponse;
+            if (FlightDetails.length > 1) {
+                temp = [...normalizedResponse, ...multiCityFlightSearch];
+            }
+            const sortedResponse = sortResponse(temp, sortBy);
             const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
             redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
-            return { flightData: savedData?.filter((_,index) => index<200), airlinesDetails: [], searchKey: id };
+            return { flightData: savedData?.filter((_, index) => index < 200), airlinesDetails: [], searchKey: id };
         } catch (error) {
             throw error;
         }
@@ -365,10 +372,11 @@ class FlightClient {
                 amadeusRequest,
                 duffelRequest
             ]);
+            const parseKiuResponse = parseMulticityKiuResponse(kiuResponse);
             const parsedDuffelResponse = (duffelResponse.data.offers);
             // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
 
-            return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
+            return [...parseKiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 
         } catch (error) {
             throw error;
@@ -712,6 +720,7 @@ class FlightClient {
     async bookKiuFlight(slice: Slice, passengers: PassengerType[]) {
         try {
             const response = await this.kiuClient.bookFlight({
+                //@ts-ignore
                 slice, passengers
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
@@ -825,6 +834,52 @@ class FlightClient {
             console.log(error);
             throw error;
         }
+    }
+
+    async getCustomFarePrice({ fareOptionGDS, offerId, choices, passengers }: getCustomFarePrice) {
+        try {
+            if(fareOptionGDS!=="KIU"){
+                throw new HttpError("Invalid GDS option", 400);
+            }
+            const offer = await getOffer(offerId);
+            const originDestinationOptions = offer.data.slices.map((slice, sliceIndex) => {
+                const FlightSegments = slice.segments.map((segment): PriceFlightSegment => {
+                    const flightSegment: PriceFlightSegment = {
+                        OriginLocation: segment.origin.iata_code,
+                        DestinationLocation: segment.destination.iata_code,
+                        DepartureDateTime: segment.departing_at,
+                        ArrivalDateTime: segment.arriving_at,
+                        CabinType: offer.data.cabinClass,
+                        FlightNumber: segment.marketing_carrier_flight_number,
+                        MarketingAirline: segment.marketing_carrier.iata_code,
+                        ResBookDesigCode: choices[sliceIndex],
+                        RPH: kiuClasses?.[`${offer.data.cabinClass}`]
+
+                    }
+                    return flightSegment;
+                });
+                return {
+                    FlightSegments: FlightSegments
+                }
+            });
+            const priceResponse = await this.kiuClient.newSearchPrice({
+                OriginDestinationOptions: originDestinationOptions,
+                Passengers: passengers
+            })
+            return priceResponse
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async newBookKiuFlight({slices, kiuPassengers,choices, passengers}: BookingRequestParams){
+        const response = await this.kiuClient.bookFlight({
+            slices,
+            choices,
+            passengers,
+            kiuPassengers
+        });
+        return response;
     }
 
 }

@@ -287,14 +287,17 @@ class KiuClient {
             })
 
           }))
+          fareBrands.sort((a, b) => a.totalAmount - b.totalAmount);
+          console.log("Sorted Fare brands", fareBrands);
           offer.fareBrands = fareBrands;
+          offer.total_amount = fareBrands[0].totalAmount;
         }))
       }))
 
       const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
       const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy") as unknown as Offer[] | any[];
-      await Promise.allSettled(normalizedResponse.map(async (offer, index) => {
-        const originDestinationOptions = offer.slices.map((slice) => {
+      await Promise.all(normalizedResponse.map(async (offer, index) => {
+        const originDestinationOptions = offer.slices.map((slice, sliceIndex) => {
           const FlightSegments = slice.segments.map((segment): PriceFlightSegment => {
             const flightSegment: PriceFlightSegment = {
               OriginLocation: segment.origin.iata_code,
@@ -304,7 +307,7 @@ class KiuClient {
               CabinType: params.CabinClass,
               FlightNumber: segment.marketing_carrier_flight_number,
               MarketingAirline: segment.marketing_carrier.iata_code,
-              ResBookDesigCode: segment.ResBookDesigCode[0],
+              ResBookDesigCode: offer.fareOptions[sliceIndex].fareBrands[0].fareBrand,
               RPH: RPH
             }
             return flightSegment;
@@ -321,42 +324,13 @@ class KiuClient {
         if (priceResponse.error === true) {
           normalizedResponse[index].invalidResponse = true;
         }
-        else{
+        else {
           normalizedResponse[index].invalidResponse = false;
-          normalizedResponse[index].total_amount = priceResponse.totalPrice;
+          normalizedResponse[index].total_amount = parseFloat(priceResponse.totalPrice);
         }
         return priceResponse;
       }))
 
-      // normalizedResponse.forEach((response) => {
-      //   const fareOptions: any = [];
-      //   response.slices.forEach((slice) => {
-      //     slice.segments.forEach(async (segment) => {
-      //       segment.ResBookDesigCode.forEach(async (code) => {
-      //         const price = await this.newSearchPrice({
-      //           OriginDestinationOptions: [
-      //             {
-      //               FlightSegments: [
-      //                 {
-      //                   OriginLocation: segment.origin.iata_code,
-      //                   DestinationLocation: segment.destination.iata_city_code,
-      //                   DepartureDateTime: segment.departing_at,
-      //                   ArrivalDateTime: segment.arriving_at,
-      //                   MarketingAirline: segment.marketing_carrier.iata_code,
-      //                   FlightNumber: segment.marketing_carrier_flight_number,
-      //                   ResBookDesigCode: code,
-      //                   CabinType: params.CabinClass,
-      //                   RPH: RPH
-      //                 }
-      //               ]
-      //             }
-      //           ],
-      //           Passengers: params.Passengers
-      //         })
-      //       })
-      //     })
-      //   })
-      // })
       return normalizedResponse.filter((offer: any) => !offer.invalidResponse) || [];
     } catch (error) {
       if (error?.response?.status === 509) {
@@ -457,11 +431,12 @@ class KiuClient {
     }
   }
 
-  async bookFlight({ slice, passengers }: BookingRequestParams) {
+  async bookFlight({ slices, choices,kiuPassengers, passengers }: BookingRequestParams) {
     try {
       const request = buildBookingRequest({
-        segments: slice.segments,
+        slices,
         passengers: passengers,
+        choices,
       }, this.mode);
       const response = await this.queuedPost(request);
       const parser = new xml2js.Parser();

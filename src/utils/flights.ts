@@ -594,8 +594,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
 
 export const filterResponse = (response: Offer[], filters: FilterType, allFirewall: Firewall[]) => {
     const filteredResponse: Offer[] = response.filter((route) => {
-        const minPriceFilter = filters?.MinPrice ? parseFloat(route.total_amount) >= filters.MinPrice : true
-        const maxPriceFilter = filters?.MaxPrice ? parseFloat(route.total_amount) <= filters.MaxPrice : true;
+        const minPriceFilter = filters?.MinPrice ? (route.total_amount) >= filters.MinPrice : true
+        const maxPriceFilter = filters?.MaxPrice ? (route.total_amount) <= filters.MaxPrice : true;
 
         //Checkin Baggage
         let checkedBaggage = true;
@@ -732,11 +732,11 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: stri
 
                 if (differenceInMinutes > minTime && differenceInMinutes < maxTime) {
                     // Sum the total_amount of the currentRoute and nextRoute
-                    const totalAmount = currentRoute.reduce((sum, route) => sum + (parseFloat(route.total_amount) || 0), 0)
-                        + (parseFloat(nextRoute.total_amount) || 0);
+                    const totalAmount = currentRoute.reduce((sum, route) => sum + ((route.total_amount) || 0), 0)
+                        + ((nextRoute.total_amount) || 0);
 
                     // Add the combined route with updated total_amount
-                    newResult.push([...currentRoute, { ...nextRoute, total_amount: `${totalAmount}` }]);
+                    newResult.push([...currentRoute, { ...nextRoute, total_amount: totalAmount }]);
                 }
 
             }
@@ -822,7 +822,7 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
         let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
         const fareOptions = [];
         offer.forEach((route, index) => {
-            totalAmount = totalAmount + parseFloat(route.total_amount);
+            totalAmount = totalAmount + route.total_amount;
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
@@ -890,7 +890,7 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
 
         let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
         offer.forEach((route) => {
-            totalAmount = totalAmount + parseFloat(route.total_amount);
+            totalAmount = totalAmount + route.total_amount;
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
@@ -950,7 +950,7 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
         let totalAmount = 0, totalCommission = 0, cabinBaggage = offer?.[0]?.cabinBaggage || 0, checkedBaggage = offer?.[0]?.checkedBaggage || 0;
         const fareBrandsArray = [];
         offer.forEach((route) => {
-            totalAmount = totalAmount + parseFloat(route.total_amount);
+            totalAmount = totalAmount + route.total_amount;
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
@@ -1025,7 +1025,7 @@ export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 
         if (maxDuration === null || timeDiff > maxDuration) maxDuration = timeDiff;
         if (minDuration === null || timeDiff < minDuration) minDuration = timeDiff;
 
-        const totalAmount = parseFloat(offer.total_amount);
+        const totalAmount = (offer.total_amount);
         if (maxPrice === null || totalAmount > maxPrice) maxPrice = totalAmount;
         if (minPrice === null || totalAmount < minPrice) minPrice = totalAmount;
 
@@ -1053,7 +1053,7 @@ export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 
                 const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
 
                 const durationScore = (maxDuration - timeDiff) / (maxDuration - minDuration || 1);
-                const priceScore = (maxPrice - parseFloat(offer.total_amount)) / (maxPrice - minPrice || 1);
+                const priceScore = (maxPrice - (offer.total_amount)) / (maxPrice - minPrice || 1);
                 const stopsScore = (maxStops - offer.stops) / (maxStops - minStops || 1);
 
                 // Adjust these weights as needed
@@ -1081,7 +1081,7 @@ export const sortMultiCityResponse = (response: Offer[] | any, sortBy: 'BEST' | 
         if (maxDuration === null || timeDiff > maxDuration) maxDuration = timeDiff;
         if (minDuration === null || timeDiff < minDuration) minDuration = timeDiff;
 
-        const totalAmount = parseFloat(offer.total_amount);
+        const totalAmount = (offer.total_amount);
         if (maxPrice === null || totalAmount > maxPrice) maxPrice = totalAmount;
         if (minPrice === null || totalAmount < minPrice) minPrice = totalAmount;
 
@@ -1109,7 +1109,7 @@ export const sortMultiCityResponse = (response: Offer[] | any, sortBy: 'BEST' | 
                 const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
 
                 const durationScore = (maxDuration - timeDiff) / (maxDuration - minDuration || 1);
-                const priceScore = (maxPrice - parseFloat(offer.total_amount)) / (maxPrice - minPrice || 1);
+                const priceScore = (maxPrice - (offer.total_amount)) / (maxPrice - minPrice || 1);
                 const stopsScore = (maxStops - offer.stops) / (maxStops - minStops || 1);
 
                 // Adjust these weights as needed
@@ -1439,5 +1439,21 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
     } catch (error) {
         console.error("Error Getting Airline Codes: ", error);
         return { airlines: [], extendedData: [] };
+    }
+}
+
+export const parseMulticityKiuResponse = (response: Offer[]) => {
+    try {
+        response.forEach((offer) => {
+            const fareOptions = [];
+            offer.fareOptions.forEach((fareOption) => {
+                fareOptions.push([fareOption]);
+            })
+            offer.fareOptions = fareOptions;
+        });
+        return response;
+    } catch (error) {
+        console.log(error);
+        return [];
     }
 }

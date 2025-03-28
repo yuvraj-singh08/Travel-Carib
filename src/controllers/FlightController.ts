@@ -20,6 +20,7 @@ class FlightController {
     this.BookFlight = this.BookFlight.bind(this);
     this.newMulticitSearch = this.newMulticitSearch.bind(this);
     this.searchFlights = this.searchFlights.bind(this);
+    this.getCustomFarePriceController = this.getCustomFarePriceController.bind(this);
   }
 
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -160,7 +161,7 @@ class FlightController {
   async BookFlight(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user.id;
-      const { offerId, passengers, flight_type, contactDetails } = req.body;
+      const { offerId, passengers, kiuPassengers, flight_type, contactDetails, fareChoices } = req.body;
       if (!offerId || !passengers || !flight_type || !userId) {
         throw new HttpError("Missing required fields: offerId, passengers, contactDetails, address, flight_type, userId", 400);
       }
@@ -168,9 +169,37 @@ class FlightController {
       if (!data) {
         throw new HttpError("Offer not found", 404);
       }
+      const offer = data.data as Offer;
+      if (offer.fareOptionGDS === "KIU") {
+        const response = await this.flightClient.newBookKiuFlight({
+          slices: offer.slices,
+          choices: fareChoices,
+          passengers,
+          kiuPassengers,
+        });
+        const PNR = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0]?.$?.ID;
+        const subBookings: SubBookingType[] = [
+          {
+            pnr: PNR,
+            status: SubBookingStatusValues.pending,
+            supplier: "KIU",
+          }
+        ]
 
+        const bookingResponse = await createBookingService({
+          flightData: offer,
+          passengers,
+          flightType: flight_type,
+          userId,
+          contactDetails,
+          subBookings
+        })
+        res.status(200).json(bookingResponse);
+        return;
+      }
+
+      //@ts-ignore
       if (data.flightWay === flightTypeValue.oneway) {
-        const offer = data.data as Offer;
         const subBookings: SubBookingType[] = [];
         let pnr;
         const promises = offer.slices.map(async (slice, index) => {
@@ -230,7 +259,9 @@ class FlightController {
       }
       else {
 
-        const offer = data.data as MulticityOffer;
+        const offer = data.data as any;
+
+
 
         const subBookings = [];
         let index = 0;
@@ -300,6 +331,16 @@ class FlightController {
       const id = req.params.searchKey;
       const cachedData = JSON.parse(await redis.get(id));
       res.status(200).json({ success: true, data: cachedData });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCustomFarePriceController(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { offerId, choices, fareOptionGDS, passengers } = req.body;
+      const priceResponse = await this.flightClient.getCustomFarePrice({ offerId, choices, fareOptionGDS, passengers });
+      res.status(200).json({ success: true, data: priceResponse });
     } catch (error) {
       next(error);
     }

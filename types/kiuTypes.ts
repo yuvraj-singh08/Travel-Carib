@@ -156,12 +156,14 @@ export type KiuJsonResponseType = {
 }
 
 export type BuildBookingRequestParams = {
-    segments: Segment[],
-    passengers: PassengerType[]
+    slices: Slice[],
+    passengers: PassengerType[];
+    choices: string[];
 }
 
 export type BookingRequestParams = {
-    slice: Slice,
+    slices: Slice[],
     passengers: PassengerType[],
-
+    choices: string[],
+    kiuPassengers:PassengerType[];
 }
