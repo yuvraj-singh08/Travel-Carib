@@ -2490,6 +2490,7 @@ export const getAllFareSettings = async (req, res) => {
 export const updateFareSetting = async (req, res) => {
     try {
         const { id } = req.params;
+        
         const { airlineCodes, fareCodes, refundable, changeable } = req.body;
         const updatedSetting = await prisma.fareSetting.update({
             where: { id },

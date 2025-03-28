@@ -189,8 +189,8 @@ router.get('/baggage', getBaggageWeight);
 
 //fare settings routes
 router.post("/createFareSetting", createFareSetting);
-router.get("/getAllFareSettings ", getAllFareSettings);
-router.put("updateFareSetting/:id", updateFareSetting);
-router.delete("deleteFareSetting/:id", deleteFareSetting);
+router.post("/getAllFareSettings", getAllFareSettings);
+router.put("/updateFareSetting/:id", updateFareSetting);
+router.post("/deleteFareSetting/:id", deleteFareSetting);
 
 export default router;
