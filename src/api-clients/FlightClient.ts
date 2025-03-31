@@ -45,11 +45,11 @@ class FlightClient {
             const id = JSON.stringify({
                 FlightDetails, cabinClass
             });
-            // const cachedResponse = await redis.get(id);
-            // if (cachedResponse) {
-            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
-            //     return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
-            // }
+            const cachedResponse = await redis.get(id);
+            if (cachedResponse) {
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+                return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
