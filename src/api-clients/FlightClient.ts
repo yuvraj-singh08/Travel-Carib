@@ -372,11 +372,10 @@ class FlightClient {
                 amadeusRequest,
                 duffelRequest
             ]);
-            const parseKiuResponse = parseMulticityKiuResponse(kiuResponse);
             const parsedDuffelResponse = (duffelResponse.data.offers);
             // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
 
-            return [...parseKiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
+            return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 
         } catch (error) {
             throw error;
