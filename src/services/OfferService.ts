@@ -28,25 +28,38 @@ export async function saveData(data: any, passengers: { adults: number, children
     }
 }
 
-export function saveSearchResponses(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
+export function saveSearchResponses(
+    data: any, 
+    passengers: { adults: number; children?: number; infants?: number }, 
+    flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY"
+) {
     try {
-        const dataWithId = data.map((item) => {
-            const id = uuidv4();
+        // Generate UUIDs and prepare data
+        const dataWithId = data.map(item => ({
+            ...item,
+            id: uuidv4(), // Generate UUID only once per item
+        }));
+
+        // Prepare an array of Prisma client promises
+        const transactions = dataWithId.map(({ id, ...item }) => 
             prisma.offer.create({
                 data: {
                     id,
                     data: JSON.stringify(item),
                     flightWay
                 }
-            }).catch(error => console.error("Error saving offer:", error)); // Catch errors to prevent crashes
-            return {
-                ...item,
-                id,
-            }
-        });
+            })
+        );
+
+        // Execute all transactions
+        prisma.$transaction(transactions)
+            .then(() => console.log("All offers saved successfully"))
+            .catch(error => console.error("Transaction failed:", error));
+
+        // Return the modified data with consistent UUIDs
         return dataWithId;
     } catch (error) {
-        console.log("Error Saving Response");
+        console.error("Error Saving Response", error);
         throw error;
     }
 }

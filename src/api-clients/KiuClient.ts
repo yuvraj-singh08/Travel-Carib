@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, buildNewPriceRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
+import { buildBookingRequest, buildFlightPriceRequest, buildFlightSearchRequest, buildNewPriceRequest, bulidMultiCityFlightSearchRequest, combineKiuRoutes, findCommonCodes, getDateString, newbuildFlightSearchRequest, newKiuParser, normalizeKiuResponse, parseFlightSearchResponse, parseKiuResposne } from '../utils/kiu';
 import xml2js from 'xml2js';
-import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceFlightSegment, PriceRequestBuilderParams, PriceRequestParams } from '../../types/kiuTypes';
+import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceFlightSegment, PriceOriginDestinationOption, PriceRequestBuilderParams, PriceRequestParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
 import { CommissionType, FareBrandType, Offer, Slice } from '../../types/flightTypes';
@@ -297,7 +297,7 @@ class KiuClient {
       const combinedIteneries = combineKiuRoutes(itenaries, 60 * 6);
       const normalizedResponse = normalizeKiuResponse(combinedIteneries, "Economy") as unknown as Offer[] | any[];
       await Promise.all(normalizedResponse.map(async (offer, index) => {
-        const originDestinationOptions = offer.slices.map((slice, sliceIndex) => {
+        const originDestinationOptions: PriceOriginDestinationOption[] = offer.slices.map((slice, sliceIndex): PriceOriginDestinationOption => {
           const FlightSegments = slice.segments.map((segment): PriceFlightSegment => {
             const flightSegment: PriceFlightSegment = {
               OriginLocation: segment.origin.iata_code,
@@ -307,7 +307,7 @@ class KiuClient {
               CabinType: params.CabinClass,
               FlightNumber: segment.marketing_carrier_flight_number,
               MarketingAirline: segment.marketing_carrier.iata_code,
-              ResBookDesigCode: offer.fareOptions[sliceIndex].fareBrands[0].fareBrand,
+              ResBookDesigCode: offer.fareOptions[sliceIndex].fareBrands?.[0]?.fareBrand,
               RPH: RPH
             }
             return flightSegment;
@@ -322,7 +322,35 @@ class KiuClient {
         })
         console.log("Price Response: ", priceResponse);
         if (priceResponse.error === true) {
-          normalizedResponse[index].invalidResponse = true;
+          const codesArray: string[][] = [];
+          offer.slices.forEach((slice) => {
+            const codes = slice.segments[0].ResBookDesigCode; //Taking from first segment because there will always be one segment.
+            codesArray.push(codes)
+          });
+          const commonCodes = findCommonCodes(codesArray);
+          let priced = false;
+          if (commonCodes.length > 0) {
+            for (const code of commonCodes) {
+              originDestinationOptions.forEach((option) => {
+                option.FlightSegments.forEach((segment) => {
+                  segment.ResBookDesigCode = code
+                })
+              });
+              const priceResponse = await this.newSearchPrice({
+                OriginDestinationOptions: originDestinationOptions,
+                Passengers: params.Passengers,
+              })
+              console.log("Price Response: ", priceResponse);
+              if (priceResponse.error === false) {
+                normalizedResponse[index].invalidResponse = false;
+                normalizedResponse[index].total_amount = parseFloat(priceResponse.totalPrice);
+                priced = true
+                break;
+              }
+            }
+          }
+          if (priced === false)
+            normalizedResponse[index].invalidResponse = true;
         }
         else {
           normalizedResponse[index].invalidResponse = false;
@@ -344,58 +372,63 @@ class KiuClient {
 
   async newSearchPrice(params: PriceRequestParams) {
     try {
-      const requestXML = buildNewPriceRequest(params, this.mode)
+      const requestXML = buildNewPriceRequest(params, this.mode);
       const response = await this.queuedPost(requestXML);
-      // console.log("Price Response: ", response.data);
+
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
+
       if (jsonResponse?.KIU_AirPriceRS?.Error) {
-        console.log("Price Request: ");
-        console.log(requestXML);
-        console.log("Error in kiu pricing:");
-        console.log(jsonResponse?.KIU_AirPriceRS?.Error);
-        return { error: true };
+        console.error("Price Request XML:", requestXML);
+        console.error("Error in KIU Pricing:", jsonResponse.KIU_AirPriceRS.Error);
+        return { error: true, message: "KIU Pricing Error", details: jsonResponse.KIU_AirPriceRS.Error };
       }
-      const totalPrice = jsonResponse?.KIU_AirPriceRS?.PricedItineraries?.[0]?.PricedItinerary?.[0]?.AirItineraryPricingInfo?.[0]?.ItinTotalFare?.[0]?.TotalFare?.[0]?.$?.Amount;
-      const fareBreakdown = jsonResponse?.KIU_AirPriceRS?.PricedItineraries?.[0]?.PricedItinerary?.[0]?.AirItineraryPricingInfo?.[0]?.PTC_FareBreakdowns?.[0]?.PTC_FareBreakdown;
-      const baggageData: KiuBaggageData = {};
+
+      const pricedItineraries = jsonResponse?.KIU_AirPriceRS?.PricedItineraries?.[0]?.PricedItinerary?.[0];
+      if (!pricedItineraries) {
+        return { error: true, message: "No pricing data available" };
+      }
+
+      const totalPrice = pricedItineraries?.AirItineraryPricingInfo?.[0]?.ItinTotalFare?.[0]?.TotalFare?.[0]?.$?.Amount || '0';
+      const fareBreakdown = pricedItineraries?.AirItineraryPricingInfo?.[0]?.PTC_FareBreakdowns?.[0]?.PTC_FareBreakdown || [];
+
+      const baggageData: KiuBaggageData = {
+        adultBaggage: { checkedBaggage: {}, cabinBaggage: {}, handBaggage: {} },
+        childBaggage: { checkedBaggage: {}, cabinBaggage: {}, handBaggage: {} },
+        infantBaggage: { checkedBaggage: {}, cabinBaggage: {}, handBaggage: {} },
+      };
+
       fareBreakdown.forEach((fareData) => {
         const passengerCode = fareData.PassengerTypeQuantity?.[0]?.$?.Code;
-        const baggageDetails = fareData.BaggageAllowance?.[0];
+        const baggageDetails = fareData.BaggageAllowance?.[0] || {};
+
         const checkedBaggage = {
           quantity: baggageDetails?.ChequedBaggage?.[0]?.Pieces?.[0] || '0',
           weight: baggageDetails?.ChequedBaggage?.[0]?.Weight?.[0] || '0',
-          unit: (baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0]) || "Kg"
-        }
+          unit: baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.ChequedBaggage?.[0]?.Unit?.[0] || "Kg",
+        };
+
         const cabinBaggage = {
           quantity: baggageDetails?.CabinBaggage?.[0]?.Pieces?.[0] || '0',
           weight: baggageDetails?.CabinBaggage?.[0]?.Weight?.[0] || '0',
-          unit: (baggageDetails?.CabinBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.CabinBaggage?.[0]?.Unit?.[0]) || 'Kg'
-        }
-        const handBaggage = {
-          quantity: baggageDetails?.HandBaggage ? '1' : '0',
-        }
-        if (passengerCode === "ADT") {
-          baggageData.adultBaggage = {
-            checkedBaggage, cabinBaggage, handBaggage
-          }
-        }
-        else if (passengerCode === "CNN") {
-          baggageData.childBaggage = {
-            checkedBaggage, cabinBaggage, handBaggage
-          }
-        }
-        else if (passengerCode === "INF") {
-          baggageData.infantBaggage = {
-            checkedBaggage, cabinBaggage, handBaggage
-          }
-        }
-      })
-      return { totalPrice, baggageData, error: false }
+          unit: baggageDetails?.CabinBaggage?.[0]?.Unit?.[0] === "K" ? "Kg" : baggageDetails?.CabinBaggage?.[0]?.Unit?.[0] || "Kg",
+        };
+
+        const handBaggage = { quantity: baggageDetails?.HandBaggage ? '1' : '0' };
+
+        if (passengerCode === "ADT") baggageData.adultBaggage = { checkedBaggage, cabinBaggage, handBaggage };
+        if (passengerCode === "CNN") baggageData.childBaggage = { checkedBaggage, cabinBaggage, handBaggage };
+        if (passengerCode === "INF") baggageData.infantBaggage = { checkedBaggage, cabinBaggage, handBaggage };
+      });
+
+      return { totalPrice, baggageData, error: false };
+
     } catch (error) {
-      throw error;
+      console.error("Error in pricing:", error);
+      return { error: true, message: "Internal Server Error", details: error };
     }
   }
+
 
   async searchPrice(params: PriceRequestBuilderParams) {
     try {
@@ -431,7 +464,7 @@ class KiuClient {
     }
   }
 
-  async bookFlight({ slices, choices,kiuPassengers, passengers }: BookingRequestParams) {
+  async bookFlight({ slices, choices, kiuPassengers, passengers }: BookingRequestParams) {
     try {
       const request = buildBookingRequest({
         slices,

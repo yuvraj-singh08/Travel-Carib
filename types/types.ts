@@ -1,4 +1,5 @@
 import { FareBrandType, Location } from "./flightTypes";
+import { PriceOriginDestinationOption } from "./kiuTypes";
 
 export interface RouteOptionParams {
     origin: string;
@@ -79,4 +80,14 @@ export interface getCustomFarePrice {
         children: number,
         infants: number
     }
+}
+
+export interface RetryPricingParams{
+    OriginDestinationOptions: PriceOriginDestinationOption[];
+    Passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
+    fareCode: string;
 }

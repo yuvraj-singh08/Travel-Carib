@@ -153,7 +153,8 @@ class AmadeusClient {
         .then(response => ({ data: response.data, dictionaries: response.result.dictionaries }));
       });
     } catch (error) {
-      throw error;
+      console.log(error);
+      return [];
     }
   }
 

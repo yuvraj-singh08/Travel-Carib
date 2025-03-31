@@ -1,7 +1,8 @@
 import { Duffel } from '@duffel/api';
-import { CreateOfferRequest } from '@duffel/api/types';
+import { CreateOfferRequest, OfferRequest } from '@duffel/api/types';
 import { DuffelCreateOrderParams } from '../../types/duffelTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
+import { DuffelResponse } from '@duffel/api/types/ClientType';
 
 // Define the request queue item interface
 interface QueueItem {
@@ -84,11 +85,23 @@ class DuffelClient {
     processNextRequest();
   }
 
-  async createOfferRequest(offerRequestData: CreateOfferRequest) {
+  async createOfferRequest(offerRequestData: CreateOfferRequest): Promise<DuffelResponse<OfferRequest>> {
     try {
       return this.enqueueRequest(() => this.client.offerRequests.create(offerRequestData));
     } catch (error) {
-      throw error;
+      console.log("Duffel Error: ");
+      console.log(error);
+      return {
+        data:{
+          id: "",
+          slices: [],
+          offers: [],
+          live_mode: true,
+          passengers:[],
+          cabin_class: "economy",
+          created_at:"1265"
+        }
+      }
     }
   }
 
