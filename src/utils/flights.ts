@@ -1413,31 +1413,37 @@ export function convertToPriceCalendar(data: FlightDate[]): PriceCalendar[] {
 
 export const getAirlineCodes = (response): { airlines: string[], extendedData: AirlineProvider[] } => {
     try {
-        const airlines: string[] = [];
-        const extendedData: AirlineProvider[] = [];
-        response.forEach((route) => {
-            route.slices.forEach((slice) => {
-                slice.segments.forEach((segment) => {
-                    if (!airlines.includes(segment.operating_carrier.iata_code)) {
-                        const iata_code = segment.operating_carrier.iata_code;
-                        airlines.push(iata_code)
-                        extendedData.push({
+        const airlineSet = new Set<string>();
+        const extendedDataMap = new Map<string, AirlineProvider>();
+
+        response.forEach(route =>
+            route.slices.forEach(slice =>
+                slice.segments.forEach(segment => {
+                    const iata_code = segment.operating_carrier.iata_code;
+                    
+                    if (!airlineSet.has(iata_code)) {
+                        airlineSet.add(iata_code);
+                        extendedDataMap.set(iata_code, {
                             id: iata_code,
                             label: segment.operating_carrier.name ?? getAirlineNameByCode(iata_code) ?? iata_code ?? "",
                             src: segment.operating_carrier.logo_symbol_url || getAirlineLogo(iata_code),
-                            iata_code: iata_code
-
-                        })
+                            iata_code
+                        });
                     }
                 })
-            })
-        })
-        return { airlines, extendedData };
+            )
+        );
+
+        return { 
+            airlines: Array.from(airlineSet), 
+            extendedData: Array.from(extendedDataMap.values()) 
+        };
     } catch (error) {
-        console.error("Error Getting Airline Codes: ", error);
+        console.error("Error Getting Airline Codes:", error);
         return { airlines: [], extendedData: [] };
     }
-}
+};
+
 
 export const parseMulticityKiuResponse = (response: Offer[]) => {
     try {

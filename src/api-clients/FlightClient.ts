@@ -45,11 +45,16 @@ class FlightClient {
             const id = JSON.stringify({
                 FlightDetails, cabinClass
             });
-            // const cachedResponse = await redis.get(id);
-            // if (cachedResponse) {
-            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
-            //     return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
-            // }
+            const [firewall, commission] = await Promise.all([
+                prisma.firewall.findMany({}),
+                prisma.commissionManagement.findMany(),
+            ])
+            const cachedResponse = await redis.get(id);
+            if (cachedResponse) {
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
+                return {flightData: filteredResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -84,23 +89,26 @@ class FlightClient {
                 temp = [...normalizedResponse, ...multiCityFlightSearch];
             }
             const sortedResponse = sortResponse(temp, sortBy);
+            const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
             const dataWithId = sortedResponse.map((response) => {
                 let id = uuidv4();
-                while(true){
-                    if(idSet.has(id)){
+                while (true) {
+                    if (idSet.has(id)) {
                         id = uuidv4();
                     }
-                    else{
+                    else {
                         idSet.add(id);
                         break;
                     }
                 }
-                return {...response, id};
+                return { ...response, id };
             })
+
             const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            const filteredResponse = filterResponse(dataWithId, filters, firewall)
             redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
-            return { flightData: dataWithId?.filter((_, index) => index < 200), airlinesDetails: [], searchKey: id };
+            return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
         } catch (error) {
             throw error;
         }
@@ -852,7 +860,7 @@ class FlightClient {
 
     async getCustomFarePrice({ fareOptionGDS, offerId, choices, passengers }: getCustomFarePrice) {
         try {
-            if(fareOptionGDS!=="KIU"){
+            if (fareOptionGDS !== "KIU") {
                 throw new HttpError("Invalid GDS option", 400);
             }
             const offer = await getOffer(offerId);
@@ -886,7 +894,7 @@ class FlightClient {
         }
     }
 
-    async newBookKiuFlight({slices, kiuPassengers,choices, passengers}: BookingRequestParams){
+    async newBookKiuFlight({ slices, kiuPassengers, choices, passengers }: BookingRequestParams) {
         const response = await this.kiuClient.bookFlight({
             slices,
             choices,
