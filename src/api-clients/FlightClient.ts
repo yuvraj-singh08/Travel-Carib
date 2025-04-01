@@ -45,11 +45,11 @@ class FlightClient {
             const id = JSON.stringify({
                 FlightDetails, cabinClass
             });
-            const cachedResponse = await redis.get(id);
-            if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
-                return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
-            }
+            // const cachedResponse = await redis.get(id);
+            // if (cachedResponse) {
+            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+            //     return {flightData: parsedResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            // }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -84,9 +84,23 @@ class FlightClient {
                 temp = [...normalizedResponse, ...multiCityFlightSearch];
             }
             const sortedResponse = sortResponse(temp, sortBy);
-            const savedData = saveSearchResponses(sortedResponse, passengers, "ONEWAY");
-            redis.set(id, JSON.stringify(savedData), "EX", 60 * 10);
-            return { flightData: savedData?.filter((_, index) => index < 200), airlinesDetails: [], searchKey: id };
+            const idSet = new Set();
+            const dataWithId = sortedResponse.map((response) => {
+                let id = uuidv4();
+                while(true){
+                    if(idSet.has(id)){
+                        id = uuidv4();
+                    }
+                    else{
+                        idSet.add(id);
+                        break;
+                    }
+                }
+                return {...response, id};
+            })
+            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
+            return { flightData: dataWithId?.filter((_, index) => index < 200), airlinesDetails: [], searchKey: id };
         } catch (error) {
             throw error;
         }
@@ -373,6 +387,7 @@ class FlightClient {
                 duffelRequest
             ]);
             const parsedDuffelResponse = (duffelResponse.data.offers);
+            const parsedKiuResponse = parseMulticityKiuResponse(kiuResponse);
             // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
 
             return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response

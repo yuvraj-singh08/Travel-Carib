@@ -826,19 +826,16 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             totalCommission = totalCommission + (route.commissionAmount);
             cabinBaggage = Math.min(cabinBaggage, route.cabinBaggage || 0);
             checkedBaggage = Math.min(checkedBaggage, route.checkedBaggage || 0)
-            if(index > 0){
+            if (index > 0) {
                 route.slices[0].segments[0].selfTransferSegment = true;
             }
             slice.segments.push(...(route.slices[0].segments))
 
-            if (route.fareBrands)
-                fareOptions.push({
-                    fareBrands: route.fareBrands,
-                    origin: route.slices[0].origin,
-                    destination: route.slices[0].destination,
-                    departing_at: route.slices[0].departing_at,
-                    arriving_at: route.slices[0].arriving_at,
-                });
+            if (route.fareOptions)
+                route.fareOptions.forEach((fareOption) => {
+                    fareOptions.push(fareOption)
+                })
+
         });
         if (totalAmount > 10000) {
             console.log("Route Price is over the limit");
@@ -897,9 +894,9 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
         });
 
         let commissionAmount = 0;
-       
+
         const finalAmount = commissionAmount + totalAmount;
-        if(!slices[0].origin){
+        if (!slices[0].origin) {
             console.log("Slice");
             console.log(slices);
         }
