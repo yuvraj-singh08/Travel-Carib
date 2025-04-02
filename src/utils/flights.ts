@@ -686,7 +686,7 @@ export const filterResponse = (response: Offer[], filters: FilterType, allFirewa
     return filteredResponse;
 }
 
-function filterRoutes(routes: Offer[]): Offer[] {
+export function filterRoutes(routes: Offer[]): Offer[] {
     const uniqueRoutes: Map<string, Offer> = new Map();
 
     for (const route of routes) {

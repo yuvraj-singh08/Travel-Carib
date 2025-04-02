@@ -1,7 +1,7 @@
 import { FlightSupplier } from "@prisma/client";
 import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -49,12 +49,12 @@ class FlightClient {
                 prisma.firewall.findMany({}),
                 prisma.commissionManagement.findMany(),
             ])
-            const cachedResponse = await redis.get(id);
-            if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
-                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-                return {flightData: filteredResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
-            }
+            // const cachedResponse = await redis.get(id);
+            // if (cachedResponse) {
+            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+            //     const filteredResponse = filterResponse(parsedResponse, filters, firewall)
+            //     return {flightData: filteredResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+            // }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -88,7 +88,8 @@ class FlightClient {
             if (FlightDetails.length > 1) {
                 temp = [...normalizedResponse, ...multiCityFlightSearch];
             }
-            const sortedResponse = sortResponse(temp, sortBy);
+            const uniqueResponses = filterRoutes(temp as unknown as Offer[]);
+            const sortedResponse = sortResponse(uniqueResponses, sortBy);
             const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
             const dataWithId = sortedResponse.map((response) => {
@@ -726,7 +727,7 @@ class FlightClient {
             // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
             const id = uuidv4();
             redis.set(id, JSON.stringify(savedData));
-            const result = savedData.filter((route, index) => {
+            const result = sortedResponse.filter((route, index) => {
                 if (index < 60) {
                     return true;
                 }

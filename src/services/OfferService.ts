@@ -5,6 +5,8 @@ import DuffelClient from "../api-clients/DuffelClient";
 import { prisma } from "../prismaClient"
 import HttpError from "../utils/httperror";
 import { transformBaggageDetailForPassengers, transformMultiCityBaggageDetailForPassengers } from "../utils/utils";
+import { Worker } from 'worker_threads';
+import path from 'path';
 
 export async function saveData(data: any, passengers: { adults: number, children?: number, infants?: number }, flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY") {
     try {
@@ -29,31 +31,35 @@ export async function saveData(data: any, passengers: { adults: number, children
 }
 
 export function saveSearchResponses(
-    data: any, 
-    passengers: { adults: number; children?: number; infants?: number }, 
+    data: any,
+    passengers: { adults: number; children?: number; infants?: number },
     flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY"
 ) {
     try {
-        const transactions = data.map(({ id, ...item }) => 
-            prisma.offer.create({
-                data: {
-                    id,
-                    data: JSON.stringify(item),
-                    flightWay
-                }
-            })
-        );
+        const worker = new Worker(path.join(__dirname, "../workers/saveResponse.ts"));
 
-        // Execute all transactions
-        prisma.$transaction(transactions)
-            .then(() => console.log("All offers saved successfully"))
-            .catch(error => console.error("Transaction failed:", error));
+        worker.postMessage({ data, flightWay });
 
-        // Return the modified data with consistent UUIDs
-        return data;
+        worker.on("message", (message) => {
+            if (message.status === "success") {
+                console.log("Data saved successfully in background.");
+            } else {
+                console.error("Error saving data:", message.message);
+                console.error(message.message);
+            }
+        });
+
+        worker.on("error", (error) => {
+            console.error("Worker error:", error);
+        });
+
+        worker.on("exit", (code) => {
+            if (code !== 0) {
+                console.error(`Worker stopped with exit code ${code}`);
+            }
+        });
     } catch (error) {
         console.error("Error Saving Response", error);
-        throw error;
     }
 }
 
