@@ -14,11 +14,13 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     res.status(401).json({ error: 'Token not provided' });
     return;
   }
-
+ console.log(authHeader)
   const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & { id: string };
+    console.log("decoded",decoded)
+
     if (!decoded) {
       res.status(403).json({ error: 'Invalid token' });
       return;

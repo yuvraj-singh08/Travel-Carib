@@ -2459,9 +2459,6 @@ export const getBaggageWeight = async (req: Request, res: Response, next: NextFu
   }
 }
 
-
-
-
 // Create a new fare setting
 export const createFareSetting = async (req, res) => {
   console.log(req.body);

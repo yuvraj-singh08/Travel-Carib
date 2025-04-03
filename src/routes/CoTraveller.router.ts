@@ -10,5 +10,4 @@ router.get('/', authenticateToken, CoTravellerController.getCoTravellers);
 router.get('/passport/:passportNumber', authenticateToken, CoTravellerController.getCoTravellerByPassport);
 router.get('/getCoTravellerById/:id', authenticateToken, CoTravellerController.getCoTravellersById);
 
-
 export default router;
