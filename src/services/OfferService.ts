@@ -36,7 +36,7 @@ export function saveSearchResponses(
     flightWay: "ONEWAY" | "ROUNDTRIP" | "MULTICITY"
 ) {
     try {
-        const worker = new Worker(path.join(__dirname, "../workers/saveResponse.ts"));
+        const worker = new Worker(path.join(__dirname, "../workers/saveResponse.js"));
 
         worker.postMessage({ data, flightWay });
 
