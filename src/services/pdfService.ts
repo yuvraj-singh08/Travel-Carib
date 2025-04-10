@@ -41,8 +41,8 @@ export async function generateNewPdf(bookingData: any): Promise<Buffer> {
     const newTemplatePath = path.join(__dirname,"views",'pdf_template.hbs');
     const newTemplateContent = fs.readFileSync(newTemplatePath, 'utf8');
     const newTemplate = handlebars.compile(newTemplateContent);
-    console.log("Using template:", newTemplatePath);
-    console.log("Template content:", newTemplate); 
+    // console.log("Using template:", newTemplatePath);
+    // console.log("Template content:", newTemplate); 
 
     let processedBookingData = {
         ...bookingData,
@@ -67,7 +67,7 @@ export async function generateNewPdf(bookingData: any): Promise<Buffer> {
         new Date(isoDate).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
     });
 
-    console.log("Generated HTML:", newHtml);
+    // console.log("Generated HTML:", newHtml);
 
     // Set HTML content with network idle check
     await page.setContent(newHtml, {

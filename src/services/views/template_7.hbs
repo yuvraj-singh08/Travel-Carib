@@ -25,76 +25,96 @@
 </style>
 </head>
 <body style="margin: 0; padding: 20px 0; background-color: #f8f9fa; font-family: Arial, sans-serif;">
- 
     <!--[if mso]>
     <style type="text/css">
     body, table, td {font-family: Arial, sans-serif !important;}
     </style>
     <![endif]-->
-
     <center style="width: 100%;">
        <div class="page-break">
-
         {{!-- {{#if (eq adminStatus "PENDING_TICKET")}} --}}
          {{#if (or (eq adminStatus "PENDING_TICKET") (eq adminStatus "PENDING_PAYMENT"))}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
             <tr>
-                <td style="padding: 20px; background-color: #f8f9fa;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                    <td style="text-align: center; padding-bottom: 20px; ">
-                        <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Pending</h1>
-                    </td>
-                    </tr>
-                    <tr>
-                    <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
-                        <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
-                        <p style="margin: 0 0 20px 0; color: #666;">Your flight booking is currently <strong>Pending</strong> confirmation. We will notify you once the booking is confirmed.</p>
-                        
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-                        <tr>
-                            <td style="padding-bottom: 10px;">
-                            <strong style="color: #333;">Pending Booking Details:</strong>
-                            </td>
-                        </tr>
-                        {{#with (getPassenger passenger 0)}}
-                        <tr>
-                            <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px 0;">Nationality: {{nationality}}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px 0;">Passport Number: {{passportNumber}}</td>
-                        </tr>
-                        {{/with}}
-                        <tr>
-                            <td style="padding: 5px 0;">Booking ID: {{#if ../subBooking.0.ticketNumber}}{{../subBooking.0.ticketNumber}}{{else}}{{id}}{{/if}}</td>
-                        </tr>
-                        {{#if (eq flight_type "ONEWAY")}}
-                        <tr>
-                            <td style="padding: 5px 0;">Flight Number:  {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
-
-                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
-                        </tr>
-                        {{else}}
-                        <tr>
-                            <td style="padding: 5px 0;">Flight Number: {{flightDetails.itenaries.0.slices.0.segments.0.operating_carrier.id}}</td>
-                        </tr>
-                        <tr>
-                            {{!-- <td style="padding: 5px 0;">Tentative Date: {{formatDate flightDetails.itenaries.0.slices.0.segments.0.departing_at}}</td> --}}
-                        </tr>
-                        {{/if}}
-                        </table>
-                        
-                        <p style="margin: 0; color: #666;">Please note that this is not a confirmed ticket. You will receive a confirmation email once the booking is complete.</p>
-                    </td>
-                    </tr>
-                </table>
+               <td style="padding: 20px; background-color: #f8f9fa;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                <td style="text-align: center; padding-bottom: 20px;">
+                    <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Pending</h1>
                 </td>
+                </tr>
+                <tr>
+                <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
+                    <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
+                    <p style="margin: 0 0 20px 0; color: #666;">We are pleased to confirm your flight booking. Please find your e-ticket attached to this email. Kindly review the details carefully to ensure all information is correct.</p>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding-bottom: 10px;">
+                        <strong style="color: #333;">Booking Details:</strong>
+                        </td>
+                    </tr>
+                    {{#with (getPassenger passenger 0)}}
+                    <tr>
+                        <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Nationality: {{nationality}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Passport Number: {{passportNumber}}</td>
+                    </tr>
+                    {{/with}}
+                    <tr>
+                        <td style="padding: 5px 0;">Booking ID: {{flightDetails.responseId}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
+                    </tr>
+                    {{!-- //hemant --}}
+                    <tr>
+                        <td style="padding: 5px 0;">Departure City: {{flightDetails.origin.iata_code}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival City: {{flightDetails.destination.iata_code}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Class: {{flightDetails.cabinClass}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+
+                     <tr>
+                        <td style="padding: 5px 0;">Arrival Date: {{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">PNR/Booking Reference: {{subBooking.0.pnr}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Base Fare and service tax</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Total Amount:{{baseFare}} {{currency}}</td>
+                    </tr>
+
+                    </table>
+                    
+                    <p style="margin: 0; color: #666;">Please ensure to carry a valid ID along with this ticket during your travel.</p>
+                </td>
+                </tr>
+            </table>
+            </td>
             </tr>
     {{else if (eq adminStatus "TICKETED")}}
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
@@ -134,11 +154,27 @@
                     <tr>
                         <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                     </tr>
+                    {{!-- //hemant --}}
+                    <tr>
+                        <td style="padding: 5px 0;">Departure City: {{flightDetails.origin.iata_code}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival City: {{flightDetails.destination.iata_code}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Class: {{flightDetails.cabinClass}}</td>
+                    </tr>
+
                     <tr>
                         <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
                     </tr>
                     <tr>
                         <td style="padding: 5px 0;">Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+
+                     <tr>
+                        <td style="padding: 5px 0;">Arrival Date: {{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</td>
                     </tr>
                     <tr>
                         <td style="padding: 5px 0;">Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</td>
@@ -146,6 +182,15 @@
                     <tr>
                         <td style="padding: 5px 0;">PNR/Booking Reference: {{subBooking.0.pnr}}</td>
                     </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Base Fare and service tax</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Total Amount:{{baseFare}} {{currency}}</td>
+                    </tr>
+
                     </table>
                     
                     <p style="margin: 0; color: #666;">Please ensure to carry a valid ID along with this ticket during your travel.</p>
@@ -161,23 +206,29 @@
             <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                 <td style="text-align: center; padding-bottom: 20px;">
-                    <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Cancellation Notice</h1>
+                    <h1 style="margin: 0; color: #333; font-size: 24px;">Flight Booking Cancelation</h1>
                 </td>
                 </tr>
                 <tr>
                 <td style="padding: 20px; background-color: #ffffff; border-radius: 4px;">
                     <h2 style="margin: 0 0 20px 0; color: #333; font-size: 18px;">Dear {{passenger.0.firstName}},</h2>
-                    <p style="margin: 0 0 20px 0; color: #666;">We regret to inform you that your flight booking has been <strong>Cancelled</strong>.</p>
+                    <p style="margin: 0 0 20px 0; color: #666;">We are pleased to confirm your flight booking. Please find your e-ticket attached to this email. Kindly review the details carefully to ensure all information is correct.</p>
                     
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                     <tr>
                         <td style="padding-bottom: 10px;">
-                        <strong style="color: #333;">Cancelled Booking Details:</strong>
+                        <strong style="color: #333;">Booking Details:</strong>
                         </td>
                     </tr>
                     {{#with (getPassenger passenger 0)}}
                     <tr>
                         <td style="padding: 5px 0;">Passenger Name: {{firstName}} {{lastName}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Nationality: {{nationality}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Passport Number: {{passportNumber}}</td>
                     </tr>
                     {{/with}}
                     <tr>
@@ -186,13 +237,46 @@
                     <tr>
                         <td style="padding: 5px 0;">Flight Number: {{flightDetails.slices.0.segments.0.operating_carrier.id}}</td>
                     </tr>
+                    {{!-- //hemant --}}
                     <tr>
-                        {{!-- <td style="padding: 5px 0;">Originally Scheduled Date: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td> --}}
+                        <td style="padding: 5px 0;">Departure City: {{flightDetails.origin.iata_code}}</td>
                     </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival City: {{flightDetails.destination.iata_code}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Class: {{flightDetails.cabinClass}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Date of Travel: {{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Departure Time: {{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</td>
+                    </tr>
+
+                     <tr>
+                        <td style="padding: 5px 0;">Arrival Date: {{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">Arrival Time: {{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;">PNR/Booking Reference: {{subBooking.0.pnr}}</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Base Fare and service tax</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 5px 0;">Total Amount:{{baseFare}} {{currency}}</td>
+                    </tr>
+
                     </table>
                     
-                    <p style="margin: 0 0 10px 0; color: #666;">If you believe this cancellation was made in error or need assistance with rebooking, please contact our customer service team immediately.</p>
-                    <p style="margin: 0; color: #666;">If this was a paid booking, your refund will be processed according to the fare rules and our refund policy.</p>
+                    <p style="margin: 0; color: #666;">Please ensure to carry a valid ID along with this ticket during your travel.</p>
                 </td>
                 </tr>
             </table>
@@ -261,7 +345,7 @@
                         <tr>
                             <td style="font-size: 12px; color: #555; line-height: 1.5; width: 60%;">
                                 For any changes with your flight, date, route, or names<br>
-                                Call us at <strong>{{contactDetail.phone}}</strong> or 
+                                Call us at <strong>7400858050</strong> or 
                                 <a href="#" style="color: #007bff; text-decoration: none;">Click here to reach help center</a>
                             </td>
                             <td style="text-align: right; vertical-align: top; width: 40%;">

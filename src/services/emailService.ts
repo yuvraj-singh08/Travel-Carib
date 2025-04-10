@@ -104,6 +104,7 @@ export const sendEmail = async (bookingData: any) => {
 
 
 
+
   let processedBookingData = {
     ...bookingData,
     downloadLink,
@@ -123,6 +124,9 @@ export const sendEmail = async (bookingData: any) => {
         : [bookingData.passenger];
     })(),
   };
+
+  console.log("processedBookingData", processedBookingData);
+
 
   const pdfBuffer = await generateNewPdf(processedBookingData);
 
