@@ -34,11 +34,13 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
-  cors({
+  cors(
+    {
     origin: ["*", "https://www.vuelitos.com", "https://flight-booking-frontend-admin.vercel.app", "https://flight-booking-frontend-website.vercel.app", "http://localhost:5173", "http://localhost:5174"], // Allow all origins
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }
+)
 );
 app.use(express.json());
 

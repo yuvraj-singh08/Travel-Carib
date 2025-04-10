@@ -208,9 +208,9 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from: "hemant27134@gmail.com",
-    to: bookingData?.contactDetail?.email,
-    // to:"hemant27134@outlook.com",
-    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
+    // to: bookingData?.contactDetail?.email,
+    to:"hemant27134@gmail.com",
+    // bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
     subject: "Your Flight Ticket Confirmation",
     template: "template_7",
     context: processedBookingData,

@@ -47,7 +47,7 @@ export const addBooking = async (req: AuthenticatedRequest, res: Response) => {
         : booking.discount;
     if (discountData?.code) {
       discount = await prisma.deals.findUnique({
-        where: {
+        where: {  
           code: data.discount?.code,
         },
       });
@@ -235,6 +235,9 @@ export const fetchBooking = async (
     const [bookings, total] = await prisma.$transaction([
       prisma.booking.findMany({
         where: whereClause,
+        orderBy: {
+          createdAt: 'desc',
+        },
         skip: pageIndex * pageSize,
         take: pageSize,
       }),
