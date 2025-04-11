@@ -177,7 +177,12 @@ class FlightController {
           passengers,
           kiuPassengers,
         });
+        const error = response?.KIU_AirBookV2RS?.Error;
+        if(error){
+          throw new HttpError(`${error?.[0]?.ErrorMsg?.[0]?.Error0}`, 400);
+        }
         const PNR = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0]?.$?.ID;
+
         const subBookings: SubBookingType[] = [
           {
             pnr: PNR,

@@ -19,7 +19,6 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & { id: string };
-    console.log("decoded",decoded)
 
     if (!decoded) {
       res.status(403).json({ error: 'Invalid token' });

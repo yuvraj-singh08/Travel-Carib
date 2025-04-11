@@ -852,6 +852,7 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             commissionAmount: commissionAmount || totalCommission,
             routeId,
             stops,
+            fareOptionGDS: "",
             // duration: offer[0].duration,
             total_amount: finalAmount,
             // base_currency: offer[0].base_currency,

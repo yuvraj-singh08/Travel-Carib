@@ -9,6 +9,7 @@ import { getGdsCreds } from '../services/GdsCreds.service';
 import { capitalizeFirstLetter } from '../utils/utils';
 import HttpError from '../utils/httperror';
 import { KiuBaggageData } from '../../types/types';
+import { prisma } from '../prismaClient';
 
 interface Payload {
   user: string;
@@ -55,7 +56,7 @@ class KiuClient {
       const creds = await getGdsCreds('KIU');
 
       if (!creds) {
-        throw new Error("Amadeus credentials not found in DB");
+        throw new Error("KIU credentials not found in DB");
       }
       let mode = capitalizeFirstLetter(creds.mode.toLowerCase())
       if (mode === "Test") {
@@ -343,7 +344,7 @@ class KiuClient {
               console.log("Price Response: ", priceResponse);
               if (priceResponse.error === false) {
                 normalizedResponse[index].invalidResponse = false;
-                normalizedResponse[index].total_amount = parseFloat(priceResponse.totalPrice);
+                normalizedResponse[index].total_amount = (priceResponse.totalPrice);
                 priced = true
                 break;
               }
@@ -354,7 +355,7 @@ class KiuClient {
         }
         else {
           normalizedResponse[index].invalidResponse = false;
-          normalizedResponse[index].total_amount = parseFloat(priceResponse.totalPrice);
+          normalizedResponse[index].total_amount = (priceResponse.totalPrice);
         }
         return priceResponse;
       }))
@@ -373,7 +374,15 @@ class KiuClient {
   async newSearchPrice(params: PriceRequestParams) {
     try {
       const requestXML = buildNewPriceRequest(params, this.mode);
-      const response = await this.queuedPost(requestXML);
+      const [response, commission] = await Promise.all([
+        this.queuedPost(requestXML),
+        prisma.commissionManagement.findMany({
+          where:{
+            supplier: "KIUSYS",
+            type: "AIRLINE"
+          }
+        })
+      ]);
 
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
@@ -420,8 +429,16 @@ class KiuClient {
         if (passengerCode === "CNN") baggageData.childBaggage = { checkedBaggage, cabinBaggage, handBaggage };
         if (passengerCode === "INF") baggageData.infantBaggage = { checkedBaggage, cabinBaggage, handBaggage };
       });
-
-      return { totalPrice, baggageData, error: false };
+      let commissionAmount = 0;
+      commission.forEach((commission) => {
+        if (commission.feeType === 'FIXED') {
+          commissionAmount += parseFloat(commission.commissionFees);
+        }
+        else {
+          commissionAmount += (parseFloat(totalPrice) * parseFloat(commission.commissionFees)) / 100.00;
+        }
+      })
+      return { totalPrice: parseFloat(totalPrice) + commissionAmount, baggageData, error: false };
 
     } catch (error) {
       console.error("Error in pricing:", error);
