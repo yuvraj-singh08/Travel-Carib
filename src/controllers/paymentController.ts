@@ -74,7 +74,6 @@ export const coinbaseWebhook = async (req, res) => {
     let data;
     const COINBASE_WEBHOOK_SECRET = process.env
       .COINBASE_WEBHOOK_SECRET as string;
-
     // Verify signature if webhook secret is available
     if (COINBASE_WEBHOOK_SECRET) {
       const signature = req.headers["x-cc-webhook-signature"] as string;
