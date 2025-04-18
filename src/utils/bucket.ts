@@ -11,7 +11,7 @@ const s3Client = new S3Client({
 });
 
 // Function to generate a random alphanumeric ID of length 5
-const generateRandomId = (length: number) => {
+export const generateRandomId = (length: number) => {
   return crypto
     .randomBytes(length)
     .toString("base64")
@@ -85,4 +85,21 @@ export const uploadImageFromUrl = async (imageUrl) => {
     console.error("Error uploading image to S3:", error);
     throw error;
   }
+};
+
+
+
+
+export const uploadImage = async (fileBuffer: Buffer, fileName: string, mimeType: string): Promise<string> => {
+  const command = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: fileName,
+    Body: fileBuffer,
+    // ContentType: mimeType,
+  });
+   console.log("command", process.env.AWS_BUCKET_NAME,process.env.AWS_ACCESS_KEY,process.env.AWS_SECRET_ACCESS_KEY);
+
+  await s3Client.send(command);
+
+  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${fileName}`;
 };

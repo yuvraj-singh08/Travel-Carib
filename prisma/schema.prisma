@@ -207,6 +207,7 @@ model BookPayment {
   paymentDate DateTime   @default(now())
   Booking     Booking    @relation(fields: [bookingId], references: [id])
   bookingId   String     @db.ObjectId
+  proofUrl  String?
 }
 
 model passenger {
@@ -483,4 +484,11 @@ model FareSetting {
   changeable   String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model PaymentCMS {
+  id              String @id @default(uuid()) @map("_id")
+  selectedPayment String @unique
+  value           String 
+  
 }

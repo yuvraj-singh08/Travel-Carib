@@ -1,5 +1,6 @@
 import { Response, Request } from "express";
 import { generateUploadUrl, uploadImageFromUrl } from "../utils/bucket";
+ 
 
 export const getFileUploadUrl = (req: Request, res: Response) => {
   generateUploadUrl()
@@ -45,3 +46,5 @@ export const uploadImageToS3 =async(url:string,iataCode:string)=>{
     // }
      
 }
+
+// your existing config

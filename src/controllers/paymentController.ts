@@ -8,6 +8,7 @@ import {
 } from "../services/paymentService";
 import * as crypto from "crypto";
 import { AuthenticatedRequest } from "../../types/express";
+import { generateRandomId, uploadImage } from "../utils/bucket";
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -103,5 +104,65 @@ export const coinbaseWebhook = async (req, res) => {
   } catch (error) {
     console.error("Error handling Coinbase webhook:", error);
     // next(error);  // Pass the error to the next middleware
+  }
+};
+
+
+export const makePayment = async (req: Request, res: Response) => { 
+
+  try {
+    const {  paymentId,paymentType } = req.body;
+    const file = req.file;
+    const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+
+    // const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+    // console.log("imageUrl",imageUrl)
+    const payment = await prisma.bookPayment.update({
+    where: {
+      id: paymentId,
+    },
+    data: {
+      paymentType: paymentType,
+      status: "COMPLETED",
+    },
+
+  });
+  if (!payment) {
+
+    return res.status(404).json({ message: "Payment not found" });
+  }
+  return res.status(200).json({ message: "Payment updated successfully",imageUrl:"", success: true });  
+    
+  } catch (error) {
+    console.error("Error updating payment status:", error?.message);
+    throw error;
+    
+  }
+}
+
+
+export const createOrUpdatePayment = async (req: Request, res: Response) => {
+  try {
+    const { selectedPayment, value } = req.body;  
+
+    const payment = await prisma.paymentCMS.upsert({
+      where: { selectedPayment:selectedPayment },
+      update: {
+        value: value,
+      },
+      create: {
+
+        selectedPayment: selectedPayment,
+        value: value,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment created or updated",
+      data: payment,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
   }
 };
