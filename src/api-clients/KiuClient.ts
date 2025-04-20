@@ -255,7 +255,7 @@ class KiuClient {
         })
         return data;
       })
-
+      console.log(itenaries)
       await Promise.allSettled(itenaries.map(async (itinerary) => {
         const offerPromises = await Promise.allSettled(itinerary.map(async (offer) => {
           const fareBrands: FareBrandType[] = [];

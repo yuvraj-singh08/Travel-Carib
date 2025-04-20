@@ -4,6 +4,7 @@ import {
   createCharge,
   createCheckoutSession,
   createOrUpdatePayment,
+  getAllPaymentMethods,
   makePayment,
   stripeWebhook,
 } from "../controllers/paymentController";
@@ -24,5 +25,6 @@ router.post("/coinbase_webhook", coinbaseWebhook);
 router.get('/:id', getPaymentDetails)
 router.post("/upload-proof", upload.single("image"), makePayment);
 router.post("/paymentCMS",createOrUpdatePayment)
+router.post("/getAllPaymentMethods",getAllPaymentMethods)
 
 export default router;  

@@ -492,3 +492,23 @@ model PaymentCMS {
   value           String 
   
 }
+
+model PaymentMethod {
+  id          String @id @default(uuid()) @map("_id")
+  type        String   @unique
+  name        String ?          // e.g., "Pago Móvil - Banesco"
+ 
+  bankName    String?          // Bank of Venezuela
+  accountName String?           // Tu Empresa, C.A.
+
+  phone       String?          // For Pago Móvil (0414-1234567)
+  identifier  String?          // For Pago Móvil (V-12.345.678)
+  email       String?          // For Zelle
+  iban        String?          // For SEPA
+  accountNumber String?        // For bank transfers
+  
+
+  
+  
+
+}

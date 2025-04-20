@@ -141,28 +141,95 @@ export const makePayment = async (req: Request, res: Response) => {
 }
 
 
-export const createOrUpdatePayment = async (req: Request, res: Response) => {
-  try {
-    const { selectedPayment, value } = req.body;  
+// export const createOrUpdatePayment = async (req: Request, res: Response) => {
+//   try {
+//     const { selectedPayment, value } = req.body;  
 
-    const payment = await prisma.paymentCMS.upsert({
-      where: { selectedPayment:selectedPayment },
+//     const payment = await prisma.paymentCMS.upsert({
+//       where: { selectedPayment:selectedPayment },
+//       update: {
+//         value: value,
+//       },
+//       create: {
+
+//         selectedPayment: selectedPayment,
+//         value: value,
+//       },
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Payment created or updated",
+//       data: payment,
+//     });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, error: error.message });
+//   }
+// };
+
+
+
+// Create or update PaymentMethod by "type"
+export const createOrUpdatePayment = async (req: Request, res: Response) => {
+  const {
+    type,
+    name,
+    isActive = true,
+    bankName,
+    accountName,
+    phone,
+    identifier,
+    email,
+    iban,
+    accountNumber,
+    order = 0
+  } = req.body;
+
+  try {
+    const paymentMethod = await prisma.paymentMethod.upsert({
+      where: { type },
       update: {
-        value: value,
+        name,
+      
+        bankName,
+        accountName,
+        phone,
+        identifier,
+        email,
+        iban,
+        accountNumber,
+      
       },
       create: {
-
-        selectedPayment: selectedPayment,
-        value: value,
-      },
+        type,
+        name,
+        
+        bankName,
+        accountName,
+        phone,
+        identifier,
+        email,
+        iban,
+        accountNumber,
+        
+      }
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Payment created or updated",
-      data: payment,
-    });
-  } catch (error: any) {
-    res.status(400).json({ success: false, error: error.message });
+    res.json(paymentMethod);
+  } catch (error) {
+    console.error('Error creating/updating payment method:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+};
+
+export const getAllPaymentMethods = async (req, res) => {
+  try {
+    console.log("api callled")
+    const methods = await prisma.paymentMethod.findMany();
+    console.log("methods",methods);
+    return res.json(methods);
+  } catch (error) { 
+    console.error("❌ Error fetching payment methods:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

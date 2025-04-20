@@ -332,6 +332,7 @@ class FlightClient {
                 if (paired.length > 0)
                     combination.push(paired)
             })
+            
 
             let temp: any = []
 

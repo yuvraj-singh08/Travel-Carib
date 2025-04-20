@@ -25,6 +25,7 @@ class FlightController {
 
   async searchFlights(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
+      console.log("api called")
       const { FlightDetails, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
       if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !cabinClass) {
         throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters");
