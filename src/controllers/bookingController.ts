@@ -158,6 +158,7 @@ export const getBookingById = async (req: AuthenticatedRequest, res: Response, n
         id
       },
       include: {
+        payment: true,
         SubBooking: true, // Fetch all associated SubBooking records
       },
     });
