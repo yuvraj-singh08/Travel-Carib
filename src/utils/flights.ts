@@ -780,6 +780,9 @@ export function filterRoutes(routes: Offer[]): Offer[] {
     const uniqueRoutes: Map<string, Offer> = new Map();
 
     for (const route of routes) {
+        if(route?.responseId === undefined) {
+            console.log("Route without responseId: ", route?.responseId);
+        }
         const existingRoute = uniqueRoutes.get(route?.responseId);
         // If no existing route or the new one is cheaper, update the map
         if (!existingRoute || route?.total_amount < existingRoute?.total_amount) {
