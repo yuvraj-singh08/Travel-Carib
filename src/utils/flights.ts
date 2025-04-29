@@ -3,7 +3,7 @@ import { routesData } from "../../constants/flightRoutes";
 import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType, Segment, Slice } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
-import { findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
+import { capitalizeFirstLetter, findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
@@ -168,15 +168,15 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
         const result = [];
         uniqueResponses.forEach((offers, key) => {
             let totalAmount = 99999999;
-            let fareBrands = [];
+            let fareOptions = [];
             let offerIndex = 0;
             offers.forEach((offer, index) => {
                 if (offer.total_amount < totalAmount) {
                     totalAmount = offer.total_amount
                     offerIndex = index;
                 }
-                fareBrands.push({
-                    fareBrand: offer.fareBrand,
+                fareOptions.push({
+                    fareBrand: offer.fareBrand || capitalizeFirstLetter(duffelResponse.data.cabin_class),
                     totalAmount: offer.total_amount,
                     cabinBaggage: offer.cabinBaggage,
                     checkedBaggage: offer.checkedBaggage,
@@ -185,7 +185,7 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
             })
             result.push({
                 ...offers[offerIndex],
-                fareBrands: fareBrands
+                fareOptions: fareOptions
             })
         })
 
@@ -780,9 +780,6 @@ export function filterRoutes(routes: Offer[]): Offer[] {
     const uniqueRoutes: Map<string, Offer> = new Map();
 
     for (const route of routes) {
-        if(route?.responseId === undefined) {
-            console.log("Route without responseId: ", route?.responseId);
-        }
         const existingRoute = uniqueRoutes.get(route?.responseId);
         // If no existing route or the new one is cheaper, update the map
         if (!existingRoute || route?.total_amount < existingRoute?.total_amount) {
@@ -924,10 +921,19 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             }
             slice.segments.push(...(route.slices[0].segments))
 
-            if (route.fareOptions)
+            if (route.fareOptions) {
+                let routeFareOptions = [];
                 route.fareOptions.forEach((fareOption) => {
-                    fareOptions.push(fareOption)
+                    routeFareOptions.push(fareOption)
                 })
+                fareOptions.push({
+                    origin: route.slices[0].origin,
+                    destination: route.slices[0].destination,
+                    departing_at: route.slices[0].departing_at,
+                    arriving_at: route.slices[0].arriving_at,
+                    fareBrands: routeFareOptions,
+                })
+            }
 
         });
         if (totalAmount > 10000) {

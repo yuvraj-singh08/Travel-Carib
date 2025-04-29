@@ -49,12 +49,12 @@ class FlightClient {
                 prisma.firewall.findMany({}),
                 prisma.commissionManagement.findMany(),
             ])
-            // const cachedResponse = await redis.get(id);
-            // if (cachedResponse) {
-            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-            //     const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-            //     return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
-            // }
+            const cachedResponse = await redis.get(id);
+            if (cachedResponse) {
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
+                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
+                return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
+            }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -106,7 +106,7 @@ class FlightClient {
                 return { ...response, id };
             })
 
-            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            // const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
             const filteredResponse = filterResponse(dataWithId, filters, firewall)
             redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
             return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
