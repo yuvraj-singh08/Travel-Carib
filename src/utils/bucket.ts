@@ -89,17 +89,25 @@ export const uploadImageFromUrl = async (imageUrl) => {
 
 
 
+const s3ClientNew = new S3Client({
+  region: process.env.AWS_REGION_NAME,
+  credentials: {
+    accessKeyId: process.env.AWS_NEW_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_NEW_SECRET_ACCESS_KEY,
+  },
+});
+
 
 export const uploadImage = async (fileBuffer: Buffer, fileName: string, mimeType: string): Promise<string> => {
   const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME,
+    Bucket: process.env.AWS_NEW_BUCKET_NAME,
     Key: fileName,
     Body: fileBuffer,
     // ContentType: mimeType,
   });
-   console.log("command", process.env.AWS_BUCKET_NAME,process.env.AWS_ACCESS_KEY,process.env.AWS_SECRET_ACCESS_KEY);
+   console.log("command", process.env.AWS_NEW_BUCKET_NAME,process.env.AWS_NEW_ACCESS_KEY,process.env.AWS_NEW_SECRET_ACCESS_KEY);
 
-  await s3Client.send(command);
+  await s3ClientNew.send(command);
 
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${fileName}`;
+  return `https://${process.env.AWS_NEW_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${fileName}`;
 };

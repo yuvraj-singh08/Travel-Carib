@@ -108,34 +108,34 @@ export const coinbaseWebhook = async (req, res) => {
 };
 
 
-export const makePayment = async (req: Request, res: Response) => { 
+  export const makePayment = async (req: Request, res: Response) => { 
 
-  try {
-    const {  paymentId,paymentType } = req.body;
-    const file = req.file;
-    const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+    try {
+      const {  paymentId,paymentType } = req.body;
+      const file = req.file;
+      const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
 
-    // const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
-    // console.log("imageUrl",imageUrl)
-    const payment = await prisma.bookPayment.update({
-    where: {
-      id: paymentId,
-    },
-    data: {
-      paymentType: paymentType,
-      status: "COMPLETED",
-    },
-
-  });
+      const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+      console.log("imageUrl",imageUrl)
+      const payment = await prisma.bookPayment.update({
+      where: {
+        id: paymentId,
+      },
+      data: {
+        paymentType: paymentType,
+        status: "COMPLETED",
+        proofUrl:imageUrl
+      },
+    });
   if (!payment) {
 
     return res.status(404).json({ message: "Payment not found" });
   }
-  return res.status(200).json({ message: "Payment updated successfully",imageUrl:"", success: true });  
+  return res.status(200).json({ message: "Payment updated successfully",imageUrl, success: true });  
     
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
     console.error("Error updating payment status:", error?.message);
-    throw error;
     
   }
 }
