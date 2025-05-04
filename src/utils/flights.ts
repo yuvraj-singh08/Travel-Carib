@@ -3,7 +3,7 @@ import { routesData } from "../../constants/flightRoutes";
 import { AggregatedFareBrand, AirlineProvider, CommissionType, FilterType, Firewall, FlightDate, Offer, PriceCalendar, routeType, Segment, Slice } from "../../types/flightTypes";
 import { AmadeusResponseType } from "../../types/amadeusTypes";
 import { response } from "express";
-import { findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
+import { capitalizeFirstLetter, findCommonFareBrands, getAirlineLogo, getAirlineNameByCode, getDifferenceInMinutes } from "./utils";
 import moment from "moment";
 import { prisma } from "../prismaClient";
 import HttpError from "./httperror";
@@ -168,15 +168,15 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
         const result = [];
         uniqueResponses.forEach((offers, key) => {
             let totalAmount = 99999999;
-            let fareBrands = [];
+            let fareOptions = [];
             let offerIndex = 0;
             offers.forEach((offer, index) => {
                 if (offer.total_amount < totalAmount) {
                     totalAmount = offer.total_amount
                     offerIndex = index;
                 }
-                fareBrands.push({
-                    fareBrand: offer.fareBrand,
+                fareOptions.push({
+                    fareBrand: offer.fareBrand || capitalizeFirstLetter(duffelResponse.data.cabin_class),
                     totalAmount: offer.total_amount,
                     cabinBaggage: offer.cabinBaggage,
                     checkedBaggage: offer.checkedBaggage,
@@ -185,13 +185,103 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
             })
             result.push({
                 ...offers[offerIndex],
-                fareBrands: fareBrands
+                fareOptions: fareOptions
             })
         })
 
         return result;
     } catch (error) {
         throw error;
+    }
+}
+
+export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<OfferRequest>) => {
+    try {
+        let response = [];
+        duffelResponse.data.offers.forEach((result) => {
+            let responseId = "";
+            let routeId = "";
+            let departing_at = result.slices?.[0]?.segments?.[0]?.departing_at;
+            let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
+            let flag = true;
+            let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
+            let fareOptions = [];
+            result.slices.forEach((slice, sliceIndex) => {
+                slice.segments?.forEach((segment, segmentIndex) => {
+                    routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
+                    responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
+
+                    const baggages = segment?.passengers?.[0]?.baggages
+                    //@ts-ignore
+                    // if (segment?.passengers?.[0]?.baggages?.filter((baggage) => baggage.type === "checked")?.quantity == undefined) {
+                    //     console.log(segment?.passengers?.[0]);
+                    // }
+
+                    const cabinBaggageData = baggages?.filter((baggage) => baggage.type === "carry_on")
+                    const checkedBaggageData = baggages?.filter((baggage) => baggage.type === "checked")
+                    const checkedBaggage = checkedBaggageData?.[0]?.quantity || 0;
+                    const cabinBaggage = cabinBaggageData?.[0]?.quantity || 0;
+                    sliceCabinBaggage = Math.min(cabinBaggage, sliceCabinBaggage)
+                    sliceCheckedBaggage = Math.min(checkedBaggage, sliceCheckedBaggage)
+
+                    //@ts-ignore
+                    result.slices[sliceIndex].segments[segmentIndex].checkedBaggage = checkedBaggage;
+                    //@ts-ignore
+                    result.slices[sliceIndex].segments[segmentIndex].cabinBaggage = cabinBaggage;
+                    //@ts-ignore
+                    result.slices[sliceIndex].sourceId = GDS.duffel;
+                    //@ts-ignore
+                    result.slices[sliceIndex].gdsOfferId = result.id;
+                    //@ts-ignore
+                    result.slices[sliceIndex].passengers = result.passengers;
+                    //@ts-ignore
+                    result.slices[sliceIndex].sliceAmount = result.total_amount;
+                })
+                fareOptions.push({
+                    fareBrand: slice.fare_brand_name,
+                    cabinBaggage: sliceCabinBaggage,
+                    checkedBaggage: sliceCheckedBaggage,
+                })
+            })
+            response.push({
+                ...result,
+                fareOptions,
+                routeId,
+                responseId,
+                departing_at,
+                arriving_at,
+                fareOptionGDS: "DUFFEL",
+                cabinBaggage: sliceCabinBaggage,
+                checkedBaggage: sliceCheckedBaggage,
+                cabin_class: duffelResponse.data.cabin_class
+            })
+        })
+
+        const uniqueResponses = new Map<string, any[]>();
+        response.forEach((response) => {
+            uniqueResponses.set(response.responseId, [...(uniqueResponses.get(response.responseId) || []), response]);
+        });
+        const result = [];
+        uniqueResponses.forEach((offers, key) => {
+            let totalAmount = 99999999;
+            let fareOptions = [];
+            let offerIndex = 0;
+            offers.forEach((offer, index) => {
+                if (offer.total_amount < totalAmount) {
+                    totalAmount = offer.total_amount
+                    offerIndex = index;
+                }
+                fareOptions.push(offer.fareOptions)
+            })
+            result.push({
+                ...offers[offerIndex],
+                fareOptions: fareOptions
+            })
+        })
+        return result;
+    } catch (error) {
+        console.log("Error parsing duffel response: ", error);
+        return [];
     }
 }
 
@@ -831,10 +921,19 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             }
             slice.segments.push(...(route.slices[0].segments))
 
-            if (route.fareOptions)
+            if (route.fareOptions) {
+                let routeFareOptions = [];
                 route.fareOptions.forEach((fareOption) => {
-                    fareOptions.push(fareOption)
+                    routeFareOptions.push(fareOption)
                 })
+                fareOptions.push({
+                    origin: route.slices[0].origin,
+                    destination: route.slices[0].destination,
+                    departing_at: route.slices[0].departing_at,
+                    arriving_at: route.slices[0].arriving_at,
+                    fareBrands: routeFareOptions,
+                })
+            }
 
         });
         if (totalAmount > 10000) {
@@ -1421,7 +1520,7 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
             route.slices.forEach(slice =>
                 slice.segments.forEach(segment => {
                     const iata_code = segment.operating_carrier.iata_code;
-                    
+
                     if (!airlineSet.has(iata_code)) {
                         airlineSet.add(iata_code);
                         extendedDataMap.set(iata_code, {
@@ -1435,9 +1534,9 @@ export const getAirlineCodes = (response): { airlines: string[], extendedData: A
             )
         );
 
-        return { 
-            airlines: Array.from(airlineSet), 
-            extendedData: Array.from(extendedDataMap.values()) 
+        return {
+            airlines: Array.from(airlineSet),
+            extendedData: Array.from(extendedDataMap.values())
         };
     } catch (error) {
         console.error("Error Getting Airline Codes:", error);

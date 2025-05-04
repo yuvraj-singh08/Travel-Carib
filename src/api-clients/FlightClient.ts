@@ -1,7 +1,7 @@
 import { FlightSupplier } from "@prisma/client";
 import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
@@ -51,9 +51,9 @@ class FlightClient {
             ])
             const cachedResponse = await redis.get(id);
             if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_,index) => index<200)
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
                 const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-                return {flightData: filteredResponse, airlinesDetails:getAirlineCodes(parsedResponse), searchKey: id};
+                return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
             }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
@@ -106,7 +106,7 @@ class FlightClient {
                 return { ...response, id };
             })
 
-            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            // const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
             const filteredResponse = filterResponse(dataWithId, filters, firewall)
             redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
             return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
@@ -208,87 +208,9 @@ class FlightClient {
                 })
             })
 
-            const amadeusRequests = possibleRoutes.map((route) => {
-                return route.map(async (segment, i: number) => {
-                    if (i > 0) {
-                        let data = await Promise.all([
-                            this.amadeusClient.newSearchFlights({
-                                passengers: amadeusPassengersArray,
-                                cabinClass,
-                                originDestinations: [
-                                    {
-                                        id: 1,
-                                        originLocationCode: segment.origin,
-                                        destinationLocationCode: segment.destination,
-                                        departureDateTimeRange: {
-                                            date: departureDate
-                                        },
-                                    }
-                                ],
-                                originDestinationIds: [1]
-                            }),
-                            this.amadeusClient.newSearchFlights({
-                                passengers: amadeusPassengersArray,
-                                cabinClass,
-                                originDestinations: [
-                                    {
-                                        id: 1,
-                                        originLocationCode: segment.origin,
-                                        destinationLocationCode: segment.destination,
-                                        departureDateTimeRange: {
-                                            date: getNextDay(departureDate)
-                                        }
-                                    }
-                                ],
-                                originDestinationIds: [1]
-                            })
-                        ]);
-                        const parsedData: any = { data: [], dictionaries: {} };
-                        data.forEach((singleResponse) => {
-                            parsedData.data = [...(parsedData.data), ...(singleResponse.data)];
-                            parsedData.dictionaries.aircraft = {
-                                ...(parsedData.dictionaries?.aircraft),
-                                ...(singleResponse.dictionaries?.aircraft)
-                            };
-                            parsedData.dictionaries.carriers = {
-                                ...(parsedData.dictionaries?.carriers),
-                                ...(singleResponse.dictionaries?.carriers)
-                            };
-                            parsedData.dictionaries.currencies = {
-                                ...(parsedData.dictionaries?.currencies),
-                                ...(singleResponse.dictionaries?.currencies)
-                            };
-                            parsedData.dictionaries.locations = {
-                                ...(parsedData.dictionaries?.locations),
-                                ...(singleResponse.dictionaries?.locations)
-                            };
-                        })
-                        return parsedData
-                    }
-                    return this.amadeusClient.newSearchFlights({
-                        passengers: amadeusPassengersArray,
-                        cabinClass,
-                        originDestinations: [
-                            {
-                                id: 1,
-                                originLocationCode: segment.origin,
-                                destinationLocationCode: segment.destination,
-                                departureDateTimeRange: {
-                                    date: departureDate
-                                }
-                            }
-                        ],
-                        originDestinationIds: [1]
-                    })
-                })
-            })
 
-            const [duffelResponse, amadeusResponse, parsedKiuResponse] = await Promise.all([
+            const [duffelResponse, parsedKiuResponse] = await Promise.all([
                 Promise.all(duffelRequests.map(async (request) => {
-                    const result = await Promise.all(request);
-                    return result;
-                })),
-                Promise.all(amadeusRequests.map(async (request) => {
                     const result = await Promise.all(request);
                     return result;
                 })),
@@ -297,14 +219,6 @@ class FlightClient {
                     return result;
                 })),
             ])
-
-            const parsedAmadeusResponse = amadeusResponse?.map((possibleRoute) => {
-                const parsedPossibleRoutes = possibleRoute.map((response) => {
-                    const parsedResponse = amadeusResponseParser(response);
-                    return parsedResponse;
-                })
-                return parsedPossibleRoutes
-            })
 
             const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
                 const parsedPossibleRoutes = possibleRoutes.map((response) => {
@@ -318,12 +232,10 @@ class FlightClient {
 
             possibleRoutes.forEach((route, index) => {
                 const duffel = parsedDuffelResponse?.[index]
-                const amadeus = parsedAmadeusResponse?.[index]
                 const kiu = parsedKiuResponse?.[index]
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
-                        ...(amadeus?.[index2] || []),
                         ...(duffel?.[index2] || []),
                         ...(kiu?.[index2] || [])
                     ])
@@ -332,7 +244,7 @@ class FlightClient {
                 if (paired.length > 0)
                     combination.push(paired)
             })
-            
+
 
             let temp: any = []
 
@@ -363,22 +275,6 @@ class FlightClient {
                 }),
             })
             let OriginDestionationIds: number[] = [];
-            const amadeusRequest = this.amadeusClient.newSearchFlights({
-                passengers: amadeusPassengersArray,
-                cabinClass: cabinClass,
-                originDestinations: FlightDetails.map((flightLeg, index) => {
-                    OriginDestionationIds.push(index + 1)
-                    return {
-                        id: index + 1,
-                        originLocationCode: flightLeg.originLocation,
-                        destinationLocationCode: flightLeg.destinationLocation,
-                        departureDateTimeRange: {
-                            date: flightLeg.departureDate
-                        },
-                    }
-                }),
-                originDestinationIds: OriginDestionationIds
-            })
             const kiuRequest = this.kiuClient.newSearchFlights({
                 Passengers: passengers,
                 CabinClass: cabinClass,
@@ -391,14 +287,12 @@ class FlightClient {
                 }),
 
             })
-            const [kiuResponse, amadeusResponse, duffelResponse] = await Promise.all([
+            const [kiuResponse, duffelResponse] = await Promise.all([
                 kiuRequest,
-                amadeusRequest,
                 duffelRequest
             ]);
-            const parsedDuffelResponse = (duffelResponse.data.offers);
+            const parsedDuffelResponse = duffelMulticityResponseFormatter(duffelResponse);
             const parsedKiuResponse = parseMulticityKiuResponse(kiuResponse);
-            // const parsedAmadeusResponse = amadeusResponseParser(amadeusResponse);
 
             return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 

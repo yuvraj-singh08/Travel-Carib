@@ -18,7 +18,8 @@ class DuffelController {
     static async create() {
         try {
             const duffelClient = await DuffelClient.create();
-            return duffelClient
+            const duffelController = new DuffelController({ duffelClient });
+            return duffelController;
         } catch (error) {
             throw error;
         }
@@ -26,21 +27,20 @@ class DuffelController {
 
     async searchFlights(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { originLocation, destinationLocation, departureDate, passengerType, returnDate, cabinClass, maxConnections } = req.body;
+            const { OriginDestinationOptions, cabinClass } = req.body;
             const offerRequest = await this.duffelClient.createOfferRequest({
-                slices: [
-                    {
-                        origin: originLocation,
-                        destination: destinationLocation,
-                        departure_date: departureDate,
+                slices: OriginDestinationOptions.map((option: any) => {
+                    return {
+                        origin: option.origin,
+                        destination: option.destination,
+                        departure_date: option.date,
                     }
-                ],
+                }),
                 passengers: [{ type: "adult" }],
-                cabin_class: "economy",
+                cabin_class: cabinClass,
                 max_connections: 2
             })
-            const response = await this.duffelClient.getOfferRequestById(offerRequest.data.id);
-            res.status(200).json(response);
+            res.status(200).json(offerRequest);
         } catch (error) {
             next(error);
         }
