@@ -205,6 +205,33 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             let flag = true;
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
+
+            let refund={}
+            let change={}
+            if(result.conditions.refund_before_departure)
+            {
+                refund={
+                    penalty_amount: result.conditions.refund_before_departure.penalty_amount,
+                    penalty_currency: result.conditions.refund_before_departure.penalty_currency,
+                    allowed: result.conditions.refund_before_departure.allowed
+                }
+            }else{
+                refund= { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on refunds' };
+            }
+
+
+            if(result.conditions.change_before_departure)
+                {
+                    change={
+                        penalty_amount: result.conditions.change_before_departure.penalty_amount,
+                        penalty_currency: result.conditions.change_before_departure.penalty_currency,
+                        allowed: result.conditions.change_before_departure.allowed
+                    }
+
+                }else{
+                    change= { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
+                }
+
             let fareOptions = [];
             result.slices.forEach((slice, sliceIndex) => {
                 slice.segments?.forEach((segment, segmentIndex) => {
@@ -241,6 +268,8 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     fareBrand: slice.fare_brand_name,
                     cabinBaggage: sliceCabinBaggage,
                     checkedBaggage: sliceCheckedBaggage,
+                    refund:refund,
+                    change:change
                 })
             })
             response.push({
@@ -253,7 +282,7 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                 fareOptionGDS: "DUFFEL",
                 cabinBaggage: sliceCabinBaggage,
                 checkedBaggage: sliceCheckedBaggage,
-                cabin_class: duffelResponse.data.cabin_class
+                cabin_class: duffelResponse.data.cabin_class,
             })
         })
 
