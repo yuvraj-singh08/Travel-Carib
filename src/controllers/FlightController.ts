@@ -162,7 +162,7 @@ class FlightController {
   async BookFlight(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user.id;
-      const { offerId, passengers, kiuPassengers, flight_type, contactDetails, fareChoices } = req.body;
+      const { offerId, duffelOfferId, price, passengers, kiuPassengers, flight_type, contactDetails, fareChoices } = req.body;
       if (!offerId || !passengers || !flight_type || !userId) {
         throw new HttpError("Missing required fields: offerId, passengers, contactDetails, address, flight_type, userId", 400);
       }
@@ -179,7 +179,7 @@ class FlightController {
           kiuPassengers,
         });
         const error = response?.KIU_AirBookV2RS?.Error;
-        if(error){
+        if (error) {
           throw new HttpError(`${error?.[0]?.ErrorMsg?.[0]?.Error0}`, 400);
         }
         const PNR = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0]?.$?.ID;
@@ -192,6 +192,36 @@ class FlightController {
           }
         ]
 
+        const bookingResponse = await createBookingService({
+          flightData: offer,
+          passengers,
+          flightType: flight_type,
+          userId,
+          contactDetails,
+          subBookings
+        })
+        res.status(200).json(bookingResponse);
+        return;
+      }
+      else if (offer.fareOptionGDS === "DUFFEL") {
+        const response = await this.flightClient.duffelMulticityBooking({
+          offer,
+          offerId: duffelOfferId,
+          passengers,
+          totalAmount: price,
+        });
+        const error = response?.errors;
+        if (error) {
+          throw new HttpError(`${error?.[0]?.message}`, 400);
+        }
+        const PNR = response.data.booking_reference;
+        const subBookings: SubBookingType[] = [
+          {
+            pnr: PNR,
+            status: SubBookingStatusValues.pending,
+            supplier: "DUFFEL",
+          }
+        ]
         const bookingResponse = await createBookingService({
           flightData: offer,
           passengers,

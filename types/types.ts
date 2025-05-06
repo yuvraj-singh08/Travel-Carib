@@ -1,4 +1,4 @@
-import { FareBrandType, Location } from "./flightTypes";
+import { FareBrandType, Location, Offer, PassengerType } from "./flightTypes";
 import { PriceOriginDestinationOption } from "./kiuTypes";
 
 export interface RouteOptionParams {
@@ -90,4 +90,11 @@ export interface RetryPricingParams{
         infants: number
     },
     fareCode: string;
+}
+
+export type DuffelMulticityBookingParams = {
+    offer: Offer;
+    offerId: string
+    passengers: PassengerType[]
+    totalAmount: string;
 }

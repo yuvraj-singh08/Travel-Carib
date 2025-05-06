@@ -12,7 +12,7 @@ import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
 import redis from "../../config/redis";
-import { getCustomFarePrice, ManualLayoverSearchParams } from "../../types/types";
+import { DuffelMulticityBookingParams, getCustomFarePrice, ManualLayoverSearchParams } from "../../types/types";
 import { BookingRequestParams, PriceFlightSegment } from "../../types/kiuTypes";
 import { kiuClasses } from "../../constants/cabinClass";
 import HttpError from "../utils/httperror";
@@ -106,7 +106,7 @@ class FlightClient {
                 return { ...response, id };
             })
 
-            // const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
             const filteredResponse = filterResponse(dataWithId, filters, firewall)
             redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
             return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
@@ -796,6 +796,58 @@ class FlightClient {
             choices,
             passengers,
             kiuPassengers
+        });
+        return response;
+    }
+
+    async duffelMulticityBooking({ offerId, offer, passengers, totalAmount }: DuffelMulticityBookingParams) {
+        const services = [];
+        const offerPassengers = offer.passengers.map((passenger) => {
+            return {
+                ...passenger,
+                used: false,
+            }
+        });
+        const passengersData = passengers.map((passenger, index) => {
+            let returnValue: CreateOrderPassenger = {
+                identity_documents: [{
+                    type: 'passport',
+                    unique_identifier: passenger.passportNumber,
+                    issuing_country_code: passenger.issuingCountry,
+                    expires_on: passenger.passportExpiryDate
+                }],
+                email: passenger.email,
+                phone_number: passenger.phoneNumber,
+                type: passenger.type,
+                id: offerPassengers.filter((p) => {
+                    if (p.type === passenger.type && !p.used) {
+                        p.used = true;
+                        return true;
+                    }
+                    return false;
+                })[0].id,
+                born_on: passenger.dob,
+                family_name: passenger.lastName,
+                given_name: passenger.firstName,
+                gender: passenger.gender,
+                title: passenger.title,
+            }
+            if (passenger.infant_passenger_id) {
+                returnValue.infant_passenger_id = passenger.infant_passenger_id;
+            }
+            if (passenger.baggageDetails) {
+                passenger?.baggageDetails.forEach((baggageData) => {
+                    services.push({
+                        id: baggageData.serviceIds[0],
+                        quantity: baggageData.quantity
+                    })
+                    totalAmount += baggageData.prices[0];
+                })
+            }
+            return returnValue
+        })
+        const response = await this.duffelClient.createOrder({
+            offerId, passengers: passengersData, services, totalAmount
         });
         return response;
     }

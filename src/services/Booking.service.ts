@@ -3,7 +3,7 @@ import { prisma } from "../prismaClient";
 
 export const createBookingService = async (params: CreateBookingServiceParams) => {
     try {
-        let totalAmount = params.flightData.total_amount;
+        let totalAmount = typeof params.flightData.total_amount === "string" ? parseFloat(params.flightData.total_amount) : params.flightData.total_amount;
         let count = 0, adult = 0, children = 0, infant = 0;
         params.passengers.forEach((passenger) => {
             if (passenger.type === "adult") {
@@ -27,7 +27,7 @@ export const createBookingService = async (params: CreateBookingServiceParams) =
                 },
                 flightDetails: JSON.stringify(params.flightData),
                 passenger: JSON.stringify(params.passengers),
-                baseFare: params.flightData.total_amount,
+                baseFare: typeof params.flightData.total_amount === "string" ? parseFloat(params.flightData.total_amount) : params.flightData.total_amount,
                 fareSummary: {
                     adults: adult,
                     children: children,
