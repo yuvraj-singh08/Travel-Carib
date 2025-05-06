@@ -146,6 +146,38 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
             })
             const totalAmount = parseFloat(result.total_amount);
 
+
+            let refund = {}
+            if (result.conditions.refund_before_departure) {
+                refund = {
+                    penalty_amount: result.conditions.refund_before_departure.penalty_amount,
+                    penalty_currency: result.conditions.refund_before_departure.penalty_currency,
+                    allowed: result.conditions.refund_before_departure.allowed
+                }
+            } else {
+                refund = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on refunds' };
+            }
+
+            let change = {}
+            if (result.conditions.change_before_departure) {
+                    change = {
+                        penalty_amount: result.conditions.change_before_departure.penalty_amount,
+                        penalty_currency: result.conditions.change_before_departure.penalty_currency,
+                        allowed: result.conditions.change_before_departure.allowed
+                    }
+
+            } else {
+                    change = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
+            }
+
+
+            let paymentRequirements = {
+                requires_instant_payment: result.payment_requirements.requires_instant_payment,
+                price_guarantee_expires_at: result.payment_requirements.price_guarantee_expires_at,
+                payment_required_by: result.payment_requirements.payment_required_by
+            }
+
+
             if (flag) {
                 response.push({
                     ...result,
@@ -157,10 +189,14 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
                     cabinBaggage: sliceCabinBaggage,
                     checkedBaggage: sliceCheckedBaggage,
                     cabin_class: duffelResponse.data.cabin_class,
-                    fareBrand: result.slices[0].fare_brand_name
+                    fareBrand: result.slices[0].fare_brand_name,
+                    refund,
+                    change,
+                    paymentRequirements
                 })
             }
         })
+
         const uniqueResponses = new Map<string, any[]>();
         response.forEach((response) => {
             uniqueResponses.set(response.responseId, [...(uniqueResponses.get(response.responseId) || []), response]);
@@ -175,14 +211,19 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
                     totalAmount = offer.total_amount
                     offerIndex = index;
                 }
+
                 fareOptions.push({
                     fareBrand: offer.fareBrand || capitalizeFirstLetter(duffelResponse.data.cabin_class),
                     totalAmount: offer.total_amount,
                     cabinBaggage: offer.cabinBaggage,
                     checkedBaggage: offer.checkedBaggage,
                     offerId: offer.id,
+                    refund: offer.refund,
+                    change: offer.change,
+                    paymentRequirements: offer.paymentRequirements
                 })
             })
+
             result.push({
                 ...offers[offerIndex],
                 fareOptions: fareOptions
@@ -205,6 +246,38 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             let flag = true;
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
+
+            let refund = {}
+            let change = {}
+            if (result.conditions.refund_before_departure) {
+                refund = {
+                    penalty_amount: result.conditions.refund_before_departure.penalty_amount,
+                    penalty_currency: result.conditions.refund_before_departure.penalty_currency,
+                    allowed: result.conditions.refund_before_departure.allowed
+                }
+            } else {
+                refund = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on refunds' };
+            }
+
+
+            if (result.conditions.change_before_departure) {
+                change = {
+                    penalty_amount: result.conditions.change_before_departure.penalty_amount,
+                    penalty_currency: result.conditions.change_before_departure.penalty_currency,
+                    allowed: result.conditions.change_before_departure.allowed
+                }
+
+            } else {
+                change = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
+            }
+
+            // hold order
+            let paymentRequirements = {
+                requires_instant_payment: result.payment_requirements.requires_instant_payment,
+                price_guarantee_expires_at: result.payment_requirements.price_guarantee_expires_at,
+                payment_required_by: result.payment_requirements.payment_required_by
+            }
+
             let fareOptions = [];
             result.slices.forEach((slice, sliceIndex) => {
                 slice.segments?.forEach((segment, segmentIndex) => {
@@ -241,6 +314,9 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     fareBrand: slice.fare_brand_name,
                     cabinBaggage: sliceCabinBaggage,
                     checkedBaggage: sliceCheckedBaggage,
+                    refund: refund,
+                    change: change,
+                    paymentRequirements: paymentRequirements
                 })
             })
             response.push({
@@ -253,7 +329,7 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                 fareOptionGDS: "DUFFEL",
                 cabinBaggage: sliceCabinBaggage,
                 checkedBaggage: sliceCheckedBaggage,
-                cabin_class: duffelResponse.data.cabin_class
+                cabin_class: duffelResponse.data.cabin_class,
             })
         })
 
@@ -272,7 +348,7 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     offerIndex = index;
                 }
                 fareOptions.push({
-                    fareOptions:offer.fareOptions,
+                    fareOptions: offer.fareOptions,
                     price: offer.total_amount,
                     offerId: offer.id,
                 })
