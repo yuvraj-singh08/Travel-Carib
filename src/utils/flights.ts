@@ -232,6 +232,13 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     change= { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
                 }
 
+                // hold order
+                let paymentRequirements={
+                    requires_instant_payment: result.payment_requirements.requires_instant_payment,
+                    price_guarantee_expires_at: result.payment_requirements.price_guarantee_expires_at,
+                    payment_required_by: result.payment_requirements.payment_required_by
+                }
+
             let fareOptions = [];
             result.slices.forEach((slice, sliceIndex) => {
                 slice.segments?.forEach((segment, segmentIndex) => {
@@ -269,7 +276,8 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     cabinBaggage: sliceCabinBaggage,
                     checkedBaggage: sliceCheckedBaggage,
                     refund:refund,
-                    change:change
+                    change:change,
+                    paymentRequirements:paymentRequirements
                 })
             })
             response.push({
