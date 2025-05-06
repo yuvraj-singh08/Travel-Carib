@@ -308,7 +308,11 @@ export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<
                     totalAmount = offer.total_amount
                     offerIndex = index;
                 }
-                fareOptions.push(offer.fareOptions)
+                fareOptions.push({
+                    fareOptions:offer.fareOptions,
+                    price: offer.total_amount,
+                    offerId: offer.id,
+                })
             })
             result.push({
                 ...offers[offerIndex],

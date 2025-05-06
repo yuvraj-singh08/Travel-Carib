@@ -167,3 +167,8 @@ export type BookingRequestParams = {
     choices: string[],
     kiuPassengers:PassengerType[];
 }
+
+export interface duffelMulticityBookingParams{
+    offerId: string;
+    passengers: PassengerType[];
+}
