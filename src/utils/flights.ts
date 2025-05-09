@@ -204,15 +204,14 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
         const result = [];
         uniqueResponses.forEach((offers, key) => {
             let totalAmount = 99999999;
-            let fareOptions = [];
+            let fareBrands = [];
             let offerIndex = 0;
             offers.forEach((offer, index) => {
                 if (offer.total_amount < totalAmount) {
                     totalAmount = offer.total_amount
                     offerIndex = index;
                 }
-
-                fareOptions.push({
+                fareBrands.push({
                     fareBrand: offer.fareBrand || capitalizeFirstLetter(duffelResponse.data.cabin_class),
                     totalAmount: offer.total_amount,
                     cabinBaggage: offer.cabinBaggage,
@@ -226,7 +225,15 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
 
             result.push({
                 ...offers[offerIndex],
-                fareOptions: fareOptions
+                fareOptions: [
+                    {
+                        origin: offers[offerIndex].slices[0].origin,
+                        destination: offers[offerIndex].slices[0].destination,
+                        departing_at: offers[offerIndex].slices[0].departing_at,
+                        arriving_at: offers[offerIndex].slices[0].arriving_at,
+                        fareBrands: fareBrands,
+                    }
+                ]
             })
         })
 
@@ -1002,16 +1009,8 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             slice.segments.push(...(route.slices[0].segments))
 
             if (route.fareOptions) {
-                let routeFareOptions = [];
                 route.fareOptions.forEach((fareOption) => {
-                    routeFareOptions.push(fareOption)
-                })
-                fareOptions.push({
-                    origin: route.slices[0].origin,
-                    destination: route.slices[0].destination,
-                    departing_at: route.slices[0].departing_at,
-                    arriving_at: route.slices[0].arriving_at,
-                    fareBrands: routeFareOptions,
+                    fareOptions.push(fareOption)
                 })
             }
 
@@ -1211,39 +1210,39 @@ export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 
     });
 
     return response.sort((a, b) => {
-        if (sortBy === "CHEAP") {
+        // if (sortBy === "CHEAP") {
             return parseFloat(a.total_amount) - parseFloat(b.total_amount);
-        } else if (sortBy === "FAST") {
-            const aDepartingAt = a?.slices?.[0]?.segments?.[0]?.departing_at;
-            const aArrivingAt = a?.slices?.[a?.slices?.length - 1]?.segments?.[a?.slices?.[a?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
-            const bDepartingAt = b?.slices?.[0]?.segments?.[0]?.departing_at;
-            const bArrivingAt = b?.slices?.[b?.slices?.length - 1]?.segments?.[b?.slices?.[b?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+        // } else if (sortBy === "FAST") {
+        //     const aDepartingAt = a?.slices?.[0]?.segments?.[0]?.departing_at;
+        //     const aArrivingAt = a?.slices?.[a?.slices?.length - 1]?.segments?.[a?.slices?.[a?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+        //     const bDepartingAt = b?.slices?.[0]?.segments?.[0]?.departing_at;
+        //     const bArrivingAt = b?.slices?.[b?.slices?.length - 1]?.segments?.[b?.slices?.[b?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
 
-            const aTimeDiff = getDifferenceInMinutes(aDepartingAt, aArrivingAt);
-            const bTimeDiff = getDifferenceInMinutes(bDepartingAt, bArrivingAt);
+        //     const aTimeDiff = getDifferenceInMinutes(aDepartingAt, aArrivingAt);
+        //     const bTimeDiff = getDifferenceInMinutes(bDepartingAt, bArrivingAt);
 
-            return aTimeDiff - bTimeDiff;
-        } else if (sortBy === "BEST") {
-            const calculateScore = (offer: Offer) => {
-                const departingAt = offer?.slices?.[0]?.segments?.[0]?.departing_at;
-                const arrivingAt = offer?.slices?.[offer?.slices?.length - 1]?.segments?.[offer?.slices?.[offer?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
-                const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
+        //     return aTimeDiff - bTimeDiff;
+        // } else if (sortBy === "BEST") {
+        //     const calculateScore = (offer: Offer) => {
+        //         const departingAt = offer?.slices?.[0]?.segments?.[0]?.departing_at;
+        //         const arrivingAt = offer?.slices?.[offer?.slices?.length - 1]?.segments?.[offer?.slices?.[offer?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
+        //         const timeDiff = getDifferenceInMinutes(departingAt, arrivingAt);
 
-                const durationScore = (maxDuration - timeDiff) / (maxDuration - minDuration || 1);
-                const priceScore = (maxPrice - (offer.total_amount)) / (maxPrice - minPrice || 1);
-                const stopsScore = (maxStops - offer.stops) / (maxStops - minStops || 1);
+        //         const durationScore = (maxDuration - timeDiff) / (maxDuration - minDuration || 1);
+        //         const priceScore = (maxPrice - (offer.total_amount)) / (maxPrice - minPrice || 1);
+        //         const stopsScore = (maxStops - offer.stops) / (maxStops - minStops || 1);
 
-                // Adjust these weights as needed
-                const durationWeight = 0.4;
-                const priceWeight = 0.4;
-                const stopsWeight = 0.2;
+        //         // Adjust these weights as needed
+        //         const durationWeight = 0.4;
+        //         const priceWeight = 0.4;
+        //         const stopsWeight = 0.2;
 
-                return (durationScore * durationWeight) + (priceScore * priceWeight) + (stopsScore * stopsWeight);
-            };
+        //         return (durationScore * durationWeight) + (priceScore * priceWeight) + (stopsScore * stopsWeight);
+        //     };
 
-            return calculateScore(b) - calculateScore(a); // Descending order for "BEST"
-        }
-        return 0;
+        //     return calculateScore(b) - calculateScore(a); // Descending order for "BEST"
+        // }
+        // return 0;
     });
 };
 

@@ -280,12 +280,14 @@ class KiuClient {
               ],
               Passengers: params.Passengers
             });
-            fareBrands.push({
-              baggageData: priceResponse.baggageData,
-              fareBrand: code,
-              offerId: "fewf",
-              totalAmount: priceResponse.totalPrice
-            })
+            if (priceResponse.error === false) {
+              fareBrands.push({
+                baggageData: priceResponse.baggageData,
+                fareBrand: code,
+                offerId: "fewf",
+                totalAmount: priceResponse.totalPrice
+              })
+            }
 
           }))
           fareBrands.sort((a, b) => a.totalAmount - b.totalAmount);
@@ -377,7 +379,7 @@ class KiuClient {
       const [response, commission] = await Promise.all([
         this.queuedPost(requestXML),
         prisma.commissionManagement.findMany({
-          where:{
+          where: {
             supplier: "KIUSYS",
             type: "AIRLINE"
           }
