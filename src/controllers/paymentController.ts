@@ -105,8 +105,7 @@ export const coinbaseWebhook = async (req, res) => {
     console.error("Error handling Coinbase webhook:", error);
     // next(error);  // Pass the error to the next middleware
   }
-};
-
+}
 
   export const makePayment = async (req: Request, res: Response) => { 
 
@@ -229,7 +228,7 @@ export const getAllPaymentMethods = async (req, res) => {
     console.log("methods",methods);
     return res.json(methods);
   } catch (error) { 
-    console.error("❌ Error fetching payment methods:", error);
+    console.error("Error fetching payment methods:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-};
+}

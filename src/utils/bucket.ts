@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, ObjectCannedACL  } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 
@@ -47,48 +47,6 @@ export const generateUploadUrl = async () => {
 import axios from "axios";
 
 
-
-
-
-export const uploadImageFromUrl = async (imageUrl) => {
-  console.log("url in uploadImageFromUrl",imageUrl)
-  const randomId = generateRandomId(5);
-  const imageName = `vuelitos-${randomId}.jpeg`;
-
-  try {
-    // Download image from the provided URL
-    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
-    const imageBuffer = Buffer.from(response.data);
-
-    const contentType = response.headers["content-type"];
-    // if (!contentType || !contentType.startsWith("image/")) {
-    //   console.log("contentType",contentType);
-      
-    //   throw new Error("Invalid image URL or unsupported image format");
-    // }
-
-    // Upload image to S3
-    const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: imageName,
-      Body: imageBuffer,
-      // ContentType: "image/jpeg",
-      ContentType: contentType,
-
-    });
-
-    const res=await s3Client.send(command);
-    console.log("res in uploadImageFromUrl",res);
-    
-    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${imageName}`;
-  } catch (error) {
-    console.error("Error uploading image to S3:", error);
-    throw error;
-  }
-};
-
-
-
 const s3ClientNew = new S3Client({
   region: process.env.AWS_REGION_NAME,
   credentials: {
@@ -96,6 +54,11 @@ const s3ClientNew = new S3Client({
     secretAccessKey: process.env.AWS_NEW_SECRET_ACCESS_KEY,
   },
 });
+
+
+
+
+
 
 
 export const uploadImage = async (fileBuffer: Buffer, fileName: string, mimeType: string): Promise<string> => {
@@ -110,4 +73,98 @@ export const uploadImage = async (fileBuffer: Buffer, fileName: string, mimeType
   await s3ClientNew.send(command);
 
   return `https://${process.env.AWS_NEW_BUCKET_NAME}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${fileName}`;
+};
+
+
+
+
+
+import { randomBytes } from 'crypto';
+
+// Validate environment variables on startup
+const requiredEnvVars = [
+  'AWS_REGION_NAME',
+  'AWS_NEW_ACCESS_KEY',
+  'AWS_NEW_SECRET_ACCESS_KEY',
+  'AWS_NEW_BUCKET_NAME'
+];
+
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    throw new Error(`Missing required environment variable: ${envVar}`);
+  }
+});
+
+
+// Utility function for generating random IDs
+
+
+// Middleware for validating image URL
+
+
+
+
+
+
+const generateId = (length = 12) => {
+  return randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
+};
+
+
+
+
+export const uploadImageFromUrl = async (imageUrl) => {
+  try {
+    // Fetch image with timeout and size limit
+    const response = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'arraybuffer',
+      timeout: 10000, // 10 seconds timeout
+      maxContentLength: 5 * 1024 * 1024, // 5MB limit
+    });
+
+    const contentType = response.headers['content-type'];
+    if (!contentType?.startsWith('image/')) {
+      throw new Error('Invalid content type - not an image');
+    }
+
+    const imageBuffer = Buffer.from(response.data);
+    const fileExtension = contentType.split('/')[1] || 'jpeg';
+    // const imageName = `vuelitos-${generateId()}.${fileExtension}`;
+    const urlObj = new URL(imageUrl);
+    const originalFilename = urlObj.pathname.split('/').pop() || 'image';
+    const fileExt = originalFilename.split('.').pop() || 'bin';
+    const imageName = `vuelitos-${generateId()}.${fileExt}`;
+   
+    //  const uploadParams = {
+    //   Bucket: process.env.AWS_NEW_BUCKET_NAME,
+    //   Key: imageName,
+    //   Body: imageBuffer,
+    //   ContentType: contentType,
+    //   // ACL: ObjectCannedACL.public_read, // Use the enum value
+    // };
+
+     const uploadParams = {
+      Bucket: process.env.AWS_NEW_BUCKET_NAME!,
+      Key: imageName,
+      Body: imageBuffer,
+      ContentType: contentType,
+      CacheControl: 'public, max-age=31536000', // 1 year cache
+      // These are REQUIRED for ACL-disabled buckets:
+      Metadata: {
+        'Cache-Control': 'public, max-age=31536000'
+      }
+    };
+
+
+    await s3ClientNew.send(new PutObjectCommand(uploadParams));
+    const encodedKey = encodeURIComponent(imageName);
+    return `https://${uploadParams.Bucket}.s3.${process.env.AWS_REGION_NAME}.amazonaws.com/${encodedKey}`;
+  } catch (error) {
+    console.error('S3 upload error:', error);
+    throw new Error(`Failed to upload image: ${error.message}`);
+  }
 };

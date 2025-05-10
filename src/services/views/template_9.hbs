@@ -465,14 +465,24 @@
                                                     <tr>
                                                         <td>
                                                            
-                                                        <img src="{{{data.flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                        {{!-- <img src="{{{data.flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
      alt="{{data.flightDetails.slices.0.segments.0.operating_carrier.name}} Logo" 
      width="60" 
      style="display: block; border: 0; outline: none;"
-     onerror="this.onerror=null; this.src='https://w7.pngwing.com/pngs/773/201/png-transparent-airplane-aircraft-flight-logo-airplane-blue-logo-flight-thumbnail.png';">
+     onerror="this.onerror=null; this.src='https://w7.pngwing.com/pngs/773/201/png-transparent-airplane-aircraft-flight-logo-airplane-blue-logo-flight-thumbnail.png';"> --}}
+ {{!-- owgjwoegjmkhrmngliehtiowkerm --}}
+
+                                                        <img src="{{{oneWayLogoUrl}}}" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
+
+
+                                                                <img src="https://travel-carib-bucket-new.s3.us-east-1.amazonaws.com/vuelitos-f92645afed10.svg" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
+
+
                                                         </td> 
                                                         <td style="vertical-align: top;">
-                                                            <h4 style="margin: 10px 0 5px 0; font-size: 14px;">{{flightDetails.slices.0.segments.0.operating_carrier.name}}</h4>
+                                                            <h4 style="margin: 5px 0 5px 0; font-size: 14px;">{{flightDetails.slices.0.segments.0.operating_carrier.name}}</h4>
                                                             <p style="margin: 0; font-size: 10px; color: #666;">Flight {{flightDetails.slices.0.segments.0.operating_carrier_flight_number}} | Aircraft: {{flightDetails.slices.0.segments.0.aircraft}} | {{flightDetails.cabinClass}} Class</p>
                                                         </td>
                                                         <td style="text-align: right;">
@@ -491,17 +501,15 @@
                                                         <td style="vertical-align: top; width: 30%;">
                                                             <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.slices.[0].segments.[0].departing_at}}</p>
                                                             <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.slices.[0].segments.[0].departing_at}}</p>
-                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.origin.name}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.origin.iata_code}}</p>
                                                         </td>
                                                         <td style="vertical-align: middle; width: 40%; text-align: center;">
                                                             <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
                                                                 <tr>
                                                                     <td style="padding: 5px 0; text-align: center;">
-                                                                        <img 
-                                                                        {{!-- src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}"  --}}
-                                                                        src="https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/ZZ.svg" 
+                                                                        <img src="{{{oneWayLogoUrl}}}" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
 
-                                                                            alt="Airline Logo" width="30" style="display: block; margin: 0 auto;">
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
@@ -514,7 +522,7 @@
                                                         <td style="vertical-align: top; width: 30%; text-align: right;">
                                                             <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">{{formatDate flightDetails.slices.[0].segments.[0].arriving_at}}</p>
                                                             <p style="margin: 0 0 5px 0; font-size: 22px; color: #333; font-weight: bold;">{{formatTime flightDetails.slices.[0].segments.[0].arriving_at}}</p>
-                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.destination.name}}</p>
+                                                            <p style="margin: 0; font-size: 14px; color: #555;">{{flightDetails.destination.iata_code}}</p>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -562,6 +570,8 @@
                                                     <tr>
                                                         <td>
                                                             <img src="{{{flightDetails.slices.0.segments.0.operating_carrier.logo_symbol_url}}}" 
+                                                                alt="Airline Logo" width="60" style="display: block;">
+                                                            <img src="{{{roundTripLogoUrl}}}" 
                                                                 alt="Airline Logo" width="60" style="display: block;">
                                                         </td>
                                                         <td style="vertical-align: top;">

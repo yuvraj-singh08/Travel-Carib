@@ -6,6 +6,7 @@ import { generateNewPdf } from "./pdfService";
 import { getSocials } from "../controllers/adminController";
 import { prisma } from "../prismaClient";
 import { uploadImageToS3 } from "../controllers/storageController";
+import { uploadImageFromUrl } from "../utils/bucket";
 
 const hbs = require("nodemailer-express-handlebars");
 
@@ -43,69 +44,77 @@ const fetchSocials = async () => {
 };
 
 export const sendEmail = async (bookingData: any) => {
-  console.log("bookingData", bookingData?.contactDetail?.email);
+  // console.log("bookingData", bookingData?.contactDetail?.email);
   const downloadLink = generateDownloadUrl(bookingData.id);
-  console.log("downloadLink", downloadLink);
+  // console.log("downloadLink", downloadLink);
 
   const socialLinks = await fetchSocials();
   //@ts-ignore
   const links: SocialPlatform[] = socialLinks[0].socialPlatforms;
-  console.log("response sociAL", links[0].url);
+  // console.log("response sociAL", links[0].url);
+
+  const oneWayAirlineLogoUrl = bookingData.flightDetails.slices[0].segments[0].operating_carrier.logo_symbol_url;
+  const oneWayLogoUrl =  oneWayAirlineLogoUrl ? await uploadImageFromUrl(oneWayAirlineLogoUrl) : "https://travel-carib-bucket-new.s3.us-east-1.amazonaws.com/352370_flight_icon.png";
+  const roundTripAirlineLogoUrl = bookingData.flightDetails.slices[1].segments[0].operating_carrier.logo_symbol_url;
+  const roundTripLogoUrl = bookingData.flight_type == "ROUNDTRIP" && roundTripAirlineLogoUrl  ? await uploadImageFromUrl(roundTripAirlineLogoUrl) : " ";
+  console.log("OneWayLogoUrl", oneWayLogoUrl,roundTripLogoUrl,bookingData.flightDetails.slices[0].segments[0].operating_carrier.logo_symbol_url);
 
 
   // const processFlightLogos = async (flightData: any): Promise<any> => {
-  //   if (!flightData) return flightData;
-  
-  //   // Handle array case
-  //   if (Array.isArray(flightData)) {
-  //     return Promise.all(flightData.map(async (item) => await processFlightLogos(item)));
-  //   }
-  
-  //   // Handle object case
-  //   if (typeof flightData === 'object') {
-  //     // Check if we're at the operating_carrier level
-  //     if (flightData.operating_carrier?.logo_symbol_url && flightData.operating_carrier?.iata_code) {
-  //       try {
-  //         const newUrl = await uploadImageToS3(
-  //           flightData.operating_carrier.logo_symbol_url,
-  //           flightData.operating_carrier.iata_code
-  //         );
-  //         flightData.operating_carrier.logo_symbol_url = newUrl;
-  //       } catch (error) {
-  //         console.error('Error uploading airline logo:', error);
-  //       }
-  //     }
-  
-  //     // Recursively process object properties
-  //     await Promise.all(Object.keys(flightData).map(async (key) => {
-  //       flightData[key] = await processFlightLogos(flightData[key]);
-  //     }));
-  //   }
-  
-  //   return flightData;
-  // };
+    //   if (!flightData) return flightData;
+    
+    //   // Handle array case
+    //   if (Array.isArray(flightData)) {
+    //     return Promise.all(flightData.map(async (item) => await processFlightLogos(item)));
+    //   }
+    
+    //   // Handle object case
+    //   if (typeof flightData === 'object') {
+    //     // Check if we're at the operating_carrier level
+    //     if (flightData.operating_carrier?.logo_symbol_url && flightData.operating_carrier?.iata_code) {
+    //       try {
+    //         const newUrl = await uploadImageToS3(
+    //           flightData.operating_carrier.logo_symbol_url,
+    //           flightData.operating_carrier.iata_code
+    //         );
+    //         flightData.operating_carrier.logo_symbol_url = newUrl;
+    //       } catch (error) {
+    //         console.error('Error uploading airline logo:', error);
+    //       }
+    //     }
+    
+    //     // Recursively process object properties
+    //     await Promise.all(Object.keys(flightData).map(async (key) => {
+    //       flightData[key] = await processFlightLogos(flightData[key]);
+    //     }));
+    //   }
+    
+    //   return flightData;
+    // };
 
 
-  // let processedBookingData = {
-  //   ...bookingData,
-  //   downloadLink,
-  //   links,
-  //   passenger: (() => {
-  //     /* existing passenger logic */
-  //   })(),
-  // };
-  
-  // // Process flight details for all possible structures
-  // processedBookingData = {
-  //   ...processedBookingData,
-  //   flightDetails: await processFlightLogos(processedBookingData.flightDetails),
-  // };
+    // let processedBookingData = {
+    //   ...bookingData,
+    //   downloadLink,
+    //   links,
+    //   passenger: (() => {
+    //     /* existing passenger logic */
+    //   })(),
+    // };
+    
+    // // Process flight details for all possible structures
+    // processedBookingData = {
+    //   ...processedBookingData,
+    //   flightDetails: await processFlightLogos(processedBookingData.flightDetails),
+    // };
 
 
 
 
 
   let processedBookingData = {
+    oneWayLogoUrl,
+    roundTripLogoUrl,
     ...bookingData,
     downloadLink,
     links,
@@ -157,7 +166,7 @@ export const sendEmail = async (bookingData: any) => {
         },
         formatIsoDate: (isoDate: string) => {
           const date = new Date(isoDate);
-          console.log("data in helper",date);
+          // console.log("data in helper",date);
           
           return format(date, "EEE, MMMM dd, yyyy");
         },
@@ -182,10 +191,10 @@ export const sendEmail = async (bookingData: any) => {
         },
 
         uploadLogo: async (url: string, iataCode: string) => {
-          console.log("url in helper")
+          // console.log("url in helper")
           try {
             const newUrl = await uploadImageToS3(url, iataCode);
-            console.log("url in helper",newUrl)
+            // console.log("url in helper",newUrl)
             return newUrl;
           } catch (error) {
             console.error('Error in uploadLogo helper:', error);
@@ -212,11 +221,11 @@ export const sendEmail = async (bookingData: any) => {
 
   const mailOptions = {
     from: "hemant27134@gmail.com",
-    to: bookingData?.contactDetail?.email,
-    // to:"hemant27134@gmail.com",
-    bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
+    // to: bookingData?.contactDetail?.email,
+    to:"hemant27134@gmail.com",
+    // bcc: "hemant27134@gmail.com,neeleshishu021@gmail.com,projectdesksoftnear@gmail.com",
     subject: "Your Flight Ticket Confirmation",
-    template: "template_7",
+    template: "template_9",
     context: processedBookingData,
     attachments: [{
       filename: `ticket-33${bookingData.id}.pdf`,

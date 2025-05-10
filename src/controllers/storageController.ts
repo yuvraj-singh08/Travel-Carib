@@ -13,21 +13,23 @@ export const getFileUploadUrl = (req: Request, res: Response) => {
       return res.status(500).json({ error: err.message });
     });
 };
-export const upload =async(req,res)=>{
-  console.log("api called",req.body);
-    try {
-      const {url} = req.body;
-     const response = await uploadImageFromUrl(url);
-     console.log('response',response);
+
+// export const upload =async(req,res)=>{
+//   console.log("api called",req.body);
+//     try {
+//       const {url} = req.body;
+//       console.log("url in upload",url);
+//      const response = await uploadImageFromUrl(url);
+//      console.log('response',response);
      
-     if(response){
-      res.send({url:response});
-     }
-    } catch (error) {
-      res.send({error:error});
-    }
+//      if(response){
+//       res.send({url:response});
+//      }
+//     } catch (error) {
+//       res.send({error:error});
+//     }
      
-}
+// }
 
 export const uploadImageToS3 =async(url:string,iataCode:string)=>{
   console.log("api called",url);
@@ -47,4 +49,33 @@ export const uploadImageToS3 =async(url:string,iataCode:string)=>{
      
 }
 
-// your existing config
+const validateImageUrl = (url) => {
+  try {
+    new URL(url);
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const hasValidExtension = validExtensions.some(ext => url.toLowerCase().endsWith(ext));
+    if (!hasValidExtension) throw new Error('Invalid image file extension');
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const upload = async (req, res) => {
+  try {
+    const { url } = req.body;
+
+    if (!url || !validateImageUrl(url)) {
+      return res.status(400).json({ error: 'Valid image URL is required' });
+    }
+
+    const s3Url = await uploadImageFromUrl(url);
+    return res.status(201).json({ url: s3Url });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    const statusCode = error.response?.status || 500;
+    const message = error.message || 'Failed to process image upload';
+    return res.status(statusCode).json({ error: message });
+  }
+};

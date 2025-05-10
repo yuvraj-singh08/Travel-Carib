@@ -162,6 +162,11 @@ export const getBookingById = async (req: AuthenticatedRequest, res: Response, n
         SubBooking: true, // Fetch all associated SubBooking records
       },
     });
+
+    
+  
+
+  
     res.status(200).json({ success: true, data: { ...booking, flightDetails: JSON.parse(booking.flightDetails) } });
   } catch (error) {
     next(error);
