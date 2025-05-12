@@ -243,9 +243,18 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
     }
 }
 
-export const duffelMulticityResponseFormatter = (duffelResponse: DuffelResponse<OfferRequest>) => {
+export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelResponse<OfferRequest>) => {
     try {
         let response = [];
+        const commission = await Promise.all([
+            // prisma.firewall.findMany({}),
+            prisma.commissionManagement.findMany(),
+        ])
+
+        // console.log(commission)
+
+
+
         duffelResponse.data.offers.forEach((result) => {
             let responseId = "";
             let routeId = "";
