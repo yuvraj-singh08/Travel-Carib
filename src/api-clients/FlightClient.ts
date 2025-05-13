@@ -50,7 +50,7 @@ class FlightClient {
                 prisma.commissionManagement.findMany(),
             ])
 
-            
+
 
             // const cachedResponse = await redis.get(id);
             // if (cachedResponse) {
@@ -225,13 +225,17 @@ class FlightClient {
                 })),
             ])
 
-            const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
-                const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelResponseParser(response);
-                    return parsedResponse;
+            const parsedDuffelResponse = await Promise.all(
+                duffelResponse.map(async (possibleRoutes) => {
+                    const parsedPossibleRoutes = await Promise.all(
+                        possibleRoutes.map((response) => {
+                            const parsedResponse =  duffelResponseParser(response);
+                            return parsedResponse;
+                        })
+                    );
+                    return parsedPossibleRoutes;
                 })
-                return parsedPossibleRoutes
-            })
+            );
 
             let combination: any = [];
 
@@ -296,7 +300,7 @@ class FlightClient {
                 kiuRequest,
                 duffelRequest
             ]);
-            const parsedDuffelResponse =await duffelMulticityResponseFormatter(duffelResponse);
+            const parsedDuffelResponse = await duffelMulticityResponseFormatter(duffelResponse);
             const parsedKiuResponse = parseMulticityKiuResponse(kiuResponse);
 
             return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response

@@ -104,9 +104,21 @@ export const amadeusResponseParser = (amadeusResponse: AmadeusResponseType) => {
     }
 }
 
-export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest>) => {
+export const duffelResponseParser = async (duffelResponse: DuffelResponse<OfferRequest>) => {
     try {
         let response = []
+
+        const [commissions] = await Promise.all([
+            prisma.commissionManagement.findMany({
+                where: {
+                    supplier: {
+                        in: ["DUFFEL", "ALL"]
+                    },
+                    type: "AIRLINE"
+                }
+            })
+        ]);
+
         duffelResponse.data.offers.forEach((result) => {
             let responseId = "";
             let routeId = "";
@@ -144,8 +156,18 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
                 //@ts-ignore
                 result.slices[0].sliceAmount = result.total_amount;
             })
-            const totalAmount = parseFloat(result.total_amount);
 
+            let totalAmount = parseFloat(result.total_amount);
+            let commissionAmount = 0;
+            commissions.forEach((commission) => {
+                if (commission.feeType === 'FIXED') {
+                    commissionAmount += parseFloat(commission.commissionFees);
+                }
+                else {
+                    commissionAmount += (totalAmount * parseFloat(commission.commissionFees)) / 100.0;
+                }
+            })
+            totalAmount = totalAmount + commissionAmount;
 
             let refund = {}
             if (result.conditions.refund_before_departure) {
@@ -160,14 +182,14 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
 
             let change = {}
             if (result.conditions.change_before_departure) {
-                    change = {
-                        penalty_amount: result.conditions.change_before_departure.penalty_amount,
-                        penalty_currency: result.conditions.change_before_departure.penalty_currency,
-                        allowed: result.conditions.change_before_departure.allowed
-                    }
+                change = {
+                    penalty_amount: result.conditions.change_before_departure.penalty_amount,
+                    penalty_currency: result.conditions.change_before_departure.penalty_currency,
+                    allowed: result.conditions.change_before_departure.allowed
+                }
 
             } else {
-                    change = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
+                change = { allowed: null, penalty_amount: null, penalty_currency: null, message: 'no data on changes' };
             }
 
 
@@ -246,14 +268,16 @@ export const duffelResponseParser = (duffelResponse: DuffelResponse<OfferRequest
 export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelResponse<OfferRequest>) => {
     try {
         let response = [];
-        const commission = await Promise.all([
-            // prisma.firewall.findMany({}),
-            prisma.commissionManagement.findMany(),
-        ])
-
-        // console.log(commission)
-
-
+        const [commissions] = await Promise.all([
+            prisma.commissionManagement.findMany({
+                where: {
+                    supplier: {
+                        in: ["DUFFEL", "ALL"]
+                    },
+                    type: "AIRLINE"
+                }
+            })
+        ]);
 
         duffelResponse.data.offers.forEach((result) => {
             let responseId = "";
@@ -262,6 +286,19 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
             let arriving_at = result.slices?.[0]?.segments?.[result.slices?.[0]?.segments?.length - 1]?.arriving_at;
             let flag = true;
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
+
+            // Commission calculation
+            let totalAmount = parseFloat(result.total_amount);
+            let commissionAmount = 0;
+            commissions.forEach((commission) => {
+                if (commission.feeType === 'FIXED') {
+                    commissionAmount += parseFloat(commission.commissionFees);
+                }
+                else {
+                    commissionAmount += (totalAmount * parseFloat(commission.commissionFees)) / 100.0;
+                }
+            })
+            totalAmount = totalAmount + commissionAmount;
 
             let refund = {}
             let change = {}
@@ -337,6 +374,7 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
             })
             response.push({
                 ...result,
+                total_amount: totalAmount,   // total_amount + commission
                 fareOptions,
                 routeId,
                 responseId,
@@ -1220,7 +1258,7 @@ export const sortResponse = (response: Offer[] | any, sortBy: 'BEST' | 'FAST' | 
 
     return response.sort((a, b) => {
         // if (sortBy === "CHEAP") {
-            return parseFloat(a.total_amount) - parseFloat(b.total_amount);
+        return parseFloat(a.total_amount) - parseFloat(b.total_amount);
         // } else if (sortBy === "FAST") {
         //     const aDepartingAt = a?.slices?.[0]?.segments?.[0]?.departing_at;
         //     const aArrivingAt = a?.slices?.[a?.slices?.length - 1]?.segments?.[a?.slices?.[a?.slices?.length - 1]?.segments?.length - 1]?.arriving_at;
