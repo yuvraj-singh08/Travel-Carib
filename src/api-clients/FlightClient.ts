@@ -49,12 +49,15 @@ class FlightClient {
                 prisma.firewall.findMany({}),
                 prisma.commissionManagement.findMany(),
             ])
-            const cachedResponse = await redis.get(id);
-            if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-                return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
-            }
+
+
+
+            // const cachedResponse = await redis.get(id);
+            // if (cachedResponse) {
+            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
+            //     const filteredResponse = filterResponse(parsedResponse, filters, firewall)
+            //     return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
+            // }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
@@ -69,6 +72,8 @@ class FlightClient {
                     })),
                     await this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
                 ])
+
+                // console.log("commission---------------------------",commission)
             }
             else {
                 manualLayoverSearch = await Promise.all(FlightDetails.map((flightDetail) => {
@@ -220,13 +225,17 @@ class FlightClient {
                 })),
             ])
 
-            const parsedDuffelResponse = duffelResponse.map((possibleRoutes) => {
-                const parsedPossibleRoutes = possibleRoutes.map((response) => {
-                    const parsedResponse = duffelResponseParser(response);
-                    return parsedResponse;
+            const parsedDuffelResponse = await Promise.all(
+                duffelResponse.map(async (possibleRoutes) => {
+                    const parsedPossibleRoutes = await Promise.all(
+                        possibleRoutes.map((response) => {
+                            const parsedResponse =  duffelResponseParser(response);
+                            return parsedResponse;
+                        })
+                    );
+                    return parsedPossibleRoutes;
                 })
-                return parsedPossibleRoutes
-            })
+            );
 
             let combination: any = [];
 
@@ -291,7 +300,7 @@ class FlightClient {
                 kiuRequest,
                 duffelRequest
             ]);
-            const parsedDuffelResponse = duffelMulticityResponseFormatter(duffelResponse);
+            const parsedDuffelResponse = await duffelMulticityResponseFormatter(duffelResponse);
             const parsedKiuResponse = parseMulticityKiuResponse(kiuResponse);
 
             return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response

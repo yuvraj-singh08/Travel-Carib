@@ -230,6 +230,9 @@ class KiuClient {
 
   async newSearchFlights(params: NewKiuFlightSearchParams): Promise<any> {
     try {
+
+      console.log("-----------------------------------")
+
       const requestXML = newbuildFlightSearchRequest(params, this.mode);
       const response = await this.queuedPost(requestXML);
       const parser = new xml2js.Parser();
@@ -379,12 +382,16 @@ class KiuClient {
       const [response, commission] = await Promise.all([
         this.queuedPost(requestXML),
         prisma.commissionManagement.findMany({
-          where: {
-            supplier: "KIUSYS",
+          where:{
+            supplier: {
+              in: ["KIUSYS", "ALL"]
+            },
             type: "AIRLINE"
           }
         })
       ]);
+
+      console.log("kiw------------------------response",commission)
 
       const parser = new xml2js.Parser();
       const jsonResponse = await parser.parseStringPromise(response.data);
