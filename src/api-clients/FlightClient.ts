@@ -50,14 +50,12 @@ class FlightClient {
                 prisma.commissionManagement.findMany(),
             ])
 
-
-
-            // const cachedResponse = await redis.get(id);
-            // if (cachedResponse) {
-            //     const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-            //     const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-            //     return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
-            // }
+            const cachedResponse = await redis.get(id);
+            if (cachedResponse) {
+                const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
+                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
+                return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
+            }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
