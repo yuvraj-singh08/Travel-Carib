@@ -891,7 +891,8 @@ export const filterResponse = (response: Offer[], filters: FilterType, allFirewa
         }
 
         //Max Stops
-        const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
+        const maxStops = true;
+        // const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
 
         //Preffered Airlines
         let prefferedAirlines = filters?.PrefferedAirlines?.length > 0 ? false : true;
