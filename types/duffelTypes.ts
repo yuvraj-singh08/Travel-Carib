@@ -15,7 +15,8 @@ type DuffelOfferRequest = {
 }
 
 export type DuffelCreateOrderParams = {
-    offerId: string
+    offerId: string;
+    holdOrder?: boolean;
     passengers: CreateOrderPassenger[]
     services: CreateOrderService[]
     totalAmount: string;

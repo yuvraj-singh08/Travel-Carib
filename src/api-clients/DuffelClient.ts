@@ -20,6 +20,7 @@ class DuffelClient {
   constructor(creds: { token: string }) {
     this.client = new Duffel(creds);
     this.getFlightDetails = this.getFlightDetails.bind(this);
+    this.getOfferById = this.getOfferById.bind(this);
   }
 
   static async create(): Promise<DuffelClient> {
@@ -45,10 +46,10 @@ class DuffelClient {
   // Method to add a request to the queue
   private enqueueRequest<T>(executeFunction: () => Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      this.requestQueue.push({ 
-        execute: executeFunction, 
-        resolve, 
-        reject 
+      this.requestQueue.push({
+        execute: executeFunction,
+        resolve,
+        reject
       });
       this.processQueue();
     });
@@ -61,7 +62,7 @@ class DuffelClient {
     }
 
     this.isProcessingQueue = true;
-    
+
     const processNextRequest = () => {
       if (this.requestQueue.length === 0) {
         this.isProcessingQueue = false;
@@ -69,7 +70,7 @@ class DuffelClient {
       }
 
       const { execute, resolve, reject } = this.requestQueue.shift()!;
-      
+
       setTimeout(() => {
         processNextRequest();
       }, this.queueInterval);
@@ -92,14 +93,14 @@ class DuffelClient {
       console.log("Duffel Error: ");
       console.log(error);
       return {
-        data:{
+        data: {
           id: "",
           slices: [],
           offers: [],
           live_mode: true,
-          passengers:[],
+          passengers: [],
           cabin_class: "economy",
-          created_at:"1265"
+          created_at: "1265"
         }
       }
     }
@@ -121,6 +122,14 @@ class DuffelClient {
     }
   }
 
+  async getOfferById(id: string) {
+    try {
+      return this.enqueueRequest(() => this.client.offers.get(id));
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async searchFlights(params: any): Promise<any> {
     try {
       const response = await this.enqueueRequest(() => this.client.offers.list(params));
@@ -132,21 +141,23 @@ class DuffelClient {
 
   async createOrder(params: DuffelCreateOrderParams): Promise<any> {
     try {
-      return this.enqueueRequest(() => 
+      return this.enqueueRequest(() =>
         this.client.orders.create({
-          type: "instant",
+          type: params.holdOrder ? "pay_later" : "instant",
           services: params.services,
           selected_offers: [
             params.offerId
           ],
           passengers: params.passengers,
-          payments: [
-            {
-              type: "balance",
-              currency: "USD",
-              amount: params.totalAmount
-            }
-          ],
+          ...(params.holdOrder === false && {
+            payments: [
+              {
+                type: "balance",
+                currency: "USD",
+                amount: params.totalAmount,
+              },
+            ],
+          }),
         })
       );
     } catch (error) {
@@ -157,7 +168,7 @@ class DuffelClient {
 
   async getAvailableServices(offerId: string): Promise<any> {
     try {
-      const response = await this.enqueueRequest(() => 
+      const response = await this.enqueueRequest(() =>
         this.client.offers.get(offerId, {
           return_available_services: true
         })

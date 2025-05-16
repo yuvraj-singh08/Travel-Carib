@@ -1686,3 +1686,11 @@ export const parseMulticityKiuResponse = (response: Offer[]) => {
         return [];
     }
 }
+
+export const verifyDuffelHoldOrder = (offer: Offer) => {
+    try {
+        return true;
+    } catch (error) {
+        throw error;
+    }
+}

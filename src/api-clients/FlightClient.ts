@@ -807,7 +807,7 @@ class FlightClient {
         return response;
     }
 
-    async duffelMulticityBooking({ offerId, offer, passengers, totalAmount }: DuffelMulticityBookingParams) {
+    async duffelMulticityBooking({ offerId, offer, passengers, totalAmount, holdOrder }: DuffelMulticityBookingParams) {
         const services = [];
         const offerPassengers = offer.passengers.map((passenger) => {
             return {
@@ -854,7 +854,7 @@ class FlightClient {
             return returnValue
         })
         const response = await this.duffelClient.createOrder({
-            offerId, passengers: passengersData, services, totalAmount
+            offerId, passengers: passengersData, services, totalAmount, holdOrder
         });
         return response;
     }

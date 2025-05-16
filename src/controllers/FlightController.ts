@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import FlightClient, { FlightClientInstance } from '../api-clients/FlightClient';
 import { promises } from 'dns';
-import { getPossibleRoutes } from '../utils/flights';
+import { getPossibleRoutes, verifyDuffelHoldOrder } from '../utils/flights';
 import HttpError from '../utils/httperror';
 import { getOffer } from '../services/OfferService';
 import { MulticityOffer, Offer, SubBookingType } from '../../types/flightTypes';
@@ -162,7 +162,7 @@ class FlightController {
   async BookFlight(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user.id;
-      const { offerId, duffelOfferId, price, passengers, kiuPassengers, flight_type, contactDetails, fareChoices } = req.body;
+      const { offerId, duffelOfferId, price, passengers, kiuPassengers, flight_type, contactDetails, fareChoices, holdOrder } = req.body;
       if (!offerId || !passengers || !flight_type || !userId) {
         throw new HttpError("Missing required fields: offerId, passengers, contactDetails, address, flight_type, userId", 400);
       }
@@ -204,11 +204,16 @@ class FlightController {
         return;
       }
       else if (offer.fareOptionGDS === "DUFFEL") {
+        let verify = false;
+        if(holdOrder){
+          verify = verifyDuffelHoldOrder(offer);
+        }
         const response = await this.flightClient.duffelMulticityBooking({
           offer,
           offerId: duffelOfferId,
           passengers,
           totalAmount: price,
+          holdOrder: verify && holdOrder,
         });
         const error = response?.errors;
         if (error) {

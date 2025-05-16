@@ -12,6 +12,7 @@ async function setRoutes() {
         router.post('/create-order', duffelController.createOrder);
         router.get('/available-services/:offerId', duffelController.getAvailableServices);
         router.get('/get-offer-request/:id', duffelController.getOfferRequestById);
+        router.get('/get-offer/:id', duffelController.getOfferById);
 
     } catch (error) {
         throw error;

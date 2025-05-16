@@ -95,6 +95,7 @@ export interface RetryPricingParams{
 export type DuffelMulticityBookingParams = {
     offer: Offer;
     offerId: string
-    passengers: PassengerType[]
+    passengers: PassengerType[];
+    holdOrder?: boolean;
     totalAmount: string;
 }

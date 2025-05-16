@@ -50,7 +50,19 @@ export type NewMultiCitySearchParams = {
         infants: number
     },
     cabinClass: 'first' | 'business' | 'economy' | 'premium_economy';
-    filters?: FilterType
+    filters?: FilterType;
+    latest?: boolean
+}
+
+export type UpdatedFlightDetailsParams = {
+    FlightDetails: FlightLeg[],
+    passengers: {
+        adults: number,
+        children: number,
+        infants: number
+    },
+    cabinClass: 'first' | 'business' | 'economy' | 'premium_economy';
+    responseId: string;
 }
 
 export type routeType = {

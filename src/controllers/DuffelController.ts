@@ -13,6 +13,7 @@ class DuffelController {
         this.createOrder = this.createOrder.bind(this);
         this.getAvailableServices = this.getAvailableServices.bind(this);
         this.getOfferRequestById = this.getOfferRequestById.bind(this);
+        this.getOfferById = this.getOfferById.bind(this);
     }
 
     static async create() {
@@ -84,6 +85,16 @@ class DuffelController {
             const { id } = req.params;
             const offerRequest = await this.duffelClient.getOfferRequestById(id);
             res.status(200).json(offerRequest);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getOfferById(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const { id } = req.params;
+            const offer = await this.duffelClient.getOfferById(id);
+            res.status(200).json(offer);
         } catch (error) {
             next(error);
         }
