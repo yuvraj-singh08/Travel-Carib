@@ -961,7 +961,7 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: stri
                         + ((nextRoute.total_amount) || 0);
 
                     // Add the combined route with updated total_amount
-                    newResult.push([...currentRoute, { ...nextRoute, total_amount: totalAmount }]);
+                    newResult.push([...currentRoute, { ...nextRoute }]);
                 }
 
             }
