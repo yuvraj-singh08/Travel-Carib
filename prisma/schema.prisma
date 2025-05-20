@@ -512,3 +512,11 @@ model PaymentMethod {
   
 
 }
+model Stripe_secret {
+  id             String   @id @default(uuid()) @map("_id")
+  environment    String
+  publishableKey String
+  secret         String
+  webbookSecret  String
+ 
+}

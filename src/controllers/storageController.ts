@@ -50,7 +50,7 @@ export const uploadImageToS3 =async(url:string,iataCode:string)=>{
 }
 
 const validateImageUrl = (url) => {
-  try {
+  try { 
     new URL(url);
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const hasValidExtension = validExtensions.some(ext => url.toLowerCase().endsWith(ext));

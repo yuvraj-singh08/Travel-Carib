@@ -7,6 +7,9 @@ import {
   getAllPaymentMethods,
   makePayment,
   stripeWebhook,
+  createStripeConfig,
+  getStripeInfo,
+  updateStripeConfig
 } from "../controllers/paymentController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import { getPaymentDetails } from "../controllers/bookingController";
@@ -26,5 +29,13 @@ router.get('/:id', getPaymentDetails)
 router.post("/upload-proof", upload.single("image"), makePayment);
 router.post("/paymentCMS",createOrUpdatePayment)
 router.post("/getAllPaymentMethods",getAllPaymentMethods)
+
+
+// stripe screts routes
+
+router.post('/stripe-config', createStripeConfig);
+router.post('/stripe-secret', getStripeInfo);
+router.put('/stripe-config', updateStripeConfig);
+
 
 export default router;  

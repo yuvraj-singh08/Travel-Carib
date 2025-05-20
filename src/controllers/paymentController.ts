@@ -10,6 +10,7 @@ import * as crypto from "crypto";
 import { AuthenticatedRequest } from "../../types/express";
 import { generateRandomId, uploadImage } from "../utils/bucket";
 
+
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 export const createCheckoutSession = async (req: AuthenticatedRequest, res) => {
@@ -214,10 +215,10 @@ export const createOrUpdatePayment = async (req: Request, res: Response) => {
       }
     });
 
-    res.json(paymentMethod);
+    return res.json(paymentMethod);
   } catch (error) {
     console.error('Error creating/updating payment method:', error);
-    res.status(500).json({ error: 'Something went wrong.' });
+    return res.status(500).json({ error: 'Something went wrong.' });
   }
 };
 
@@ -229,6 +230,96 @@ export const getAllPaymentMethods = async (req, res) => {
     return res.json(methods);
   } catch (error) { 
     console.error("Error fetching payment methods:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
+
+
+
+const algorithm = "aes-256-cbc";
+const key = Buffer.from("e63f71a0d3bd94e3846a71d59e34f11f2a6d6cbe517a3c6b447de6712a9ffccb", "hex");
+
+export const encrypt = (text: string): string => {
+const iv = crypto.randomBytes(16);
+const cipher = crypto.createCipheriv(algorithm, key, iv);
+let encrypted = cipher.update(text, "utf8", "hex");
+encrypted += cipher.final("hex");
+return iv.toString("hex") + ":" + encrypted;
+};
+
+export const decrypt = (encryptedText: string): string => {
+const [ivHex, encrypted] = encryptedText.split(":");
+const iv = Buffer.from(ivHex, "hex");
+const decipher = crypto.createDecipheriv(algorithm, key, iv);
+let decrypted = decipher.update(encrypted, "hex", "utf8");
+decrypted += decipher.final("utf8");
+return decrypted;
+};
+
+
+export const getStripeInfo = async (req: Request, res: Response) => {
+try {
+  console.log("clled this api")
+const config = await prisma.stripe_secret.findFirst();
+ console.log("clled this api",config)
+if (!config) return res.status(404).json({ error: "No Stripe config found" });
+return res.json({
+  environment: config.environment,
+  publishableKey: decrypt(config.publishableKey),
+  secret: decrypt(config.secret),
+  webbookSecret: decrypt(config.webbookSecret),
+});
+} catch (error) {
+console.error("Error fetching Stripe config:", error);
+return res.status(500).json({ error: "Internal server error" });
+}
+};
+
+export const createStripeConfig = async (req: Request, res: Response) => {
+try {
+const existing = await prisma.stripe_secret.findFirst();
+console.log(existing)
+if (existing) return res.status(400).json({ error: "Stripe config already exists" });
+const { environment, publishableKey, secret, webbookSecret } = req.body;
+console.log("environment, publishableKey, secret, webhookSigningSecret ",environment, publishableKey, secret, webbookSecret )
+
+const newConfig = await prisma.stripe_secret.create({
+  data: {
+    environment,
+    publishableKey: encrypt(publishableKey),
+    secret: encrypt(secret),
+    webbookSecret: encrypt(webbookSecret),
+  },
+});
+console.log("newConfig",newConfig);
+
+return res.status(201).json({ id: newConfig.id });
+} catch (error) {
+console.error("Error creating Stripe config:", error);
+return res.status(500).json({ error: "Internal server error" });
+}
+};
+
+export const updateStripeConfig = async (req: Request, res: Response) => {
+try {
+const existing = await prisma.stripe_secret.findFirst();
+if (!existing) return res.status(404).json({ error: "Stripe config not found" });
+const { environment, publishableKey, secret, webbookSecret } = req.body;
+
+await prisma.stripe_secret.update({
+  where: { id: existing.id },
+  data: {
+    environment,
+    publishableKey: encrypt(publishableKey),
+    secret: encrypt(secret),
+    webbookSecret: encrypt(webbookSecret),
+  },
+});
+
+return res.json({ message: "Stripe config updated" });
+
+} catch (error) {
+console.error("Error updating Stripe config:", error);
+return res.status(500).json({ error: "Internal server error" });
+}
+};
