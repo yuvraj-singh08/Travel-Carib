@@ -119,6 +119,7 @@ export type Offer = {
     checkedBaggage: number;
     sourceId: string;
     routeId: string;
+    serverSlices?: Slice[];
     fareOptions: any;
 };
 

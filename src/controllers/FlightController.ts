@@ -243,7 +243,7 @@ class FlightController {
       if (data.flightWay === flightTypeValue.oneway) {
         const subBookings: SubBookingType[] = [];
         let pnr;
-        const promises = offer.slices.map(async (slice, index) => {
+        const promises = offer.serverSlices.map(async (slice, index) => {
           const provider = slice.sourceId;
           switch (provider) {
             case GDS.kiu:

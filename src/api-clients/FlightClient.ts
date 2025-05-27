@@ -1,8 +1,8 @@
 import { FlightSupplier } from "@prisma/client";
-import { AirlineProvider, ContactDetailsType, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
+import { AirlineProvider, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, amadeusResponseParser, combineAllRoutes, combineMultiCityRoutes, combineResponses, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
-import { combineKiuRoutes, parseKiuResposne } from "../utils/kiu";
+import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { combineKiuRoutes } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";

@@ -149,7 +149,7 @@ class DuffelClient {
             params.offerId
           ],
           passengers: params.passengers,
-          ...(params.holdOrder === false && {
+          ...(params.holdOrder !== true && {
             payments: [
               {
                 type: "balance",

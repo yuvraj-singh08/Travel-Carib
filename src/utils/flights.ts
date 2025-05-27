@@ -1077,6 +1077,7 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             responseId,
             commissionAmount: commissionAmount || totalCommission,
             routeId,
+            serverSlices,
             stops,
             fareOptionGDS: "",
             // duration: offer[0].duration,
@@ -1099,11 +1100,13 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
         let responseId = "";
         let routeId = "";
         let fareOptions = [];
+        let serverSlices = [];
         offer.forEach((route) => {
             slices.push(...(route.slices));
             responseId += route?.responseId
             routeId += route?.routeId
             fareOptions.push(route.fareOptions);
+            serverSlices.push(...(route.serverSlices));
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -1144,6 +1147,7 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
             cabinBaggage,
             checkedBaggage,
             cabinClass,
+            serverSlices,
             fareOptions
         };
     })
