@@ -247,7 +247,7 @@ class FlightController {
           const provider = slice.sourceId;
           switch (provider) {
             case GDS.kiu:
-              pnr = await this.flightClient.bookKiuFlight(slice, passengers);
+              pnr = await this.flightClient.bookKiuFlight(slice, passengers, fareChoices[index]);
               subBookings.push({
                 pnr,
                 status: SubBookingStatusValues.pending,
@@ -258,20 +258,8 @@ class FlightController {
                 PNR: pnr
               }
               break;
-            case GDS.amadeus:
-              pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
-              subBookings.push({
-                pnr,
-                status: SubBookingStatusValues.pending,
-                supplier: slice.sourceId
-              });
-              return {
-                ...slice,
-                PNR: (pnr)
-              }
-              break;
             case GDS.duffel:
-              pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index)
+              pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index, fareChoices[index])
               subBookings.push({
                 pnr,
                 status: SubBookingStatusValues.pending,
@@ -312,22 +300,15 @@ class FlightController {
             const provider = slice.sourceId;
             switch (provider) {
               case GDS.kiu:
-                //@ts-ignore
-                await this.flightClient.bookKiuFlight(offer, passengers);
-                break;
-              case GDS.amadeus:
-                pnr = await this.flightClient.bookAmadeusFlight(slice.gdsOfferId, passengers);
+                pnr = await this.flightClient.newBookKiuFlight({slices: [slice], passengers, kiuPassengers, choices: [fareChoices[index]]});
                 subBookings.push({
                   pnr,
                   status: SubBookingStatusValues.pending,
-                });
-                return {
-                  ...slice,
-                  PNR: (pnr)
-                }
+                  supplier: slice.sourceId
+                })
                 break;
               case GDS.duffel:
-                pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index)
+                pnr = await this.flightClient.bookDuffelFlight(slice, passengers, index, fareChoices[index]);
                 subBookings.push({
                   pnr,
                   status: SubBookingStatusValues.pending,

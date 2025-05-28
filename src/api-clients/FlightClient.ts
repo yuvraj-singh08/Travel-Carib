@@ -136,6 +136,8 @@ class FlightClient {
                                         origin: segment.origin,
                                         destination: segment.destination,
                                         departure_date: departureDate,
+                                        departure_time: null,
+                                        arrival_time: null,
                                     }
                                 ],
                             }),
@@ -148,6 +150,8 @@ class FlightClient {
                                         origin: segment.origin,
                                         destination: segment.destination,
                                         departure_date: getNextDay(departureDate),
+                                        departure_time: null,
+                                        arrival_time: null,
                                     }
                                 ],
                             })
@@ -167,6 +171,8 @@ class FlightClient {
                                 origin: segment.origin,
                                 destination: segment.destination,
                                 departure_date: departureDate,
+                                departure_time: null,
+                                arrival_time: null,
                             }
                         ],
                     })
@@ -227,7 +233,7 @@ class FlightClient {
                 duffelResponse.map(async (possibleRoutes) => {
                     const parsedPossibleRoutes = await Promise.all(
                         possibleRoutes.map((response) => {
-                            const parsedResponse =  duffelResponseParser(response);
+                            const parsedResponse = duffelResponseParser(response);
                             return parsedResponse;
                         })
                     );
@@ -278,6 +284,8 @@ class FlightClient {
                         origin: flightLeg.originLocation,
                         destination: flightLeg.destinationLocation,
                         departure_date: flightLeg.departureDate,
+                        departure_time: null,
+                        arrival_time: null,
                     }
                 }),
             })
@@ -433,6 +441,8 @@ class FlightClient {
                                         origin: segment.origin,
                                         destination: segment.destination,
                                         departure_date: params.departureDate,
+                                        departure_time: null,
+                                        arrival_time: null,
                                     }
                                 ],
                             }),
@@ -445,6 +455,8 @@ class FlightClient {
                                         origin: segment.origin,
                                         destination: segment.destination,
                                         departure_date: getNextDay(params.departureDate),
+                                        departure_time: null,
+                                        arrival_time: null,
                                     }
                                 ],
                             })
@@ -464,6 +476,9 @@ class FlightClient {
                                 origin: segment.origin,
                                 destination: segment.destination,
                                 departure_date: params.departureDate,
+                                departure_time: null,
+                                arrival_time: null,
+
                             }
                         ],
                     })
@@ -642,11 +657,11 @@ class FlightClient {
         }
     }
 
-    async bookKiuFlight(slice: Slice, passengers: PassengerType[]) {
+    async bookKiuFlight(slice: Slice, passengers: PassengerType[], fareCode: string) {
         try {
             const response = await this.kiuClient.bookFlight({
                 //@ts-ignore
-                slice, passengers
+                slice, passengers, fareCode
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
             const pnr = bookingReference?.$?.ID || "Not Available";
@@ -711,7 +726,7 @@ class FlightClient {
         }
     }
 
-    async bookDuffelFlight(slice: Slice, passengers: PassengerType[], sliceIndex: number) {
+    async bookDuffelFlight(slice: Slice, passengers: PassengerType[], sliceIndex: number, choice: { offerId: string, holdOrder: boolean }) {
         try {
             const services = [];
             let totalAmount = parseFloat(slice.sliceAmount);
@@ -726,7 +741,7 @@ class FlightClient {
                     }],
                     email: passenger.email,
                     phone_number: passenger.phoneNumber,
-                    type: passenger.type,
+                    // type: passenger.type,
                     id: slice.passengers[index].id,
                     born_on: passenger.dob,
                     family_name: passenger.lastName,
@@ -750,7 +765,8 @@ class FlightClient {
             })
             const response = await this.duffelClient.createOrder({
                 passengers: passengersData,
-                offerId: slice.gdsOfferId,
+                offerId: choice.offerId,
+                holdOrder: choice.holdOrder,
                 services,
                 totalAmount: ("" + totalAmount.toFixed(2)),
             })
@@ -825,7 +841,7 @@ class FlightClient {
                 }],
                 email: passenger.email,
                 phone_number: passenger.phoneNumber,
-                type: passenger.type,
+                // type: passenger.type,
                 id: offerPassengers.filter((p) => {
                     if (p.type === passenger.type && !p.used) {
                         p.used = true;
