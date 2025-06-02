@@ -247,7 +247,7 @@ class FlightController {
           const provider = slice.sourceId;
           switch (provider) {
             case GDS.kiu:
-              pnr = await this.flightClient.bookKiuFlight(slice, passengers, fareChoices[index]);
+              pnr = await this.flightClient.bookKiuFlight(slice, passengers, fareChoices[index], kiuPassengers);
               subBookings.push({
                 pnr,
                 status: SubBookingStatusValues.pending,

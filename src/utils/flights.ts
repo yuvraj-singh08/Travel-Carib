@@ -128,7 +128,7 @@ export const duffelResponseParser = async (duffelResponse: DuffelResponse<OfferR
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
             result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
+                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number + segment.departing_at;
 
                 const baggages = segment?.passengers?.[0]?.baggages
                 //@ts-ignore
@@ -816,7 +816,8 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
     }
 }
 
-export const filterResponse = (response: Offer[], filters: FilterType, allFirewall: Firewall[]) => {
+export const filterResponse = (response: Offer[], filters: FilterType, allFirewall: Firewall[], airlines: string[]) => {
+    const excludedAirlines = airlines.filter((airline) => !filters.PrefferedAirlines.includes(airline));
     const filteredResponse: Offer[] = response.filter((route) => {
         const minPriceFilter = filters?.MinPrice ? (route.total_amount) >= filters.MinPrice : true
         const maxPriceFilter = filters?.MaxPrice ? (route.total_amount) <= filters.MaxPrice : true;
@@ -895,12 +896,14 @@ export const filterResponse = (response: Offer[], filters: FilterType, allFirewa
         // const maxStops = filters?.MaxStops !== undefined ? route.stops <= filters.MaxStops : true
 
         //Preffered Airlines
-        let prefferedAirlines = filters?.PrefferedAirlines?.length > 0 ? false : true;
-        filters?.PrefferedAirlines?.forEach((airline) => {
-            if (route.responseId.includes(airline)) {
-                prefferedAirlines = true;
-            }
-        })
+        let prefferedAirlines = true;
+        if (filters?.PrefferedAirlines?.length > 0) {
+            excludedAirlines?.forEach((airline) => {
+                if (route.responseId.includes(airline)) {
+                    prefferedAirlines = false;
+                }
+            })
+        }
 
         if (!(airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage)) {
             console.log("This");

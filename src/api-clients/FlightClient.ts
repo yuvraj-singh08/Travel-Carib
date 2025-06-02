@@ -53,8 +53,9 @@ class FlightClient {
             const cachedResponse = await redis.get(id);
             if (cachedResponse) {
                 const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-                const filteredResponse = filterResponse(parsedResponse, filters, firewall)
-                return { flightData: filteredResponse, airlinesDetails: getAirlineCodes(parsedResponse), searchKey: id };
+                const airlinesDetails = getAirlineCodes(parsedResponse)
+                const filteredResponse = filterResponse(parsedResponse, filters, firewall, airlinesDetails.airlines)
+                return { flightData: filteredResponse, airlinesDetails, searchKey: id };
             }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
@@ -87,6 +88,7 @@ class FlightClient {
 
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
+            // let temp = multiCityFlightSearch;
             let temp = normalizedResponse;
             if (FlightDetails.length > 1) {
                 temp = [...normalizedResponse, ...multiCityFlightSearch];
@@ -110,7 +112,7 @@ class FlightClient {
             })
 
             const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
-            const filteredResponse = filterResponse(dataWithId, filters, firewall)
+            const filteredResponse = filterResponse(dataWithId, filters, firewall, airlinesDetails.airlines)
             redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
             return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
         } catch (error) {
@@ -253,7 +255,7 @@ class FlightClient {
                         ...(kiu?.[index2] || [])
                     ])
                 })
-                const paired = combineAllRoutes(temp, { maxTime: searchManagement?.searchManagement?.[0]?.maxConnectionTime, minTime: searchManagement?.searchManagement?.[0]?.minConnectionTime })
+                const paired = combineAllRoutes(temp, { maxTime: searchManagement?.[0]?.maxConnectionTime, minTime: searchManagement?.[0]?.minConnectionTime })
                 if (paired.length > 0)
                     combination.push(paired)
             })
@@ -261,7 +263,9 @@ class FlightClient {
 
             let temp: any = []
 
-            combination.forEach((route) => {
+            combination.forEach((route, index) => {
+                // if (index === 0)
+                //     return;
                 temp.push(...route)
             })
 
@@ -638,7 +642,7 @@ class FlightClient {
             const normalizedResponse = normalizeResponse(temp, commission, params.cabinClass)
             const airlinesDetails = getAirlineCodes(normalizedResponse);
             //@ts-ignore
-            const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall)
+            const filteredResponse = filterResponse(normalizedResponse, params.filters, allFirewall, airlinesDetails.airlines)
             const sortedResponse = sortResponse(filteredResponse, params.sortBy);
             const savedData = saveSearchResponses(sortedResponse, params.passengers, "ONEWAY");
             // redis.set(`${params.originLocation}-${params.destinationLocation}-${params.departureDate}`, JSON.stringify(savedData));
@@ -657,11 +661,13 @@ class FlightClient {
         }
     }
 
-    async bookKiuFlight(slice: Slice, passengers: PassengerType[], fareCode: string) {
+    async bookKiuFlight(slice: Slice, passengers: PassengerType[], fareCode: string, kiuPassengers) {
         try {
             const response = await this.kiuClient.bookFlight({
-                //@ts-ignore
-                slice, passengers, fareCode
+                kiuPassengers,
+                slices: [slice],
+                passengers,
+                choices: [fareCode]
             });
             const bookingReference = response?.KIU_AirBookV2RS?.BookingReferenceID?.[0];
             const pnr = bookingReference?.$?.ID || "Not Available";

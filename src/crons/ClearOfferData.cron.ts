@@ -4,8 +4,7 @@ import { prisma } from '../prismaClient';
 export const initializeClearOfferDataJob = () => {
     try {
         cron.schedule("*/5 * * * *", async () => {
-            const tenMinutesAgo = new Date(Date.now() - 25 * 60 * 1000).toISOString(); // Convert to UTC
-            const offers = await prisma.offer.findMany();
+            const tenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString(); // Convert to UTC
             const deleted = await prisma.offer.deleteMany({
                 where: {
                     createdAt: {
@@ -13,13 +12,7 @@ export const initializeClearOfferDataJob = () => {
                     },
                 },
             });
-            const deletedAmadeus = await prisma.amadeusOffer.deleteMany({
-                where: {
-                    createdAt: {
-                        lt: tenMinutesAgo, // Delete Amadeus offers older than 10 mins
-                    },
-                }
-            })
+            console.log("Deleted offers older than 10 minutes: ", deleted.count);
         })
     } catch (error) {
         console.log("Cron Job failed: ", error.message);

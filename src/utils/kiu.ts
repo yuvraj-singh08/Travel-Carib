@@ -692,7 +692,7 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
     let responseId = "";
     let validSegment: boolean = true;
     const segments = data?.FlightSegment.map((segment, index): Segment => {
-      responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber;
+      responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber + segment?.$?.DepartureDateTime;
       if (index > 0) {
         validSegment = false;
       }
