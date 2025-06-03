@@ -57,7 +57,8 @@ class DuffelClient {
 
   // Method to process the request queue
   private processQueue(): void {
-    if (this.isProcessingQueue || this.requestQueue.length === 0) {
+    try {
+      if (this.isProcessingQueue || this.requestQueue.length === 0) {
       return;
     }
 
@@ -84,6 +85,11 @@ class DuffelClient {
     };
 
     processNextRequest();
+    } catch (error) {
+      console.error("Error processing request queue:", error);
+      this.isProcessingQueue = false; // Reset processing state on error
+      throw error; // Re-throw the error for further handling
+    }
   }
 
   async createOfferRequest(offerRequestData: CreateOfferRequest): Promise<DuffelResponse<OfferRequest>> {

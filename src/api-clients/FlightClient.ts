@@ -98,7 +98,8 @@ class FlightClient {
             const sortedResponse = sortResponse(uniqueResponses, sortBy);
             const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
-            const dataWithId = sortedResponse.map((response) => {
+            const limitedResponse = sortedResponse.filter((route, index) => index < 10000);
+            const dataWithId = limitedResponse.map((response) => {
                 let id = uuidv4();
                 while (true) {
                     if (idSet.has(id)) {

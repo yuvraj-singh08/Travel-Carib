@@ -907,7 +907,7 @@ export const filterResponse = (response: Offer[], filters: FilterType, allFirewa
             })
         }
 
-        if (!(airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage)) {
+        if (!(airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && checkedBaggage && cabinBaggage)) {
             console.log("This");
         }
         return airlineFirewallFlag && minPriceFilter && maxPriceFilter && maxDuration && maxStops && MaxOnwardDuration && MinOnwardDuration && ArrivalFilter && DepartureFilter && prefferedAirlines && checkedBaggage && cabinBaggage;
