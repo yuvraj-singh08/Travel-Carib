@@ -53,9 +53,10 @@ class FlightClient {
             const cachedResponse = await redis.get(id);
             if (cachedResponse) {
                 const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-                const airlinesDetails = getAirlineCodes(parsedResponse)
+                const airlinesDetails = getAirlineCodes(parsedResponse);
                 const filteredResponse = filterResponse(parsedResponse, filters, firewall, airlinesDetails.airlines)
-                return { flightData: filteredResponse, airlinesDetails, searchKey: id };
+                const sortedResponse = sortResponse(filteredResponse, sortBy);
+                return { flightData: sortedResponse, airlinesDetails, searchKey: id };
             }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
@@ -311,7 +312,6 @@ class FlightClient {
                 duffelRequest
             ]);
             const parsedDuffelResponse = await duffelMulticityResponseFormatter(duffelResponse);
-            const parsedKiuResponse = parseMulticityKiuResponse(kiuResponse);
 
             return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
 
