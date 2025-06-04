@@ -496,3 +496,11 @@ export async function clearCache(searchKey) {
     console.error('Error clearing cache:', error);
   }
 }
+
+export function* mergeOffers(...lists) {
+  for (const list of lists) {
+    for (const item of list) {
+      yield item;
+    }
+  }
+}

@@ -7,7 +7,7 @@ import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { getOffer, saveData, saveSearchResponses } from "../services/OfferService";
-import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
+import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays, mergeOffers } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
@@ -89,11 +89,16 @@ class FlightClient {
             const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
             const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
             // let temp = multiCityFlightSearch;
-            let temp = normalizedResponse;
-            if (FlightDetails.length > 1) {
-                temp = [...normalizedResponse, ...multiCityFlightSearch];
+            const offerIterator = mergeOffers(normalizedResponse, ...(FlightDetails.length > 1 ? [multiCityFlightSearch] : []));
+            const temp = Array.from(offerIterator);
+            const uniqueResponses = [];
+            const chunkSize = 1000;
+
+            for (let i = 0; i < temp.length; i += chunkSize) {
+                const chunk = temp.slice(i, i + chunkSize);
+                const filtered = filterRoutes(chunk); // Only filter here
+                uniqueResponses.push(...filtered);
             }
-            const uniqueResponses = filterRoutes(temp as unknown as Offer[]);
             const sortedResponse = sortResponse(uniqueResponses, sortBy);
             const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
