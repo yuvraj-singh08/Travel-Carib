@@ -7,7 +7,7 @@ import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { getOffer, saveData, saveSearchResponses } from "../services/OfferService";
-import { getNextDay, getPassengerArrays } from "../utils/utils";
+import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
@@ -50,13 +50,12 @@ class FlightClient {
                 prisma.commissionManagement.findMany(),
             ])
 
-            const cachedResponse = await redis.get(id);
+            const cachedResponse = await getCachedResponse(id);
             if (cachedResponse) {
-                const parsedResponse = JSON.parse(cachedResponse)?.filter((_, index) => index < 200)
-                const airlinesDetails = getAirlineCodes(parsedResponse);
-                const filteredResponse = filterResponse(parsedResponse, filters, firewall, airlinesDetails.airlines)
+                const airlinesDetails = getAirlineCodes(cachedResponse);
+                const filteredResponse = filterResponse(cachedResponse, filters, firewall, airlinesDetails.airlines)
                 const sortedResponse = sortResponse(filteredResponse, sortBy);
-                return { flightData: sortedResponse, airlinesDetails, searchKey: id };
+                return { flightData: sortedResponse.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
             }
             let manualLayoverSearch, multiCityFlightSearch;
             if (FlightDetails.length > 1) {
@@ -98,8 +97,7 @@ class FlightClient {
             const sortedResponse = sortResponse(uniqueResponses, sortBy);
             const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
-            const limitedResponse = sortedResponse.filter((route, index) => index < 10000);
-            const dataWithId = limitedResponse.map((response) => {
+            const dataWithId = sortedResponse.map((response) => {
                 let id = uuidv4();
                 while (true) {
                     if (idSet.has(id)) {
@@ -115,7 +113,7 @@ class FlightClient {
 
             const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
             const filteredResponse = filterResponse(dataWithId, filters, firewall, airlinesDetails.airlines)
-            redis.set(id, JSON.stringify(dataWithId), "EX", 60 * 10);
+            cacheResponseInChunks(id, dataWithId);
             return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
         } catch (error) {
             throw error;

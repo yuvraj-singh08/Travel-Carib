@@ -1,3 +1,4 @@
+import redis from "../../config/redis";
 import { AggregatedFareBrand, DbBaggageType, FareBrandType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
 import { airlines } from "./airlines";
 
@@ -348,4 +349,150 @@ export function reorganizeFareCodes(data: string[][]): string[][] {
   });
   
   return result;
+}
+
+export async function cacheResponseInChunks(searchKey, data, chunkSize = 1000) {
+  try {
+    const chunks = [];
+
+    // Split data into chunks
+    for (let i = 0; i < data.length; i += chunkSize) {
+      chunks.push(data.slice(i, i + chunkSize));
+    }
+
+    // Store metadata
+    const metadata = {
+      totalItems: data.length,
+      totalChunks: chunks.length,
+      chunkSize: chunkSize,
+      cachedAt: new Date().toISOString()
+    };
+
+    // Store all chunks and metadata in parallel
+    const cachePromises = [
+      // Store metadata
+      redis.set(`${searchKey}:meta`, JSON.stringify(metadata), "EX", 60 * 10),
+      // Store each chunk
+      ...chunks.map((chunk, index) =>
+        redis.set(
+          `${searchKey}:chunk:${index}`,
+          JSON.stringify(chunk),
+          "EX", 60 * 10
+        )
+      )
+    ];
+
+    await Promise.all(cachePromises);
+    console.log(`Cached ${data.length} items in ${chunks.length} chunks for key: ${searchKey}`);
+
+  } catch (error) {
+    console.error('Error caching response in chunks:', error);
+    // Fallback: try to cache first 200 items only
+    try {
+      const fallbackData = data.slice(0, 200);
+      await redis.set(`${searchKey}:fallback`, JSON.stringify(fallbackData), "EX", 60 * 10);
+      console.log('Fallback cache successful');
+    } catch (fallbackError) {
+      console.error('Fallback cache also failed:', fallbackError);
+    }
+  }
+}
+
+export async function getCachedResponse(searchKey) {
+  try {
+    // Try to get metadata first
+    const metadataStr = await redis.get(`${searchKey}:meta`);
+
+    if (!metadataStr) {
+      // Check for fallback cache
+      const fallbackStr = await redis.get(`${searchKey}:fallback`);
+      return fallbackStr ? JSON.parse(fallbackStr) : null;
+    }
+
+    const metadata = JSON.parse(metadataStr);
+
+    // Get all chunks in parallel
+    const chunkPromises = [];
+    for (let i = 0; i < metadata.totalChunks; i++) {
+      chunkPromises.push(redis.get(`${searchKey}:chunk:${i}`));
+    }
+
+    const chunkResults = await Promise.all(chunkPromises);
+
+    // Check if any chunk is missing
+    const missingChunks = chunkResults.some(chunk => chunk === null);
+    if (missingChunks) {
+      console.warn(`Some chunks missing for key: ${searchKey}`);
+      // Try fallback
+      const fallbackStr = await redis.get(`${searchKey}:fallback`);
+      return fallbackStr ? JSON.parse(fallbackStr) : null;
+    }
+
+    // Combine all chunks
+    const combinedData = [];
+    chunkResults.forEach(chunkStr => {
+      if (chunkStr) {
+        const chunkData = JSON.parse(chunkStr);
+        combinedData.push(...chunkData);
+      }
+    });
+
+    console.log(`Retrieved ${combinedData.length} items from ${metadata.totalChunks} chunks`);
+    return combinedData;
+
+  } catch (error) {
+    console.error('Error retrieving cached response:', error);
+    // Try fallback cache
+    try {
+      const fallbackStr = await redis.get(`${searchKey}:fallback`);
+      return fallbackStr ? JSON.parse(fallbackStr) : null;
+    } catch (fallbackError) {
+      console.error('Fallback retrieval also failed:', fallbackError);
+      return null;
+    }
+  }
+}
+
+// Optional: Method to get specific chunks for pagination
+export async function getCachedChunk(searchKey, chunkIndex) {
+  try {
+    const chunkStr = await redis.get(`${searchKey}:chunk:${chunkIndex}`);
+    return chunkStr ? JSON.parse(chunkStr) : null;
+  } catch (error) {
+    console.error(`Error retrieving chunk ${chunkIndex}:`, error);
+    return null;
+  }
+}
+
+// Optional: Method to get cache info
+export async function getCacheInfo(searchKey) {
+  try {
+    const metadataStr = await redis.get(`${searchKey}:meta`);
+    return metadataStr ? JSON.parse(metadataStr) : null;
+  } catch (error) {
+    console.error('Error retrieving cache info:', error);
+    return null;
+  }
+}
+
+// Cleanup method to remove all chunks for a search key
+export async function clearCache(searchKey) {
+  try {
+    const metadata = await this.getCacheInfo(searchKey);
+    if (metadata) {
+      const deletePromises = [
+        redis.del(`${searchKey}:meta`),
+        redis.del(`${searchKey}:fallback`)
+      ];
+
+      for (let i = 0; i < metadata.totalChunks; i++) {
+        deletePromises.push(redis.del(`${searchKey}:chunk:${i}`));
+      }
+
+      await Promise.all(deletePromises);
+      console.log(`Cleared cache for key: ${searchKey}`);
+    }
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+  }
 }
