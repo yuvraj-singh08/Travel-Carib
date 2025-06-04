@@ -351,6 +351,53 @@ export function reorganizeFareCodes(data: string[][]): string[][] {
   return result;
 }
 
+export async function cacheResponseInChunks(searchKey, data, chunkSize = 1000) {
+  try {
+    const chunks = [];
+
+    // Split data into chunks
+    for (let i = 0; i < data.length; i += chunkSize) {
+      chunks.push(data.slice(i, i + chunkSize));
+    }
+
+    // Store metadata
+    const metadata = {
+      totalItems: data.length,
+      totalChunks: chunks.length,
+      chunkSize: chunkSize,
+      cachedAt: new Date().toISOString()
+    };
+
+    // Store all chunks and metadata in parallel
+    const cachePromises = [
+      // Store metadata
+      redis.set(`${searchKey}:meta`, JSON.stringify(metadata), "EX", 60 * 10),
+      // Store each chunk
+      ...chunks.map((chunk, index) =>
+        redis.set(
+          `${searchKey}:chunk:${index}`,
+          JSON.stringify(chunk),
+          "EX", 60 * 10
+        )
+      )
+    ];
+
+    await Promise.all(cachePromises);
+    console.log(`Cached ${data.length} items in ${chunks.length} chunks for key: ${searchKey}`);
+
+  } catch (error) {
+    console.error('Error caching response in chunks:', error);
+    // Fallback: try to cache first 200 items only
+    try {
+      const fallbackData = data.slice(0, 200);
+      await redis.set(`${searchKey}:fallback`, JSON.stringify(fallbackData), "EX", 60 * 10);
+      console.log('Fallback cache successful');
+    } catch (fallbackError) {
+      console.error('Fallback cache also failed:', fallbackError);
+    }
+  }
+}
+
 export async function getCachedResponse(searchKey) {
   try {
     // Try to get metadata first
@@ -448,71 +495,4 @@ export async function clearCache(searchKey) {
   } catch (error) {
     console.error('Error clearing cache:', error);
   }
-}
-
-export async function cacheResponseInChunks(searchKey, data, chunkSize = 500) { // Reduced chunk size
-    try {
-        const chunks = [];
-        
-        // Process data in smaller chunks to reduce memory pressure
-        for (let i = 0; i < data.length; i += chunkSize) {
-            const chunk = data.slice(i, i + chunkSize);
-            chunks.push(chunk);
-        }
-        
-        const metadata = {
-            totalItems: data.length,
-            totalChunks: chunks.length,
-            chunkSize: chunkSize,
-            cachedAt: new Date().toISOString()
-        };
-        
-        // Cache chunks sequentially to avoid memory spikes
-        await redis.set(`${searchKey}:meta`, JSON.stringify(metadata), "EX", 60 * 10);
-        
-        for (let i = 0; i < chunks.length; i++) {
-            await redis.set(
-                `${searchKey}:chunk:${i}`,
-                JSON.stringify(chunks[i]),
-                "EX", 60 * 10
-            );
-            
-            // Clear chunk from memory after caching
-            chunks[i] = null;
-            
-            // Periodic GC for large datasets
-            if (i % 10 === 0 && global.gc) {
-                global.gc();
-            }
-        }
-        
-        console.log(`Cached ${data.length} items in ${chunks.length} chunks for key: ${searchKey}`);
-        
-    } catch (error) {
-        console.error('Error caching response in chunks:', error);
-        // Fallback with even smaller dataset
-        try {
-            const fallbackData = data.slice(0, 100);
-            await redis.set(`${searchKey}:fallback`, JSON.stringify(fallbackData), "EX", 60 * 10);
-            console.log('Fallback cache successful');
-        } catch (fallbackError) {
-            console.error('Fallback cache also failed:', fallbackError);
-        }
-    }
-}
-
-// Memory-efficient generator-based merge
-export function* mergeOffers(...lists) {
-    for (const list of lists) {
-        if (Array.isArray(list)) {
-            for (let i = 0; i < list.length; i++) {
-                yield list[i];
-                
-                // Periodically allow garbage collection
-                if (i % 1000 === 0 && global.gc) {
-                    global.gc();
-                }
-            }
-        }
-    }
 }

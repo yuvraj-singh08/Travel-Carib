@@ -7,7 +7,7 @@ import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { getOffer, saveData, saveSearchResponses } from "../services/OfferService";
-import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays, mergeOffers } from "../utils/utils";
+import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
@@ -41,392 +41,84 @@ class FlightClient {
     }
 
     async searchFlights({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
-    try {
-        const id = JSON.stringify({
-            FlightDetails, cabinClass
-        });
-        
-        const [firewall, commission] = await Promise.all([
-            prisma.firewall.findMany({}),
-            prisma.commissionManagement.findMany(),
-        ]);
-
-        // Check cache first
-        const cachedResponse = await getCachedResponse(id);
-        if (cachedResponse) {
-            const airlinesDetails = getAirlineCodes(cachedResponse);
-            const filteredResponse = filterResponse(cachedResponse, filters, firewall, airlinesDetails.airlines);
-            const sortedResponse = sortResponse(filteredResponse, sortBy);
-            return { 
-                flightData: sortedResponse.slice(0, 200), 
-                airlinesDetails, 
-                searchKey: id 
-            };
-        }
-
-        // Process searches with streaming approach
-        const searchResults = await this.processSearchesWithStreaming(FlightDetails, passengers, cabinClass);
-        
-        // Process results in batches to avoid memory buildup
-        const finalResults = await this.processBatchedResults(searchResults, sortBy, filters, firewall, passengers);
-        
-        // Cache results in chunks
-        await cacheResponseInChunks(id, finalResults);
-        
-        const airlinesDetails = getAirlineCodes(finalResults.slice(0, 1000)); // Only process subset for airline codes
-        const filteredResponse = filterResponse(finalResults, filters, firewall, airlinesDetails.airlines);
-        
-        return { 
-            flightData: filteredResponse.slice(0, 200), 
-            airlinesDetails, 
-            searchKey: id 
-        };
-        
-    } catch (error) {
-        throw error;
-    }
-}
-
-// New streaming approach for search processing
-async processSearchesWithStreaming(FlightDetails, passengers, cabinClass) {
-    const BATCH_SIZE = 100; // Process routes in smaller batches
-    const results = [];
-    
-    if (FlightDetails.length > 1) {
-        // Process multi-city searches in parallel but with controlled concurrency
-        const [manualResults, multiCityResults] = await Promise.all([
-            this.processManualLayoverBatched(FlightDetails, passengers, cabinClass, BATCH_SIZE),
-            this.newMulticityFlightSearch({ FlightDetails, passengers, cabinClass, sortBy: "CHEAP", maxLayovers: 10 })
-        ]);
-        
-        // Use generator to avoid creating large intermediate arrays
-        const combinedGenerator = this.combineResultsGenerator(manualResults, multiCityResults);
-        
-        // Process in chunks instead of loading everything into memory
-        for await (const batch of this.batchGenerator(combinedGenerator, BATCH_SIZE)) {
-            results.push(...batch);
-            
-            // Periodically trigger garbage collection for large datasets
-            if (results.length % (BATCH_SIZE * 10) === 0) {
-                if (global.gc) global.gc();
-            }
-        }
-    } else {
-        const manualResults = await this.processManualLayoverBatched(FlightDetails, passengers, cabinClass, BATCH_SIZE);
-        results.push(...manualResults);
-    }
-    
-    return results;
-}
-
-// Batched processing for manual layover search
-async processManualLayoverBatched(FlightDetails, passengers, cabinClass, batchSize) {
-    const results = [];
-    
-    for (let i = 0; i < FlightDetails.length; i += batchSize) {
-        const batch = FlightDetails.slice(i, i + batchSize);
-        
-        const batchResults = await Promise.all(
-            batch.map(flightDetail => 
-                this.manualLayoverSearchOptimized({
-                    origin: flightDetail.originLocation,
-                    destination: flightDetail.destinationLocation,
-                    departureDate: flightDetail.departureDate,
-                    passengers,
-                    cabinClass
-                })
-            )
-        );
-        
-        // Process batch results immediately instead of accumulating
-        const combinedBatch = this.combineKiuRoutesOptimized(batchResults, 60 * 6);
-        const normalizedBatch = newNormalizeResponse(combinedBatch, cabinClass);
-        
-        results.push(...normalizedBatch);
-        
-        // Clear batch from memory
-        batchResults.length = 0;
-    }
-    
-    return results;
-}
-
-// Memory-optimized version of manualLayoverSearch
-async manualLayoverSearchOptimized({ origin, destination, passengers, cabinClass, departureDate }) {
-    try {
-        const { duffelPassengersArray } = getPassengerArrays(passengers);
-        const { searchManagement, possibleRoutes } = await getRouteOptions({ origin, destination });
-        
-        // Process routes in smaller batches to reduce memory pressure
-        const ROUTE_BATCH_SIZE = 5;
-        const allCombinations = [];
-        
-        for (let i = 0; i < possibleRoutes.length; i += ROUTE_BATCH_SIZE) {
-            const routeBatch = possibleRoutes.slice(i, i + ROUTE_BATCH_SIZE);
-            
-            const [duffelBatch, kiuBatch] = await Promise.all([
-                this.processDuffelBatch(routeBatch, duffelPassengersArray, cabinClass, departureDate),
-                this.processKiuBatch(routeBatch, passengers, cabinClass, departureDate)
-            ]);
-            
-            // Process combinations immediately for this batch
-            routeBatch.forEach((route, batchIndex) => {
-                const duffel = duffelBatch[batchIndex];
-                const kiu = kiuBatch[batchIndex];
-                const temp = [];
-                
-                route.forEach((data, segmentIndex) => {
-                    temp.push([
-                        ...(duffel?.[segmentIndex] || []),
-                        ...(kiu?.[segmentIndex] || [])
-                    ]);
-                });
-                
-                const paired = combineAllRoutes(temp, { 
-                    maxTime: searchManagement?.[0]?.maxConnectionTime, 
-                    minTime: searchManagement?.[0]?.minConnectionTime 
-                });
-                
-                if (paired.length > 0) {
-                    allCombinations.push(...paired);
-                }
+        try {
+            const id = JSON.stringify({
+                FlightDetails, cabinClass
             });
-            
-            // Clear batch data
-            duffelBatch.length = 0;
-            kiuBatch.length = 0;
-        }
-        
-        return mapCombinedResponseToOfferType(allCombinations);
-        
-    } catch (error) {
-        throw error;
-    }
-}
+            const [firewall, commission] = await Promise.all([
+                prisma.firewall.findMany({}),
+                prisma.commissionManagement.findMany(),
+            ])
 
-// Generator function to combine results without creating large arrays
-*combineResultsGenerator(manualResults, multiCityResults = []) {
-    for (const result of manualResults) {
-        yield result;
-    }
-    for (const result of multiCityResults) {
-        yield result;
-    }
-}
-
-// Async generator for batch processing
-async *batchGenerator(generator, batchSize) {
-    let batch = [];
-    
-    for (const item of generator) {
-        batch.push(item);
-        
-        if (batch.length >= batchSize) {
-            yield batch;
-            batch = []; // Clear the batch
-        }
-    }
-    
-    // Yield remaining items
-    if (batch.length > 0) {
-        yield batch;
-    }
-}
-
-// Optimized batch processing for final results
-async processBatchedResults(searchResults, sortBy, filters, firewall, passengers) {
-    const PROCESSING_BATCH_SIZE = 1000;
-    const uniqueResponses = [];
-    const idSet = new Set();
-    
-    // Process in chunks to avoid memory buildup
-    for (let i = 0; i < searchResults.length; i += PROCESSING_BATCH_SIZE) {
-        const chunk = searchResults.slice(i, i + PROCESSING_BATCH_SIZE);
-        
-        // Filter routes in this chunk
-        const filtered = filterRoutes(chunk);
-        
-        // Add IDs and check uniqueness
-        const chunkWithIds = filtered.map(response => {
-            let id = uuidv4();
-            while (idSet.has(id)) {
-                id = uuidv4();
+            const cachedResponse = await getCachedResponse(id);
+            if (cachedResponse) {
+                const airlinesDetails = getAirlineCodes(cachedResponse);
+                const filteredResponse = filterResponse(cachedResponse, filters, firewall, airlinesDetails.airlines)
+                const sortedResponse = sortResponse(filteredResponse, sortBy);
+                return { flightData: sortedResponse.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
             }
-            idSet.add(id);
-            return { ...response, id };
-        });
-        
-        uniqueResponses.push(...chunkWithIds);
-        
-        // Clear processed chunk
-        chunk.length = 0;
-        
-        // Trigger GC periodically for large datasets
-        if (i % (PROCESSING_BATCH_SIZE * 5) === 0 && global.gc) {
-            global.gc();
+            let manualLayoverSearch, multiCityFlightSearch;
+            if (FlightDetails.length > 1) {
+                [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
+                    Promise.all(FlightDetails.map((flightDetail) => {
+                        return this.manualLayoverSearch({
+                            origin: flightDetail.originLocation,
+                            destination: flightDetail.destinationLocation,
+                            departureDate: flightDetail.departureDate,
+                            passengers,
+                            cabinClass
+                        })
+                    })),
+                    await this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
+                ])
+
+                // console.log("commission---------------------------",commission)
+            }
+            else {
+                manualLayoverSearch = await Promise.all(FlightDetails.map((flightDetail) => {
+                    return this.manualLayoverSearch({
+                        origin: flightDetail.originLocation,
+                        destination: flightDetail.destinationLocation,
+                        departureDate: flightDetail.departureDate,
+                        passengers,
+                        cabinClass
+                    })
+                }));
+            }
+
+            const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
+            const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
+            // let temp = multiCityFlightSearch;
+            let temp = normalizedResponse;
+            if (FlightDetails.length > 1) {
+                temp = [...normalizedResponse, ...multiCityFlightSearch];
+            }
+            const uniqueResponses = filterRoutes(temp as unknown as Offer[]);
+            const sortedResponse = sortResponse(uniqueResponses, sortBy);
+            const airlinesDetails = getAirlineCodes(normalizedResponse)
+            const idSet = new Set();
+            const dataWithId = sortedResponse.map((response) => {
+                let id = uuidv4();
+                while (true) {
+                    if (idSet.has(id)) {
+                        id = uuidv4();
+                    }
+                    else {
+                        idSet.add(id);
+                        break;
+                    }
+                }
+                return { ...response, id };
+            })
+
+            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+            const filteredResponse = filterResponse(dataWithId, filters, firewall, airlinesDetails.airlines)
+            cacheResponseInChunks(id, dataWithId);
+            return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
+        } catch (error) {
+            throw error;
         }
     }
-    
-    // Sort only once at the end
-    const sortedResponse = sortResponse(uniqueResponses, sortBy);
-    
-    // Save search responses (consider doing this asynchronously)
-    setImmediate(() => {
-        saveSearchResponses(sortedResponse, passengers, "ONEWAY");
-    });
-    
-    return sortedResponse;
-}
-
-// Optimized KIU routes combination
-combineKiuRoutesOptimized(routes, maxTime) {
-    // Use a more memory-efficient approach
-    const results = [];
-    const BATCH_SIZE = 100;
-    
-    for (let i = 0; i < routes.length; i += BATCH_SIZE) {
-        const batch = routes.slice(i, i + BATCH_SIZE);
-        const batchResults = combineKiuRoutes(batch, maxTime);
-        results.push(...batchResults);
-        
-        // Clear batch
-        batch.length = 0;
-    }
-    
-    return results;
-}
-
-// Process Duffel requests in batches
-async processDuffelBatch(routeBatch, duffelPassengersArray, cabinClass, departureDate) {
-    const CONCURRENT_LIMIT = 3; // Limit concurrent requests
-    const results = [];
-    
-    for (let i = 0; i < routeBatch.length; i += CONCURRENT_LIMIT) {
-        const concurrentBatch = routeBatch.slice(i, i + CONCURRENT_LIMIT);
-        
-        const batchPromises = concurrentBatch.map(route => 
-            Promise.all(route.map(async (segment, index) => {
-                if (index > 0) {
-                    const [today, tomorrow] = await Promise.all([
-                        this.duffelClient.createOfferRequest({
-                            passengers: duffelPassengersArray,
-                            cabin_class: cabinClass,
-                            max_connections: 2,
-                            slices: [{
-                                origin: segment.origin,
-                                destination: segment.destination,
-                                departure_date: departureDate,
-                                departure_time: null,
-                                arrival_time: null,
-                            }],
-                        }),
-                        this.duffelClient.createOfferRequest({
-                            passengers: duffelPassengersArray,
-                            cabin_class: cabinClass,
-                            max_connections: 2,
-                            slices: [{
-                                origin: segment.origin,
-                                destination: segment.destination,
-                                departure_date: getNextDay(departureDate),
-                                departure_time: null,
-                                arrival_time: null,
-                            }],
-                        })
-                    ]);
-                    
-                    return {
-                        ...today,
-                        data: {
-                            ...today.data,
-                            offers: [...today.data.offers, ...tomorrow.data.offers]
-                        }
-                    };
-                }
-                
-                return this.duffelClient.createOfferRequest({
-                    passengers: duffelPassengersArray,
-                    cabin_class: cabinClass,
-                    max_connections: 2,
-                    slices: [{
-                        origin: segment.origin,
-                        destination: segment.destination,
-                        departure_date: departureDate,
-                        departure_time: null,
-                        arrival_time: null,
-                    }],
-                });
-            }))
-        );
-        
-        const batchResults = await Promise.all(batchPromises);
-        
-        // Parse results immediately
-        const parsedResults = await Promise.all(
-            batchResults.map(routeResult => 
-                Promise.all(routeResult.map(response => duffelResponseParser(response)))
-            )
-        );
-        
-        results.push(...parsedResults);
-    }
-    
-    return results;
-}
-
-// Similar optimization for KIU batch processing
-async processKiuBatch(routeBatch, passengers, cabinClass, departureDate) {
-    const CONCURRENT_LIMIT = 3;
-    const results = [];
-    
-    for (let i = 0; i < routeBatch.length; i += CONCURRENT_LIMIT) {
-        const concurrentBatch = routeBatch.slice(i, i + CONCURRENT_LIMIT);
-        
-        const batchPromises = concurrentBatch.map(route =>
-            Promise.all(route.map(async (segment, index) => {
-                if (index > 0) {
-                    const [today, tomorrow] = await Promise.all([
-                        this.kiuClient.newSearchFlights({
-                            OriginDestinationOptions: [{
-                                OriginLocation: segment.origin,
-                                DestinationLocation: segment.destination,
-                                DepartureDate: departureDate
-                            }],
-                            CabinClass: cabinClass,
-                            Passengers: passengers
-                        }),
-                        this.kiuClient.newSearchFlights({
-                            OriginDestinationOptions: [{
-                                OriginLocation: segment.origin,
-                                DestinationLocation: segment.destination,
-                                DepartureDate: getNextDay(departureDate)
-                            }],
-                            CabinClass: cabinClass,
-                            Passengers: passengers
-                        })
-                    ]);
-                    
-                    return [...today, ...tomorrow];
-                }
-                
-                return this.kiuClient.newSearchFlights({
-                    OriginDestinationOptions: [{
-                        OriginLocation: segment.origin,
-                        DestinationLocation: segment.destination,
-                        DepartureDate: departureDate
-                    }],
-                    CabinClass: cabinClass,
-                    Passengers: passengers
-                });
-            }))
-        );
-        
-        const batchResults = await Promise.all(batchPromises);
-        results.push(...batchResults);
-    }
-    
-    return results;
-}
-
 
     async manualLayoverSearch({ origin, destination, passengers, cabinClass, departureDate }: ManualLayoverSearchParams) {
         try {
