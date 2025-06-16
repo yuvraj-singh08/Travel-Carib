@@ -335,7 +335,7 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
             result.slices.forEach((slice, sliceIndex) => {
                 slice.segments?.forEach((segment, segmentIndex) => {
                     routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                    responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
+                    responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number + segment.departing_at + segment.arriving_at;
 
                     const baggages = segment?.passengers?.[0]?.baggages
                     //@ts-ignore
