@@ -128,7 +128,7 @@ export const duffelResponseParser = async (duffelResponse: DuffelResponse<OfferR
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
             result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number + segment.departing_at;
+                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number || segment.marketing_carrier_flight_number + segment.departing_at;
 
                 const baggages = segment?.passengers?.[0]?.baggages
                 //@ts-ignore
@@ -335,7 +335,7 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
             result.slices.forEach((slice, sliceIndex) => {
                 slice.segments?.forEach((segment, segmentIndex) => {
                     routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                    responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number + segment.departing_at + segment.arriving_at;
+                    responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number || segment.marketing_carrier_flight_number + segment.departing_at + segment.arriving_at;
 
                     const baggages = segment?.passengers?.[0]?.baggages
                     //@ts-ignore
@@ -407,7 +407,7 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
                     offerId: offer.id,
                 })
             })
-            result.push({
+                        result.push({
                 ...offers[offerIndex],
                 fareOptions: fareOptions
             })
@@ -575,7 +575,7 @@ export const duffelNewParser = (duffelResponse: DuffelResponse<OfferRequest>, fi
             let sliceCabinBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = result?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
             result.slices?.[0]?.segments?.forEach((segment, segmentIndex) => {
                 routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number
+                responseId += segment.operating_carrier.iata_code + segment.operating_carrier_flight_number || segment.marketing_carrier_flight_number
                 for (let i = 0; i < firewall.length; i++) {
                     if (firewall[i].from === origin && firewall[i].to === destination) {
                         if (segment?.operating_carrier?.iata_code === firewall[i]?.code) {
