@@ -482,6 +482,9 @@ model FareSetting {
   fareCodes    String[] // Array of fare codes
   refundable   String
   changeable   String
+  gds          String
+  checkedBaggage String
+  cabinBaggage String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

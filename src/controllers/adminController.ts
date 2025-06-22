@@ -2459,9 +2459,9 @@ export const getBaggageWeight = async (req: Request, res: Response, next: NextFu
 export const createFareSetting = async (req, res) => {
   console.log(req.body);
   try {
-    const { airlineCodes, fareCodes, refundable, changeable, checkedBags } = req.body;
+    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
     const newSetting = await prisma.fareSetting.create({
-      data: { airlineCodes, fareCodes, refundable, changeable },
+      data: { airlineCodes, fareCodes, refundable, changeable ,gds, cabinBaggage, checkedBaggage},
     });
     res.status(201).json(newSetting);
   } catch (error) {
@@ -2475,7 +2475,7 @@ export const getAllFareSettings = async (req, res) => {
     const settings = await prisma.fareSetting.findMany();
     res.json(settings);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching fare settings" });
+    res.status(500).json({ error: error });
   }
 };
 
@@ -2484,10 +2484,10 @@ export const updateFareSetting = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { airlineCodes, fareCodes, refundable, changeable } = req.body;
+    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
     const updatedSetting = await prisma.fareSetting.update({
       where: { id },
-      data: { airlineCodes, fareCodes, refundable, changeable },
+      data: { airlineCodes, fareCodes, refundable, changeable,gds,cabinBaggage, checkedBaggage },
     });
     res.json(updatedSetting);
   } catch (error) {
