@@ -136,7 +136,7 @@ router.post("/add-cookie", authenticateToken, addCookie);
 router.post("/update-cookie", authenticateToken, updateCookie);
 router.post("/delete-cookie", authenticateToken, deleteCookie);
 
-router.get("/privacies", getPrivacy);
+router.post("/privacies", getPrivacy);
 router.get("/privacy/:id", getPrivacyById);
 router.post("/add-privacy", authenticateToken, addPrivacy);
 router.post("/update-privacy", authenticateToken, updatePrivacy);
@@ -161,7 +161,7 @@ router.post("/add-deal", authenticateToken, createDeal);
 router.post("/update-deal", authenticateToken, updateDeal);
 router.post("/delete-deal", authenticateToken, deleteDeal);
 
-router.get("/terms", getTerms);
+router.post("/terms", getTerms);
 router.get("/term/:id", getTermById);
 router.post("/add-term", authenticateToken, addTerms);
 router.post("/update-term", authenticateToken, updateTerm);

@@ -317,15 +317,22 @@ model SocialSettings {
 }
 
 model privacyPolicy {
-  id        String  @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid()) @map("_id")
   isEnabled Boolean
-  content   Json[]
+  language  Language
+  content   Json
 }
 
 model termsAndCondition {
-  id        String  @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid()) @map("_id")
   isEnabled Boolean
-  content   Json[]
+  language  Language
+  content   Json
+}
+
+enum Language {
+  EN
+  ES
 }
 
 model deals {

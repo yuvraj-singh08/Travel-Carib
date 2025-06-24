@@ -1349,13 +1349,15 @@ export const addPrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { isEnabled, content } = req.body;
+  const { isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
 
   try {
     const privacy = await prisma.privacyPolicy.create({
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
@@ -1379,8 +1381,12 @@ export const getPrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
+  const { language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.privacyPolicy.findMany();
+    const privacy = await prisma.privacyPolicy.findMany({
+      where: { language: lang },
+    });
 
     if (privacy) {
       res.status(200).json({
@@ -1402,12 +1408,13 @@ export const getPrivacyById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.body;
-
+  const { id, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.privacyPolicy.findUnique({
+    const privacy = await prisma.privacyPolicy.findFirst({
       where: {
         id: id,
+        language: lang,
       },
     });
 
@@ -1431,8 +1438,8 @@ export const updatePrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, isEnabled, content } = req.body;
-
+  const { id, isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
     const updatedPrivacy = await prisma.privacyPolicy.update({
       where: {
@@ -1441,6 +1448,7 @@ export const updatePrivacy = async (
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
@@ -1492,24 +1500,26 @@ export const addTerms = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { isEnabled, content } = req.body;
+  const { isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
 
   try {
-    const privacy = await prisma.termsAndCondition.create({
+    const terms = await prisma.termsAndCondition.create({
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy added",
-        privacy: privacy,
+        message: "Terms added",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not created" });
+      res.status(404).json({ error: "Terms not created" });
     }
   } catch (error) {
     console.log(error);
@@ -1522,17 +1532,21 @@ export const getTerms = async (
   res: Response,
   next: NextFunction
 ) => {
+  const { language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.termsAndCondition.findMany();
+    const terms = await prisma.termsAndCondition.findMany({
+      where: { language: lang },
+    });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy fetched",
-        privacy: privacy,
+        message: "Terms fetched",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not found" });
+      res.status(404).json({ error: "Terms not found" });
     }
   } catch (error) {
     console.log(error);
@@ -1545,23 +1559,24 @@ export const getTermById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.body;
-
+  const { id, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.termsAndCondition.findUnique({
+    const terms = await prisma.termsAndCondition.findFirst({
       where: {
         id: id,
+        language: lang,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy fetched",
-        privacy: privacy,
+        message: "Terms fetched",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not found" });
+      res.status(404).json({ error: "Terms not found" });
     }
   } catch (error) {
     console.log(error);
@@ -1574,27 +1589,28 @@ export const updateTerm = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, isEnabled, content } = req.body;
-
+  const { id, isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const updatedPrivacy = await prisma.termsAndCondition.update({
+    const updatedTerms = await prisma.termsAndCondition.update({
       where: {
         id: id,
       },
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
-    if (updatedPrivacy) {
+    if (updatedTerms) {
       res.status(200).json({
-        message: "Privacy updated",
-        privacy: updatedPrivacy,
+        message: "Terms updated",
+        terms: updatedTerms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not updated" });
+      res.status(404).json({ error: "Terms not updated" });
     }
   } catch (error) {
     console.log(error);
@@ -1610,19 +1626,19 @@ export const deleteTerm = async (
   const { id } = req.body;
 
   try {
-    const privacy = await prisma.termsAndCondition.delete({
+    const terms = await prisma.termsAndCondition.delete({
       where: {
         id: id,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy deleted",
+        message: "Terms deleted",
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not deleted" });
+      res.status(404).json({ error: "Terms not deleted" });
     }
   } catch (error) {
     console.log(error);
