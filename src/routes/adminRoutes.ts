@@ -84,8 +84,10 @@ import {
   updateFareSetting,
   getAllFareSettings,
   createFareSetting,
+  uploadImages,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authmiddleware";
+import { upload } from "../utils/multer";
 
 const router = Router();
 router.get("/profile", authenticateToken, getAdminById);
@@ -172,11 +174,16 @@ router.post("/add-search", authenticateToken, createSearchManagement);
 router.post("/update-search", authenticateToken, updateSearchManagement);
 router.post("/delete-search", authenticateToken, deleteSearchManagement);
 
-router.get("/blogs", getBlogs);
+router.post("/blogs", getBlogs);
 router.get("/blog/:id", getBlogById);
-router.post("/add-blog", authenticateToken, createBlog);
+router.post("/add-blog",  upload.single("image"), createBlog);
 router.post("/update-blog", authenticateToken, updateBlog);
 router.post("/delete-blog", authenticateToken, deleteBlog);
+
+router.post("/upload-image", upload.array("images"), uploadImages);
+
+
+
 
 router.get("/bookings", authenticateToken, fetchBooking);
 router.post("/update-booking", authenticateToken, updateBooking);

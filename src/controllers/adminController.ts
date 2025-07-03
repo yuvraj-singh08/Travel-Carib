@@ -9,6 +9,9 @@ import { AdminPermissions } from "../../types/adminTypes";
 import { BaggageType } from "@prisma/client";
 import { prisma } from "../prismaClient";
 
+import { generateRandomId, uploadImage } from "../utils/bucket";
+
+
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
 
@@ -2261,6 +2264,41 @@ export const deleteSearchManagement = async (
   }
 };
 
+export const uploadImages = async (req: Request, res: Response) => {
+  try {
+    
+    const files = req.files as Express.Multer.File[];
+
+    console.log("files",files)
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ success: false, message: "No files uploaded." });
+    }
+
+    const imageUrls: string[] = [];
+
+    for (const file of files) {
+      const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+      const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+      imageUrls.push(imageUrl);
+    }
+     console.log("imageUrls",imageUrls)
+
+    return res.status(200).json({
+      success: true,
+      urls: imageUrls,
+    });
+
+  } catch (error) {
+    console.error("Error uploading images:", error);
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
+};
+
+
 //blogs
 export const createBlog = async (
   req: Request,
@@ -2268,7 +2306,12 @@ export const createBlog = async (
   next: NextFunction
 ) => {
   try {
-    const { mainImg, description, secondaryImg, secondaryDesc } = req.body;
+    const { mainImg, description, secondaryImg, secondaryDesc,language } = req.body;
+    //  const file = req.file;
+    // const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+    
+    // const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+    // console.log("imageUrl",imageUrl)
 
     const newEntry = await prisma.blog.create({
       data: {
@@ -2276,6 +2319,7 @@ export const createBlog = async (
         description,
         secondaryImg,
         secondaryDesc,
+        language,
       },
     });
 
@@ -2286,19 +2330,48 @@ export const createBlog = async (
   }
 };
 
+// export const getBlogs = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const {language} = req.body;
+//     const entries = await prisma.blog.findMany({
+//       where: {
+//         language: language, // ✅ OR simply `language` if key and value are same
+//       },
+//     });
+//     res.status(200).json(entries);
+//   } catch (error) {
+//     console.log(error);
+//     next(handlePrismaError(error));
+//   }
+// };
+
 export const getBlogs = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const entries = await prisma.blog.findMany();
+    const { language } = req.body;
+
+    console.log(language)
+
+    const entries = await prisma.blog.findMany({
+      where: {
+        language: language, // ✅ OR simply `language` if key and value are same
+      },
+    });
+
     res.status(200).json(entries);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     next(handlePrismaError(error));
   }
 };
+
 
 export const getBlogById = async (
   req: Request,

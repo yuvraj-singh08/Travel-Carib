@@ -394,6 +394,7 @@ model Blog {
   description   String
   secondaryImg  String[]
   secondaryDesc String
+  language      Language
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
