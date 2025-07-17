@@ -85,6 +85,11 @@ import {
   getAllFareSettings,
   createFareSetting,
   uploadImages,
+  createScrapingModule,
+  getAllScrapingModules,
+  getScrapingModuleById,
+  updateScrapingModule,
+  deleteScrapingModule,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authmiddleware";
 import { upload } from "../utils/multer";
@@ -163,6 +168,7 @@ router.post("/add-deal", authenticateToken, createDeal);
 router.post("/update-deal", authenticateToken, updateDeal);
 router.post("/delete-deal", authenticateToken, deleteDeal);
 
+
 router.post("/terms", getTerms);
 router.get("/term/:id", getTermById);
 router.post("/add-term", authenticateToken, addTerms);
@@ -199,5 +205,12 @@ router.post("/createFareSetting", createFareSetting);
 router.post("/getAllFareSettings", getAllFareSettings);
 router.put("/updateFareSetting/:id", updateFareSetting);
 router.post("/deleteFareSetting/:id", deleteFareSetting);
+
+// Scraping Module Routes
+router.post("/scraping-modules", authenticateToken, createScrapingModule);
+router.get("/scraping-modules", authenticateToken, getAllScrapingModules);
+router.get("/scraping-modules/:id", authenticateToken, getScrapingModuleById);
+router.put("/scraping-modules/:id", authenticateToken, updateScrapingModule);
+router.delete("/scraping-modules/:id", authenticateToken, deleteScrapingModule);
 
 export default router;

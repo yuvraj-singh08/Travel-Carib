@@ -225,6 +225,7 @@ enum FlightSupplier {
   DUFFEL
   ALL
   NONE
+  COCKPIT 
 }
 
 model firewall {
@@ -530,4 +531,17 @@ model Stripe_secret {
   secret         String
   webbookSecret  String
  
+}
+
+model ScrapingModule {
+  id              String   @id @default(uuid()) @map("_id")
+  airlineName     String
+  packageName     String
+  cabinBaggage    String?
+  checkedBaggage  String?
+  handBaggage     String?
+  otherDetails    String[]
+  price           Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

@@ -2594,3 +2594,178 @@ export const deleteFareSetting = async (req, res) => {
     res.status(500).json({ error: "Error deleting fare setting", details: error.message });
   }
 };
+
+// Scraping Module Controllers
+export const createScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const {
+    airlineName,
+    packageName,
+    cabinBaggage,
+    checkedBaggage,
+    handBaggage,
+    otherDetails,
+    price,
+  } = req.body;
+
+  try {
+    const scrapingModule = await prisma.scrapingModule.create({
+      data: {
+        airlineName,
+        packageName,
+        cabinBaggage,
+        checkedBaggage,
+        handBaggage,
+        otherDetails,
+        price: parseFloat(price),
+      },
+    });
+
+    if (scrapingModule) {
+      res.status(201).json({
+        message: "Scraping module created successfully",
+        scrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not created" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getAllScrapingModules = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const scrapingModules = await prisma.scrapingModule.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (scrapingModules) {
+      res.status(200).json({
+        message: "Scraping modules fetched successfully",
+        scrapingModules,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping modules not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getScrapingModuleById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+
+  try {
+    const scrapingModule = await prisma.scrapingModule.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (scrapingModule) {
+      res.status(200).json({
+        message: "Scraping module fetched successfully",
+        scrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const updateScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+  const {
+    airlineName,
+    packageName,
+    cabinBaggage,
+    checkedBaggage,
+    handBaggage,
+    otherDetails,
+    price,
+  } = req.body;
+
+  try {
+    const updatedScrapingModule = await prisma.scrapingModule.update({
+      where: {
+        id: id,
+      },
+      data: {
+        airlineName,
+        packageName,
+        cabinBaggage,
+        checkedBaggage,
+        handBaggage,
+        otherDetails,
+        price: price ? parseFloat(price) : undefined,
+      },
+    });
+
+    if (updatedScrapingModule) {
+      res.status(200).json({
+        message: "Scraping module updated successfully",
+        scrapingModule: updatedScrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not updated" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const deleteScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+
+  try {
+    const deletedScrapingModule = await prisma.scrapingModule.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (deletedScrapingModule) {
+      res.status(200).json({
+        message: "Scraping module deleted successfully",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
