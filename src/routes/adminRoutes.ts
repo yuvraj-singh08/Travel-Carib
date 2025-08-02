@@ -84,8 +84,15 @@ import {
   updateFareSetting,
   getAllFareSettings,
   createFareSetting,
+  uploadImages,
+  createScrapingModule,
+  getAllScrapingModules,
+  getScrapingModuleById,
+  updateScrapingModule,
+  deleteScrapingModule,
 } from "../controllers/adminController";
 import { authenticateToken } from "../middleware/authmiddleware";
+import { upload } from "../utils/multer";
 
 const router = Router();
 router.get("/profile", authenticateToken, getAdminById);
@@ -136,7 +143,7 @@ router.post("/add-cookie", authenticateToken, addCookie);
 router.post("/update-cookie", authenticateToken, updateCookie);
 router.post("/delete-cookie", authenticateToken, deleteCookie);
 
-router.get("/privacies", getPrivacy);
+router.post("/privacies", getPrivacy);
 router.get("/privacy/:id", getPrivacyById);
 router.post("/add-privacy", authenticateToken, addPrivacy);
 router.post("/update-privacy", authenticateToken, updatePrivacy);
@@ -161,7 +168,8 @@ router.post("/add-deal", authenticateToken, createDeal);
 router.post("/update-deal", authenticateToken, updateDeal);
 router.post("/delete-deal", authenticateToken, deleteDeal);
 
-router.get("/terms", getTerms);
+
+router.post("/terms", getTerms);
 router.get("/term/:id", getTermById);
 router.post("/add-term", authenticateToken, addTerms);
 router.post("/update-term", authenticateToken, updateTerm);
@@ -172,11 +180,16 @@ router.post("/add-search", authenticateToken, createSearchManagement);
 router.post("/update-search", authenticateToken, updateSearchManagement);
 router.post("/delete-search", authenticateToken, deleteSearchManagement);
 
-router.get("/blogs", getBlogs);
+router.post("/blogs", getBlogs);
 router.get("/blog/:id", getBlogById);
-router.post("/add-blog", authenticateToken, createBlog);
+router.post("/add-blog",  upload.single("image"), createBlog);
 router.post("/update-blog", authenticateToken, updateBlog);
 router.post("/delete-blog", authenticateToken, deleteBlog);
+
+router.post("/upload-image", upload.array("images"), uploadImages);
+
+
+
 
 router.get("/bookings", authenticateToken, fetchBooking);
 router.post("/update-booking", authenticateToken, updateBooking);
@@ -192,5 +205,12 @@ router.post("/createFareSetting", createFareSetting);
 router.post("/getAllFareSettings", getAllFareSettings);
 router.put("/updateFareSetting/:id", updateFareSetting);
 router.post("/deleteFareSetting/:id", deleteFareSetting);
+
+// Scraping Module Routes
+router.post("/scraping-modules", authenticateToken, createScrapingModule);
+router.get("/scraping-modules", authenticateToken, getAllScrapingModules);
+router.get("/scraping-modules/:id", authenticateToken, getScrapingModuleById);
+router.put("/scraping-modules/:id", authenticateToken, updateScrapingModule);
+router.delete("/scraping-modules/:id", authenticateToken, deleteScrapingModule);
 
 export default router;

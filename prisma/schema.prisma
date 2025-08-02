@@ -225,6 +225,7 @@ enum FlightSupplier {
   DUFFEL
   ALL
   NONE
+  COCKPIT 
 }
 
 model firewall {
@@ -317,15 +318,22 @@ model SocialSettings {
 }
 
 model privacyPolicy {
-  id        String  @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid()) @map("_id")
   isEnabled Boolean
-  content   Json[]
+  language  Language
+  content   Json
 }
 
 model termsAndCondition {
-  id        String  @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid()) @map("_id")
   isEnabled Boolean
-  content   Json[]
+  language  Language
+  content   Json
+}
+
+enum Language {
+  EN
+  ES
 }
 
 model deals {
@@ -387,6 +395,7 @@ model Blog {
   description   String
   secondaryImg  String[]
   secondaryDesc String
+  language      Language
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -482,6 +491,9 @@ model FareSetting {
   fareCodes    String[] // Array of fare codes
   refundable   String
   changeable   String
+  gds          String
+  checkedBaggage String
+  cabinBaggage String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -519,4 +531,17 @@ model Stripe_secret {
   secret         String
   webbookSecret  String
  
+}
+
+model ScrapingModule {
+  id              String   @id @default(uuid()) @map("_id")
+  airlineName     String
+  packageName     String
+  cabinBaggage    String?
+  checkedBaggage  String?
+  handBaggage     String?
+  otherDetails    String[]
+  price           Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

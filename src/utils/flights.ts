@@ -949,6 +949,7 @@ export function combineAllRoutes(routeArrays: Offer[][], args?: { minTime?: stri
                     console.log(nextRoute.total_amount);
                 }
                 // Ensure that the time difference is sufficient between current route and next route
+                //last configured leg
                 const lastSegmentOfCurrentRoute = currentRoute[currentRoute.length - 1]?.slices?.[0]?.segments;
                 const lastSegmentLength = lastSegmentOfCurrentRoute?.length;
                 const differenceInMinutes = getDifferenceInMinutes(
@@ -1061,7 +1062,7 @@ export const mapCombinedResponseToOfferType = (response: Offer[][]) => {
             }
             slice.segments.push(...(route.slices[0].segments))
 
-            if (route.fareOptions) {
+            if (route.fareOptions) { 
                 route.fareOptions.forEach((fareOption) => {
                     fareOptions.push(fareOption)
                 })

@@ -9,6 +9,9 @@ import { AdminPermissions } from "../../types/adminTypes";
 import { BaggageType } from "@prisma/client";
 import { prisma } from "../prismaClient";
 
+import { generateRandomId, uploadImage } from "../utils/bucket";
+
+
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
 
@@ -1349,13 +1352,15 @@ export const addPrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { isEnabled, content } = req.body;
+  const { isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
 
   try {
     const privacy = await prisma.privacyPolicy.create({
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
@@ -1379,8 +1384,12 @@ export const getPrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
+  const { language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.privacyPolicy.findMany();
+    const privacy = await prisma.privacyPolicy.findMany({
+      where: { language: lang },
+    });
 
     if (privacy) {
       res.status(200).json({
@@ -1402,12 +1411,13 @@ export const getPrivacyById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.body;
-
+  const { id, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.privacyPolicy.findUnique({
+    const privacy = await prisma.privacyPolicy.findFirst({
       where: {
         id: id,
+        language: lang,
       },
     });
 
@@ -1431,8 +1441,8 @@ export const updatePrivacy = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, isEnabled, content } = req.body;
-
+  const { id, isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
     const updatedPrivacy = await prisma.privacyPolicy.update({
       where: {
@@ -1441,6 +1451,7 @@ export const updatePrivacy = async (
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
@@ -1492,24 +1503,26 @@ export const addTerms = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { isEnabled, content } = req.body;
+  const { isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
 
   try {
-    const privacy = await prisma.termsAndCondition.create({
+    const terms = await prisma.termsAndCondition.create({
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy added",
-        privacy: privacy,
+        message: "Terms added",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not created" });
+      res.status(404).json({ error: "Terms not created" });
     }
   } catch (error) {
     console.log(error);
@@ -1522,17 +1535,21 @@ export const getTerms = async (
   res: Response,
   next: NextFunction
 ) => {
+  const { language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.termsAndCondition.findMany();
+    const terms = await prisma.termsAndCondition.findMany({
+      where: { language: lang },
+    });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy fetched",
-        privacy: privacy,
+        message: "Terms fetched",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not found" });
+      res.status(404).json({ error: "Terms not found" });
     }
   } catch (error) {
     console.log(error);
@@ -1545,23 +1562,24 @@ export const getTermById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id } = req.body;
-
+  const { id, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const privacy = await prisma.termsAndCondition.findUnique({
+    const terms = await prisma.termsAndCondition.findFirst({
       where: {
         id: id,
+        language: lang,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy fetched",
-        privacy: privacy,
+        message: "Terms fetched",
+        terms: terms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not found" });
+      res.status(404).json({ error: "Terms not found" });
     }
   } catch (error) {
     console.log(error);
@@ -1574,27 +1592,28 @@ export const updateTerm = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { id, isEnabled, content } = req.body;
-
+  const { id, isEnabled, content, language } = req.body;
+  const lang = language && ["EN", "ES"].includes(language) ? language : "EN";
   try {
-    const updatedPrivacy = await prisma.termsAndCondition.update({
+    const updatedTerms = await prisma.termsAndCondition.update({
       where: {
         id: id,
       },
       data: {
         isEnabled: isEnabled,
         content: content,
+        language: lang,
       },
     });
 
-    if (updatedPrivacy) {
+    if (updatedTerms) {
       res.status(200).json({
-        message: "Privacy updated",
-        privacy: updatedPrivacy,
+        message: "Terms updated",
+        terms: updatedTerms,
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not updated" });
+      res.status(404).json({ error: "Terms not updated" });
     }
   } catch (error) {
     console.log(error);
@@ -1610,19 +1629,19 @@ export const deleteTerm = async (
   const { id } = req.body;
 
   try {
-    const privacy = await prisma.termsAndCondition.delete({
+    const terms = await prisma.termsAndCondition.delete({
       where: {
         id: id,
       },
     });
 
-    if (privacy) {
+    if (terms) {
       res.status(200).json({
-        message: "Privacy deleted",
+        message: "Terms deleted",
         success: true,
       });
     } else {
-      res.status(404).json({ error: "Privacy not deleted" });
+      res.status(404).json({ error: "Terms not deleted" });
     }
   } catch (error) {
     console.log(error);
@@ -2245,6 +2264,41 @@ export const deleteSearchManagement = async (
   }
 };
 
+export const uploadImages = async (req: Request, res: Response) => {
+  try {
+    
+    const files = req.files as Express.Multer.File[];
+
+    console.log("files",files)
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ success: false, message: "No files uploaded." });
+    }
+
+    const imageUrls: string[] = [];
+
+    for (const file of files) {
+      const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+      const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+      imageUrls.push(imageUrl);
+    }
+     console.log("imageUrls",imageUrls)
+
+    return res.status(200).json({
+      success: true,
+      urls: imageUrls,
+    });
+
+  } catch (error) {
+    console.error("Error uploading images:", error);
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
+};
+
+
 //blogs
 export const createBlog = async (
   req: Request,
@@ -2252,7 +2306,12 @@ export const createBlog = async (
   next: NextFunction
 ) => {
   try {
-    const { mainImg, description, secondaryImg, secondaryDesc } = req.body;
+    const { mainImg, description, secondaryImg, secondaryDesc,language } = req.body;
+    //  const file = req.file;
+    // const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
+    
+    // const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
+    // console.log("imageUrl",imageUrl)
 
     const newEntry = await prisma.blog.create({
       data: {
@@ -2260,6 +2319,7 @@ export const createBlog = async (
         description,
         secondaryImg,
         secondaryDesc,
+        language,
       },
     });
 
@@ -2270,19 +2330,48 @@ export const createBlog = async (
   }
 };
 
+// export const getBlogs = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const {language} = req.body;
+//     const entries = await prisma.blog.findMany({
+//       where: {
+//         language: language, // ✅ OR simply `language` if key and value are same
+//       },
+//     });
+//     res.status(200).json(entries);
+//   } catch (error) {
+//     console.log(error);
+//     next(handlePrismaError(error));
+//   }
+// };
+
 export const getBlogs = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const entries = await prisma.blog.findMany();
+    const { language } = req.body;
+
+    console.log(language)
+
+    const entries = await prisma.blog.findMany({
+      where: {
+        language: language, // ✅ OR simply `language` if key and value are same
+      },
+    });
+
     res.status(200).json(entries);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     next(handlePrismaError(error));
   }
 };
+
 
 export const getBlogById = async (
   req: Request,
@@ -2459,9 +2548,9 @@ export const getBaggageWeight = async (req: Request, res: Response, next: NextFu
 export const createFareSetting = async (req, res) => {
   console.log(req.body);
   try {
-    const { airlineCodes, fareCodes, refundable, changeable, checkedBags } = req.body;
+    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
     const newSetting = await prisma.fareSetting.create({
-      data: { airlineCodes, fareCodes, refundable, changeable },
+      data: { airlineCodes, fareCodes, refundable, changeable ,gds, cabinBaggage, checkedBaggage},
     });
     res.status(201).json(newSetting);
   } catch (error) {
@@ -2475,7 +2564,7 @@ export const getAllFareSettings = async (req, res) => {
     const settings = await prisma.fareSetting.findMany();
     res.json(settings);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching fare settings" });
+    res.status(500).json({ error: error });
   }
 };
 
@@ -2484,10 +2573,10 @@ export const updateFareSetting = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { airlineCodes, fareCodes, refundable, changeable } = req.body;
+    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
     const updatedSetting = await prisma.fareSetting.update({
       where: { id },
-      data: { airlineCodes, fareCodes, refundable, changeable },
+      data: { airlineCodes, fareCodes, refundable, changeable,gds,cabinBaggage, checkedBaggage },
     });
     res.json(updatedSetting);
   } catch (error) {
@@ -2503,5 +2592,180 @@ export const deleteFareSetting = async (req, res) => {
     res.json({ message: "Fare setting deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting fare setting", details: error.message });
+  }
+};
+
+// Scraping Module Controllers
+export const createScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const {
+    airlineName,
+    packageName,
+    cabinBaggage,
+    checkedBaggage,
+    handBaggage,
+    otherDetails,
+    price,
+  } = req.body;
+
+  try {
+    const scrapingModule = await prisma.scrapingModule.create({
+      data: {
+        airlineName,
+        packageName,
+        cabinBaggage,
+        checkedBaggage,
+        handBaggage,
+        otherDetails,
+        price: parseFloat(price),
+      },
+    });
+
+    if (scrapingModule) {
+      res.status(201).json({
+        message: "Scraping module created successfully",
+        scrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not created" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getAllScrapingModules = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const scrapingModules = await prisma.scrapingModule.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (scrapingModules) {
+      res.status(200).json({
+        message: "Scraping modules fetched successfully",
+        scrapingModules,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping modules not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const getScrapingModuleById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+
+  try {
+    const scrapingModule = await prisma.scrapingModule.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (scrapingModule) {
+      res.status(200).json({
+        message: "Scraping module fetched successfully",
+        scrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const updateScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+  const {
+    airlineName,
+    packageName,
+    cabinBaggage,
+    checkedBaggage,
+    handBaggage,
+    otherDetails,
+    price,
+  } = req.body;
+
+  try {
+    const updatedScrapingModule = await prisma.scrapingModule.update({
+      where: {
+        id: id,
+      },
+      data: {
+        airlineName,
+        packageName,
+        cabinBaggage,
+        checkedBaggage,
+        handBaggage,
+        otherDetails,
+        price: price ? parseFloat(price) : undefined,
+      },
+    });
+
+    if (updatedScrapingModule) {
+      res.status(200).json({
+        message: "Scraping module updated successfully",
+        scrapingModule: updatedScrapingModule,
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not updated" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
+  }
+};
+
+export const deleteScrapingModule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { id } = req.params;
+
+  try {
+    const deletedScrapingModule = await prisma.scrapingModule.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    if (deletedScrapingModule) {
+      res.status(200).json({
+        message: "Scraping module deleted successfully",
+        success: true,
+      });
+    } else {
+      res.status(404).json({ error: "Scraping module not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    next(handlePrismaError(error));
   }
 };

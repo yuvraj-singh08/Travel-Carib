@@ -12,6 +12,7 @@ async function setupRoutes() {
 
     // Pass the initialized flightClient to FlightController
     const flightController = new FlightController(flightClient);
+    
 
     // Define routes
     router.post('/get-possible-routes', flightController.getPossibleRoutes);
