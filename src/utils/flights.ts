@@ -817,7 +817,7 @@ export const amadeusNewParser = (amadeusResponse: AmadeusResponseType, firewall:
 }
 
 export const filterResponse = (response: Offer[], filters: FilterType, allFirewall: Firewall[], airlines: string[]) => {
-    const excludedAirlines = airlines.filter((airline) => !filters.PrefferedAirlines.includes(airline));
+    const excludedAirlines = airlines.filter((airline) => !filters?.PrefferedAirlines?.includes(airline));
     const filteredResponse: Offer[] = response.filter((route) => {
         const minPriceFilter = filters?.MinPrice ? (route.total_amount) >= filters.MinPrice : true
         const maxPriceFilter = filters?.MaxPrice ? (route.total_amount) <= filters.MaxPrice : true;

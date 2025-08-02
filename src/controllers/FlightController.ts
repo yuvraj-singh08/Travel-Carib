@@ -15,8 +15,6 @@ class FlightController {
 
   constructor(flightClient: FlightClientInstance) {
     this.flightClient = flightClient;
-    this.advanceFlightSearch = this.advanceFlightSearch.bind(this);
-    this.multiCitySearch = this.multiCitySearch.bind(this);
     this.BookFlight = this.BookFlight.bind(this);
     this.newMulticitSearch = this.newMulticitSearch.bind(this);
     this.searchFlights = this.searchFlights.bind(this);
@@ -48,33 +46,6 @@ class FlightController {
     }
   }
 
-  async advanceFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { filters, originLocation, passengers, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
-      if (!(originLocation !== undefined && destinationLocation !== undefined && departureDate !== undefined && maxLayovers !== undefined && passengerType !== undefined && cabinClass !== undefined))
-        throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
-
-      const response = await this.flightClient.advanceFlightSearch({
-        originLocation,
-        destinationLocation,
-        passengers: {
-          adults: parseInt(passengers?.adults) || 1,
-          children: parseInt(passengers?.children) || 0,
-          infants: parseInt(passengers?.infants) || 0,
-        },
-        departureDate,
-        passengerType,
-        maxLayovers,
-        cabinClass,
-        filters,
-        sortBy: sortBy || "BEST"
-      })
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async newMulticitSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { FlightDetails, passengers, maxLayovers, cabinClass, filters, sortBy } = req.body;
@@ -94,56 +65,6 @@ class FlightController {
         filters,
       })
       res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async multiCitySearch(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { FlightDetails, passengerType, passengers, maxLayovers, cabinClass, filters, sortBy, flightWay } = req.body;
-      if (!FlightDetails || FlightDetails.length == 0 || !maxLayovers || !passengerType || !cabinClass || !flightWay) {
-        throw new Error("Missing required fields: FlightDetails, passengerType, maxLayovers, cabinClass, filters, flightWay");
-      }
-      const response = await this.flightClient.multiCityFlightSearch({
-        FlightDetails,
-        passengerType,
-        maxLayovers,
-        passengers: {
-          adults: parseInt(passengers?.adults) || 1,
-          children: parseInt(passengers?.children) || 0,
-          infants: parseInt(passengers?.infants) || 0,
-        },
-        sortBy: sortBy || "BEST",
-        cabinClass,
-        filters,
-        flightWay
-      })
-      res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async roundFlightSearch(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { filters, originLocation, destinationLocation, passengers, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections, sortBy } = req.body;
-      if (!(originLocation !== undefined && destinationLocation !== undefined && departureDate !== undefined && maxLayovers !== undefined && passengerType !== undefined && cabinClass !== undefined))
-        throw new Error("Missing required fields: originLocation, destinationLocation, departureDate, maxLayovers, passengerType, returnDate, cabinClass, maxConnections");
-
-      const response = await this.flightClient.advanceFlightSearch({
-        originLocation,
-        destinationLocation,
-        departureDate,
-        sortBy: sortBy || 'BESsortByT',
-        returnDate,
-        passengerType,
-        maxLayovers,
-        cabinClass,
-        filters,
-        passengers
-      })
-      res.status(200).json(response);
     } catch (error) {
       next(error);
     }

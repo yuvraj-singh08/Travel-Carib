@@ -125,106 +125,83 @@ class KiuClient {
     return this.enqueueRequest(config);
   }
 
-  async searchFlights(params: FlightSearchParams, firewall: any, commission: CommissionType): Promise<any> {
+  async searchFlights(params: NewKiuFlightSearchParams): Promise<any> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000 * (Math.random())))
-      const invalidResponseIndexs = [];
-      const DepartureDate = getDateString(params.DepartureDate)
-      const requestXML = buildFlightSearchRequest({ ...params, DepartureDate: DepartureDate }, this.mode);
+      const requestXML = newbuildFlightSearchRequest(params, this.mode);
       const response = await this.queuedPost(requestXML);
-      // console.log("KIU response: ", response.data);
       const parser = new xml2js.Parser();
-      const jsonResponse = await parser.parseStringPromise(response.data);
-      const parsedResponse = parseKiuResposne(jsonResponse, firewall, params.tripOrigin, params.tripDestination);
-      const cabinClass = kiuClasses[params.CabinClass];
-      const priceRequestPromises = parsedResponse?.map(async (offer, offerIndex) => {
-        let sliceSum = 0;
-        const sliceResponse = await Promise.allSettled(
-          offer?.slices?.map(async (slice, sliceIndex) => {
-            let segmentSum = 0
-            const segmentResponse = await Promise.allSettled(
-              slice?.segments?.map(async (segment, segmentIndex) => {
-                let flag = false;
-                let code = null;
-                segment?.bookingAvl?.forEach((bookingAvl) => {
-                  if (flag)
-                    return;
-                  if (parseInt(bookingAvl.quantity) > (params.Passengers.adults + params.Passengers.children + params.Passengers.infants)) {
-                    flag = true;
-                    code = bookingAvl.code;
-                  }
-                })
-                if (!flag) {
-                  invalidResponseIndexs.push(offerIndex);
-                  return null;
-                }
-                const priceResponse = await this.searchPrice({
-                  OriginLocation: segment?.origin?.iata_code,
-                  DestinationLocation: segment?.destination?.iata_code,
-                  DepartureDateTime: segment?.departing_at,
-                  ArrivalDateTime: segment?.arriving_at,
-                  MarketingAirline: segment?.operating_carrier?.iata_code,
-                  FlightNumber: segment?.operating_carrier_flight_number,
-                  Passengers: params.Passengers,
-                  ResBookDesigCode: code
-                });
-
-                const pi = priceResponse?.KIU_AirPriceRS?.PricedItineraries?.[0];
-                const py = pi?.PricedItinerary?.[0];
-                const itf = py?.AirItineraryPricingInfo?.[0]?.ItinTotalFare?.[0];
-                const total_amount = itf?.TotalFare?.[0]?.$?.Amount;
-                if (!total_amount) {
-                  console.log("KIU Price Error");
-                }
-                if (total_amount) {
-                  segmentSum += parseFloat(total_amount);
-                }
-
-                // Update the parsedResponse with the price data
-                parsedResponse[offerIndex].slices[sliceIndex].segments[segmentIndex].segmentPrice = total_amount;
-                parsedResponse[offerIndex].slices[sliceIndex].segments[segmentIndex].ResBookDesigCode = code;
-                return priceResponse;
-              })
-            );
-            if (segmentSum) {
-              sliceSum += segmentSum;
-            }
-            return {
-              ...segmentResponse,
-              segmentSum
-            };
-          })
-        );
-        let commissionAmount = 0;
-        if (commission) {
-          if (commission.feeType === 'FIXED') {
-            commissionAmount = parseFloat(commission.commissionFees);
-          }
-          else {
-            commissionAmount = (sliceSum * parseFloat(commission.commissionFees)) / 100.00;
-          }
+      const jsonResponse = await parser.parseStringPromise(response.data) as { KIU_AirAvailRS: KiuJsonResponseType };
+      //@ts-ignore
+      if (jsonResponse?.Root?.Error) {
+        console.log(jsonResponse);
+        throw new HttpError("Error in KIU response check server log", 500);
+      }
+      const RPH = kiuClasses?.[`${params.CabinClass}`]
+      const itenaries = jsonResponse.KIU_AirAvailRS?.OriginDestinationInformation?.map((OriginDestinationInformation) => {
+        //@ts-ignores
+        if (OriginDestinationInformation?.OriginDestinationOptions?.[0] === "\n\t\t") {
+          return []
         }
-        parsedResponse[offerIndex].total_amount = (sliceSum === 0 ? 999999 : sliceSum + commissionAmount).toString();
-        parsedResponse[offerIndex].commissionAmount = commissionAmount;
-        return {
-          ...sliceResponse,
-          sliceSum
-        };
-      });
+        const data: Offer[] = [];
+        OriginDestinationInformation?.OriginDestinationOptions?.[0]?.OriginDestinationOption?.forEach((OriginDestionationOption) => {
+          const parsedValue = newKiuParser(OriginDestionationOption, RPH) as Offer | false;
+          if (parsedValue === false) {
+            return;
+          }
+          data.push(parsedValue);
+        })
+        return data;
+      })
+      console.log(itenaries)
+      await Promise.allSettled(itenaries.map(async (itinerary) => {
+        const offerPromises = await Promise.allSettled(itinerary.map(async (offer) => {
+          const fareBrands: FareBrandType[] = [];
+          const fareCodePromises = await Promise.allSettled(offer.slices[0].segments[0].ResBookDesigCode.map(async (code) => {
+            const priceResponse = await this.newSearchPrice({
+              OriginDestinationOptions: [
+                {
+                  FlightSegments: offer.slices[0].segments.map((segment) => {
+                    return {
+                      OriginLocation: segment.origin.iata_code,
+                      DestinationLocation: segment.destination.iata_code,
+                      DepartureDateTime: segment.departing_at,
+                      ArrivalDateTime: segment.arriving_at,
+                      CabinType: 'economy',
+                      FlightNumber: segment.marketing_carrier_flight_number,
+                      MarketingAirline: segment.marketing_carrier.iata_code,
+                      ResBookDesigCode: code,
+                      RPH: RPH
+                    }
+                  })
+                }
+              ],
+              Passengers: params.Passengers
+            });
+            if (priceResponse.error === false) {
+              fareBrands.push({
+                baggageData: priceResponse.baggageData,
+                fareBrand: code,
+                offerId: "fewf",
+                totalAmount: priceResponse.totalPrice
+              })
+            }
 
-      // Execute all price requests concurrently
-      const priceResponse = await Promise.allSettled(priceRequestPromises)
+          }))
+          fareBrands.sort((a, b) => a.totalAmount - b.totalAmount);
+          console.log("Sorted Fare brands", fareBrands);
+          offer.fareBrands = fareBrands;
+          offer.total_amount = fareBrands[0].totalAmount;
+        }))
+      }))
 
-      const filteredResponse = parsedResponse.filter((parsedResponse, index) => !invalidResponseIndexs.includes(index));
-
-      return filteredResponse
+      return itenaries;
     } catch (error) {
       if (error?.response?.status === 509) {
         console.log("KIU's request limit exceeded");
         return [];
       }
       console.log(error);
-      return []
+      return [];
     }
   }
 
