@@ -1,0 +1,27 @@
+name: Deploy Travel-Carib Backend to EC2
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT || 22 }}
+        script: |
+          cd Travel-Carib
+          pm2 stop all
+          git pull
+          npx prisma generate
+          pm2 start --node-args="--max-old-space-size=14336" --interpreter="node_modules/.bin/ts-node" --interpreter-args="-P tsconfig.json --esm" index.ts
+          
+          echo "Deployment completed successfully!"
