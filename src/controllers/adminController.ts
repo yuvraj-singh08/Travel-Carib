@@ -2216,6 +2216,7 @@ export const getSearchManagement = async (
   res: Response,
   next: NextFunction
 ) => {
+  
   try {
     const entries = await prisma.searchManagement.findMany();
     res.status(200).json(entries);

@@ -341,7 +341,8 @@ model deals {
   title        String
   way          String
   code         String   @unique
-  origin       String?
+  origin     Json?
+  
   discount     String
   discountType String
   airlineCode  String?
@@ -374,8 +375,10 @@ model SearchManagement {
   gdsNdcSupplier        FlightSupplier
   ruleType              RuleType
   journeyType           RouteType
-  fromOriginAirport     String
-  toDestinationsAirport String
+  fromOriginAirport     String?
+  toDestinationsAirport String?
+  origins               String[]
+  destinations          String[]
   connectingAirports    Json
   airlinesIncluded      String[]
   airlinesExcluded      String[]
