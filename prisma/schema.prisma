@@ -496,7 +496,7 @@ model FareSetting {
   changeable   String
   gds          String
   checkedBaggage String
-  cabinBaggage String
+  cabinBaggage String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

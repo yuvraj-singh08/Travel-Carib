@@ -40,7 +40,7 @@ export const registerUser = async (req: AuthenticatedRequest, res: Response, nex
       success: true,
     });
   } catch (error) {
-    next();
+    next(handlePrismaError(error));
   }
 };
 
@@ -86,7 +86,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 };
 
 //verify-otp
-export const verifyOTP = async (req: Request, res: Response) => {
+export const verifyOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, otp } = req.body;
 
   try {
@@ -128,15 +128,11 @@ export const verifyOTP = async (req: Request, res: Response) => {
       success: true,
     });
   } catch (e) {
-    console.log(e);
-    return res.status(500).json({
-      success: false,
-      message: e.message,
-    });
+    next(handlePrismaError(e));
   }
 };
 
-export const resetAdminPassword = async (req: Request, res: Response) => {
+export const resetAdminPassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
 
   try {
@@ -177,16 +173,12 @@ export const resetAdminPassword = async (req: Request, res: Response) => {
       });
     }
   } catch (e) {
-    console.log(e);
-    return res.status(500).json({
-      success: false,
-      message: e.message,
-    });
+    next(handlePrismaError(e));
   }
 };
 
 // Login User
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
 
   try {
@@ -218,15 +210,15 @@ export const loginUser = async (req: Request, res: Response) => {
 
     return res.json({ token, user });
   } catch (error) {
-    console.error("Error logging in user:", error);
-    return res.status(500).json({ error: "Failed to login" });
+    next(handlePrismaError(error));
   }
 };
 
 export const getAdminById = async (
   req: AuthenticatedRequest,
-  res: Response
-) => {
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
   const adminId = req.user?.id;
 
   if (!adminId) {
@@ -325,8 +317,11 @@ export const getAdminById = async (
       return res.status(404).json({ error: "User not found" });
     }
   } catch (error) {
-    console.error("Error fetching user:", error);
-    return res.status(500).json({ error: "Failed to fetch user" });
+
+    next(handlePrismaError(error));
+
+    // console.error("Error fetching user:", error);
+    // return res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
@@ -2200,6 +2195,7 @@ export const createSearchManagement = async (
   next: NextFunction
 ) => {
   try {
+
     const newEntry = await prisma.searchManagement.create({
       data: req.body,
     });
@@ -2362,7 +2358,7 @@ export const getBlogs = async (
 
     const entries = await prisma.blog.findMany({
       where: {
-        language: language, // ✅ OR simply `language` if key and value are same
+        language: language || "EN", // ✅ OR simply `language` if key and value are same
       },
     });
 
@@ -2430,26 +2426,24 @@ export const deleteBlog = async (
   }
 };
 
-export const fetchBooking = async (req: Request, res: Response) => {
+export const fetchBooking = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const bookings = await prisma.booking.findMany();
 
     if (!bookings) {
-      return res
+       res
         .status(404)
         .json({ error: "Booking not found", success: false });
     }
 
-    return res.status(200).json({ data: bookings, success: true });
+     res.status(200).json({ data: bookings, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch booking", success: false });
+    next(handlePrismaError(error));
   }
 };
 
-export const deleteBooking = async (req: Request, res: Response) => {
+export const deleteBooking = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.body;
 
   try {
@@ -2457,16 +2451,17 @@ export const deleteBooking = async (req: Request, res: Response) => {
       where: { id: id },
     });
 
-    return res.status(200).json({ message: "Booking deleted", success: true });
+     res.status(200).json({ message: "Booking deleted", success: true });
   } catch (error) {
     console.error("Error deleting booking:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to delete booking", success: false });
+    next(handlePrismaError(error));
+    // return res
+    //   .status(500)
+    //   .json({ error: "Failed to delete booking", success: false });
   }
 };
 
-export const updateBooking = async (req: Request, res: Response) => {
+export const updateBooking = async (req: Request, res: Response, next: NextFunction) => {
   const { id, ...data } = req.body;
 
   try {
@@ -2475,12 +2470,13 @@ export const updateBooking = async (req: Request, res: Response) => {
       data: data,
     });
 
-    return res.status(200).json({ booking, success: true });
+     res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error("Error updating booking:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to update booking", success: false });
+    next(handlePrismaError(error));
+    // return res
+    //   .status(500)
+    //   .json({ error: "Failed to update booking", success: false });
   }
 };
 
@@ -2546,7 +2542,7 @@ export const getBaggageWeight = async (req: Request, res: Response, next: NextFu
 }
 
 // Create a new fare setting
-export const createFareSetting = async (req, res) => {
+export const createFareSetting = async (req: Request, res: Response, next: NextFunction) => {
   console.log(req.body);
   try {
     const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
@@ -2555,22 +2551,27 @@ export const createFareSetting = async (req, res) => {
     });
     res.status(201).json(newSetting);
   } catch (error) {
-    res.status(500).json({ error: "Error creating fare setting", details: error.message });
+    next(handlePrismaError(error));
+    // res.status(500).json({ error: "Error creating fare setting", details: error.message });
   }
 };
 
 // Get all fare settings
-export const getAllFareSettings = async (req, res) => {
+export const getAllFareSettings = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("getAllFareSettings")
     const settings = await prisma.fareSetting.findMany();
     res.json(settings);
+
   } catch (error) {
-    res.status(500).json({ error: error });
+    console.log(error)
+    next(handlePrismaError(error));
+    // res.status(500).json({ error: error });
   }
 };
 
 // Update a fare setting
-export const updateFareSetting = async (req, res) => {
+export const updateFareSetting = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -2581,18 +2582,20 @@ export const updateFareSetting = async (req, res) => {
     });
     res.json(updatedSetting);
   } catch (error) {
-    res.status(500).json({ error: "Error updating fare setting", details: error.message });
+    next(handlePrismaError(error));
+    // res.status(500).json({ error: "Error updating fare setting", details: error.message });
   }
 };
 
 // Delete a fare setting
-export const deleteFareSetting = async (req, res) => {
+export const deleteFareSetting = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     await prisma.fareSetting.delete({ where: { id } });
     res.json({ message: "Fare setting deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Error deleting fare setting", details: error.message });
+    next(handlePrismaError(error));
+    // res.status(500).json({ error: "Error deleting fare setting", details: error.message });
   }
 };
 

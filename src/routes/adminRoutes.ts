@@ -204,7 +204,7 @@ router.get('/baggage', getBaggageWeight);
 router.post("/createFareSetting", createFareSetting);
 router.post("/getAllFareSettings", getAllFareSettings);
 router.put("/updateFareSetting/:id", updateFareSetting);
-router.post("/deleteFareSetting/:id", deleteFareSetting);
+router.delete("/deleteFareSetting/:id", deleteFareSetting);
 
 // Scraping Module Routes
 router.post("/scraping-modules", authenticateToken, createScrapingModule);
