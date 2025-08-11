@@ -548,3 +548,6 @@ model ScrapingModule {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+
+

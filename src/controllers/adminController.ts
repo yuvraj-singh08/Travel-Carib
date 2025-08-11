@@ -10,13 +10,18 @@ import { BaggageType } from "@prisma/client";
 import { prisma } from "../prismaClient";
 
 import { generateRandomId, uploadImage } from "../utils/bucket";
-
+import { actions, resources } from "../utils/constants";
+import { checkPermission } from "../utils/permission";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
 const SALT_ROUNDS = 10;
 
-export const registerUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  if (req.user.role !== 'ADMIN') {
+export const registerUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (req.user.role !== "ADMIN") {
     throw new HttpError("Unauthorized", 403);
   }
   const { email, password, firstName, lastName, role } = req.body;
@@ -86,7 +91,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
 };
 
 //verify-otp
-export const verifyOTP = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const verifyOTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
   const { email, otp } = req.body;
 
   try {
@@ -132,7 +141,11 @@ export const verifyOTP = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const resetAdminPassword = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const resetAdminPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
   const { email, password } = req.body;
 
   try {
@@ -178,7 +191,11 @@ export const resetAdminPassword = async (req: Request, res: Response, next: Next
 };
 
 // Login User
-export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
   const { email, password } = req.body;
 
   try {
@@ -204,11 +221,24 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       }
     }
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: "7d",
+    const role = await prisma.userManagement.findFirst({
+      where: {
+        adminId: user.id,
+      },
+      select: {
+        roleId: true,
+      },
     });
 
-    return res.json({ token, user });
+    const token = jwt.sign(
+      { userId: user.id, role: user.role, roleId: role.roleId },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    return res.json({ token, user, roleId: role.roleId });
   } catch (error) {
     next(handlePrismaError(error));
   }
@@ -238,23 +268,25 @@ export const getAdminById = async (
       },
     });
 
+    console.log("user...............",user);
+
     data = {
       id: user?.id,
       email: user?.email,
-      role: user?.role,
+      role: user?.userManagement[0]?.roleName + user?.role,
       firstname: user?.firstname,
       lastname: user?.lastname,
     };
 
     const specificNames = {
-      "Dashboard": "dashboard",
-      "Firewall": "firewall",
+      Dashboard: "dashboard",
+      Firewall: "firewall",
       "Customer Details": "customer_details",
       "Commission Details": "commission_details",
       "User Management": "user_management",
       "Ticket System": "ticket_system",
       "Landing Page": "landing_page",
-      "Settings": "settings",
+      Settings: "settings",
       "Search Management": "search_management",
     };
 
@@ -317,7 +349,6 @@ export const getAdminById = async (
       return res.status(404).json({ error: "User not found" });
     }
   } catch (error) {
-
     next(handlePrismaError(error));
 
     // console.error("Error fetching user:", error);
@@ -330,7 +361,8 @@ export const addFirewall = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { title, supplier, code, flightNumber, flightSequence, from, to } = req.body;
+  const { title, supplier, code, flightNumber, flightSequence, from, to } =
+    req.body;
 
   try {
     const firewall = await prisma.firewall.create({
@@ -736,9 +768,10 @@ export const addUser = async (
         role: "ADMIN",
       },
     });
+    let createAdminUser
 
     if (user) {
-      const createAdminUser = await prisma.userManagement.create({
+       createAdminUser = await prisma.userManagement.create({
         data: {
           name: name,
           uniqueId: uniqueId,
@@ -757,6 +790,7 @@ export const addUser = async (
         res.status(200).json({
           message: "User created",
           user: user,
+          createAdminUser: createAdminUser,
           success: true,
         });
       } else {
@@ -2195,7 +2229,6 @@ export const createSearchManagement = async (
   next: NextFunction
 ) => {
   try {
-
     const newEntry = await prisma.searchManagement.create({
       data: req.body,
     });
@@ -2212,7 +2245,6 @@ export const getSearchManagement = async (
   res: Response,
   next: NextFunction
 ) => {
-  
   try {
     const entries = await prisma.searchManagement.findMany();
     res.status(200).json(entries);
@@ -2263,13 +2295,14 @@ export const deleteSearchManagement = async (
 
 export const uploadImages = async (req: Request, res: Response) => {
   try {
-    
     const files = req.files as Express.Multer.File[];
 
-    console.log("files",files)
+    console.log("files", files);
 
     if (!files || files.length === 0) {
-      return res.status(400).json({ success: false, message: "No files uploaded." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No files uploaded." });
     }
 
     const imageUrls: string[] = [];
@@ -2279,22 +2312,21 @@ export const uploadImages = async (req: Request, res: Response) => {
       const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
       imageUrls.push(imageUrl);
     }
-     console.log("imageUrls",imageUrls)
+    console.log("imageUrls", imageUrls);
 
     return res.status(200).json({
       success: true,
       urls: imageUrls,
     });
-
   } catch (error) {
     console.error("Error uploading images:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Unknown error occurred",
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };
-
 
 //blogs
 export const createBlog = async (
@@ -2303,10 +2335,11 @@ export const createBlog = async (
   next: NextFunction
 ) => {
   try {
-    const { mainImg, description, secondaryImg, secondaryDesc,language } = req.body;
+    const { mainImg, description, secondaryImg, secondaryDesc, language } =
+      req.body;
     //  const file = req.file;
     // const fileName = `vuelitos-${generateRandomId(5)}.jpeg`;
-    
+
     // const imageUrl = await uploadImage(file.buffer, fileName, file.mimetype);
     // console.log("imageUrl",imageUrl)
 
@@ -2354,7 +2387,7 @@ export const getBlogs = async (
   try {
     const { language } = req.body;
 
-    console.log(language)
+    console.log(language);
 
     const entries = await prisma.blog.findMany({
       where: {
@@ -2368,7 +2401,6 @@ export const getBlogs = async (
     next(handlePrismaError(error));
   }
 };
-
 
 export const getBlogById = async (
   req: Request,
@@ -2426,24 +2458,30 @@ export const deleteBlog = async (
   }
 };
 
-export const fetchBooking = async (req: Request, res: Response, next: NextFunction) => {
+export const fetchBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const bookings = await prisma.booking.findMany();
 
     if (!bookings) {
-       res
-        .status(404)
-        .json({ error: "Booking not found", success: false });
+      res.status(404).json({ error: "Booking not found", success: false });
     }
 
-     res.status(200).json({ data: bookings, success: true });
+    res.status(200).json({ data: bookings, success: true });
   } catch (error) {
     console.error("Error fetching booking:", error);
     next(handlePrismaError(error));
   }
 };
 
-export const deleteBooking = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id } = req.body;
 
   try {
@@ -2451,7 +2489,7 @@ export const deleteBooking = async (req: Request, res: Response, next: NextFunct
       where: { id: id },
     });
 
-     res.status(200).json({ message: "Booking deleted", success: true });
+    res.status(200).json({ message: "Booking deleted", success: true });
   } catch (error) {
     console.error("Error deleting booking:", error);
     next(handlePrismaError(error));
@@ -2461,7 +2499,11 @@ export const deleteBooking = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const updateBooking = async (req: Request, res: Response, next: NextFunction) => {
+export const updateBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { id, ...data } = req.body;
 
   try {
@@ -2470,7 +2512,7 @@ export const updateBooking = async (req: Request, res: Response, next: NextFunct
       data: data,
     });
 
-     res.status(200).json({ booking, success: true });
+    res.status(200).json({ booking, success: true });
   } catch (error) {
     console.error("Error updating booking:", error);
     next(handlePrismaError(error));
@@ -2480,10 +2522,20 @@ export const updateBooking = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const addBaggageWeight = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addBaggageWeight = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
+
+    
+
+
+
+
     const { weight, type } = req.body;
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== "ADMIN") {
       throw new HttpError("Unauthorized", 403);
     }
     if (type !== BaggageType.CABIN && type !== BaggageType.CHECKED) {
@@ -2499,12 +2551,33 @@ export const addBaggageWeight = async (req: AuthenticatedRequest, res: Response,
   } catch (error) {
     next(error);
   }
-}
+};
 
-export const upadteBaggageWeight = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const upadteBaggageWeight = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
+
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.UPDATE
+    // );        
+
+    // if (!permission) {
+    //   res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to update baggage weight",
+    //   });
+    // } 
+
+
     const { weight, type } = req.body;
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== "ADMIN") {
       throw new HttpError("Unauthorized", 403);
     }
     if (type !== BaggageType.CABIN && type !== BaggageType.CHECKED) {
@@ -2530,24 +2603,82 @@ export const upadteBaggageWeight = async (req: AuthenticatedRequest, res: Respon
   } catch (error) {
     next(error);
   }
-}
+};
 
-export const getBaggageWeight = async (req: Request, res: Response, next: NextFunction) => {
+export const getBaggageWeight = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
+
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.VIEW
+    // );
+
+    // if (!permission) {
+    //   res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to view baggage weight",
+    //   });
+    // }
+
     const baggage = await prisma.baggageWeight.findMany();
     res.status(200).json(baggage);
   } catch (error) {
     next(error);
   }
-}
+};
 
 // Create a new fare setting
-export const createFareSetting = async (req: Request, res: Response, next: NextFunction) => {
+export const createFareSetting = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   console.log(req.body);
   try {
-    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
+
+
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.CREATE
+    // );    
+
+    // if (!permission) {
+    //   res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to create fare setting",
+    //   });
+    // }
+
+
+    const {
+      airlineCodes,
+      fareCodes,
+      refundable,
+      changeable,
+      gds,
+      cabinBaggage,
+      checkedBaggage,
+    } = req.body;
     const newSetting = await prisma.fareSetting.create({
-      data: { airlineCodes, fareCodes, refundable, changeable ,gds, cabinBaggage, checkedBaggage},
+      data: {
+        airlineCodes,
+        fareCodes,
+        refundable,
+        changeable,
+        gds,
+        cabinBaggage,
+        checkedBaggage,
+      },
     });
     res.status(201).json(newSetting);
   } catch (error) {
@@ -2557,28 +2688,66 @@ export const createFareSetting = async (req: Request, res: Response, next: NextF
 };
 
 // Get all fare settings
-export const getAllFareSettings = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllFareSettings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    console.log("getAllFareSettings")
+    console.log("getAllFareSettings");
     const settings = await prisma.fareSetting.findMany();
     res.json(settings);
-
   } catch (error) {
-    console.log(error)
+    console.log(error);
     next(handlePrismaError(error));
     // res.status(500).json({ error: error });
   }
 };
 
 // Update a fare setting
-export const updateFareSetting = async (req: Request, res: Response, next: NextFunction) => {
+export const updateFareSetting = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
 
-    const { airlineCodes, fareCodes, refundable, changeable,gds, cabinBaggage, checkedBaggage } = req.body;
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.UPDATE
+    // );  
+
+    // if (!permission) {
+    //   res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to update fare setting",
+    //   });
+    // }
+
+    const {
+      airlineCodes,
+      fareCodes,
+      refundable,
+      changeable,
+      gds,
+      cabinBaggage,
+      checkedBaggage,
+    } = req.body;
     const updatedSetting = await prisma.fareSetting.update({
       where: { id },
-      data: { airlineCodes, fareCodes, refundable, changeable,gds,cabinBaggage, checkedBaggage },
+      data: {
+        airlineCodes,
+        fareCodes,
+        refundable,
+        changeable,
+        gds,
+        cabinBaggage,
+        checkedBaggage,
+      },
     });
     res.json(updatedSetting);
   } catch (error) {
@@ -2588,7 +2757,11 @@ export const updateFareSetting = async (req: Request, res: Response, next: NextF
 };
 
 // Delete a fare setting
-export const deleteFareSetting = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteFareSetting = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { id } = req.params;
     await prisma.fareSetting.delete({ where: { id } });
@@ -2616,6 +2789,25 @@ export const createScrapingModule = async (
   } = req.body;
 
   try {
+
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.CREATE
+    // );  
+
+    // if (!permission) {
+    //   res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to create scraping module",
+    //   });
+    // }
+
+
+
+
     const scrapingModule = await prisma.scrapingModule.create({
       data: {
         airlineName,
@@ -2647,11 +2839,27 @@ export const getAllScrapingModules = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<any> => {
   try {
+
+    // const roleId = (req as any).user.roleId;
+
+    // const permission = await checkPermission(
+    //   roleId,
+    //   resources.SETTINGS,
+    //   actions.VIEW
+    // );
+
+    // if (!permission) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Insufficient permissions to view scraping modules",
+    //   });
+    // }
+
     const scrapingModules = await prisma.scrapingModule.findMany({
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -2676,6 +2884,23 @@ export const getScrapingModuleById = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
+
+  const roleId = (req as any).user.roleId;
+
+  const permission = await checkPermission(
+    roleId,
+    resources.SETTINGS,
+    actions.VIEW
+  );
+
+  if (!permission) {
+    res.status(401).json({
+      success: false,
+      message: "Insufficient permissions to view scraping module",
+    });
+  }
+
+
 
   try {
     const scrapingModule = await prisma.scrapingModule.findUnique({
@@ -2705,6 +2930,23 @@ export const updateScrapingModule = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
+
+  const roleId = (req as any).user.roleId;
+
+  const permission = await checkPermission(
+    roleId,
+    resources.SETTINGS,
+    actions.UPDATE
+  );
+
+  if (!permission) {
+    res.status(401).json({
+      success: false,
+      message: "Insufficient permissions to update scraping module",
+    });
+  }
+
+
   const {
     airlineName,
     packageName,
@@ -2752,6 +2994,20 @@ export const deleteScrapingModule = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
+
+  // const roleId = (req as any).user.roleId;
+
+  // const permission = await checkPermission(
+  //   roleId,
+  //   resources.SETTINGS,
+  //   actions.CREATE
+  // );
+  // if (!permission) {
+  //   res.status(401).json({
+  //     success: false,
+  //     message: "Insufficient permissions to delete scraping module",
+  //   });
+  // }
 
   try {
     const deletedScrapingModule = await prisma.scrapingModule.delete({

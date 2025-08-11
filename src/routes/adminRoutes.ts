@@ -91,8 +91,10 @@ import {
   updateScrapingModule,
   deleteScrapingModule,
 } from "../controllers/adminController";
-import { authenticateToken } from "../middleware/authmiddleware";
+import { authenticateToken, checkRolePermission } from "../middleware/authmiddleware";
 import { upload } from "../utils/multer";
+import { resolve } from "path";
+import { actions, resources } from "../utils/constants";
 
 const router = Router();
 router.get("/profile", authenticateToken, getAdminById);
@@ -102,115 +104,116 @@ router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify", verifyOTP);
 
-router.get("/firewall", getFirewall);
-router.post("/add-firewall", authenticateToken, addFirewall);
-router.post("/delete-firewall", authenticateToken, deleteFirewall);
+router.get("/firewall", authenticateToken,checkRolePermission(resources.FIREWALL,actions.VIEW ), getFirewall);
+router.post("/add-firewall", authenticateToken,checkRolePermission(resources.FIREWALL,actions.CREATE ), addFirewall);
+router.post("/delete-firewall", authenticateToken,checkRolePermission(resources.FIREWALL,actions.DELETE ), deleteFirewall);
 
-router.get("/types", getCommissionTypes);
-router.get("/type/:id", getCommissionTypeById);
-router.post("/add-type", authenticateToken, addCommissionType);
-router.post("/update-type", authenticateToken, updateCommissionType);
-router.post("/delete-type", authenticateToken, deleteCommissionType);
+router.get("/types", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.VIEW ), getCommissionTypes);
+router.get("/type/:id", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.VIEW ), getCommissionTypeById);
+router.post("/add-type", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.CREATE ), addCommissionType);
+router.post("/update-type", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.UPDATE ), updateCommissionType);
+router.post("/delete-type", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.DELETE ), deleteCommissionType);
 
-router.get("/commission", getCommission);
-router.get("/commission/:id", getCommissionById);
-router.post("/add-commission", authenticateToken, addCommission);
-router.post("/update-commission", authenticateToken, updateCommision);
-router.post("/delete-commission", authenticateToken, deleteCommision);
+router.get("/commission", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.VIEW ), getCommission);
+router.get("/commission/:id", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.VIEW ), getCommissionById);
+router.post("/add-commission", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.CREATE ), addCommission);
+router.post("/update-commission", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.UPDATE ), updateCommision);
+router.post("/delete-commission", authenticateToken,checkRolePermission(resources.COMMISSION_DETAILS,actions.DELETE ), deleteCommision);
 
-router.get("/roles", getRoles);
-router.get("/roles/:id", getRolesById);
-router.post("/add-roles", authenticateToken, addRoles);
-router.post("/update-roles", authenticateToken, updateRoles);
-router.post("/delete-roles", authenticateToken, deleteRoles);
+router.get("/roles", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.VIEW ), getRoles);
+router.get("/roles/:id", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.VIEW ), getRolesById);
+router.post("/add-roles", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.CREATE ), addRoles);
+router.post("/update-roles", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.UPDATE ), updateRoles);
+router.post("/delete-roles", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.DELETE ), deleteRoles);
 
-router.get("/users", getUsers);
-router.get("/user/:id", getUserById);
-router.post("/add-user", authenticateToken, addUser);
-router.post("/update-user", authenticateToken, updateUser);
-router.post("/delete-user", authenticateToken, deleteUser);
+router.get("/users", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.VIEW ), getUsers);
+router.get("/user/:id", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.VIEW ), getUserById);
+router.post("/add-user", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.CREATE ), addUser);
+router.post("/update-user", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.UPDATE ), updateUser);
+router.post("/delete-user", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.DELETE ), deleteUser);
 
-router.get("/tickets", getTickets);
-router.get("/ticket/:id", getTicketById);
-router.get("/count-tickets", authenticateToken, countTickets);
-router.post("/add-ticket", authenticateToken, addTicket);
-router.post("/update-ticket", authenticateToken, updateTicket);
-router.post("/delete-ticket", authenticateToken, deleteTicket);
+router.get("/tickets", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), getTickets);
+router.get("/ticket/:id", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), getTicketById);
+router.get("/count-tickets", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), countTickets);
+router.post("/add-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.CREATE ), addTicket);
+router.post("/update-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.UPDATE ), updateTicket);
+router.post("/delete-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.DELETE ), deleteTicket);
 
-router.get("/cookies", getCookies);
-router.get("/cookie/:id", getCookieById);
-router.post("/add-cookie", authenticateToken, addCookie);
-router.post("/update-cookie", authenticateToken, updateCookie);
-router.post("/delete-cookie", authenticateToken, deleteCookie);
+router.get("/cookies", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getCookies);
+router.get("/cookie/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getCookieById);
+router.post("/add-cookie", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addCookie);
+router.post("/update-cookie", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateCookie);
+router.post("/delete-cookie", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteCookie);
 
-router.post("/privacies", getPrivacy);
-router.get("/privacy/:id", getPrivacyById);
-router.post("/add-privacy", authenticateToken, addPrivacy);
-router.post("/update-privacy", authenticateToken, updatePrivacy);
-router.post("/delete-privacy", authenticateToken, deletePrivacy);
+router.post("/privacies", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getPrivacy);
+router.get("/privacy/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getPrivacyById);
+router.post("/add-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addPrivacy);
+router.post("/update-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updatePrivacy);
+router.post("/delete-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deletePrivacy);
 
-router.get("/socials", getSocials);
-router.get("/social/:id", getSocialById);
-router.post("/add-social", authenticateToken, addSocials);
-router.post("/update-social", authenticateToken, updateSocial);
-router.post("/delete-social", authenticateToken, deleteSocials);
+router.get("/socials", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getSocials);
+router.get("/social/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getSocialById);
+router.post("/add-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addSocials);
+router.post("/update-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateSocial);
+router.post("/delete-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteSocials);
 
-router.get("/emails", getEmailSMTP);
-router.get("/email/:id", getEmailSMTPById);
-router.post("/add-email-smtp", authenticateToken, addEmailSMTP);
-router.post("/update-email-smtp", authenticateToken, updateEmailSMTP);
-router.post("/delete-email-smtp", authenticateToken, deleteEmailSMTP);
+router.get("/emails", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getEmailSMTP);
+router.get("/email/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getEmailSMTPById);
+router.post("/add-email-smtp", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addEmailSMTP);
+router.post("/update-email-smtp", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateEmailSMTP);
+router.post("/delete-email-smtp", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteEmailSMTP);
 
-router.get("/deals", getDeals);
-router.get("/deal/:id", getDealById);
-router.get("/code-deal/:code", getDealByCode);
-router.post("/add-deal", authenticateToken, createDeal);
-router.post("/update-deal", authenticateToken, updateDeal);
-router.post("/delete-deal", authenticateToken, deleteDeal);
+router.get("/deals", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getDeals);
+router.get("/deal/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getDealById);
+router.get("/code-deal/:code", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getDealByCode);
+router.post("/add-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), createDeal);
+router.post("/update-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateDeal);
+router.post("/delete-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteDeal);
 
 
-router.post("/terms", getTerms);
-router.get("/term/:id", getTermById);
-router.post("/add-term", authenticateToken, addTerms);
-router.post("/update-term", authenticateToken, updateTerm);
-router.post("/delete-term", authenticateToken, deleteTerm);
+router.post("/terms", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getTerms);
+router.get("/term/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getTermById);
+router.post("/add-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addTerms);
+router.post("/update-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateTerm);
+router.post("/delete-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteTerm);
 
-router.get("/search", getSearchManagement);
-router.post("/add-search", authenticateToken, createSearchManagement);
-router.post("/update-search", authenticateToken, updateSearchManagement);
-router.post("/delete-search", authenticateToken, deleteSearchManagement);
+router.get("/search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.VIEW ), getSearchManagement);
+router.post("/add-search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.CREATE ), createSearchManagement);
+router.post("/update-search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.UPDATE ), updateSearchManagement);
+router.post("/delete-search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.DELETE ), deleteSearchManagement);
 
-router.post("/blogs", getBlogs);
-router.get("/blog/:id", getBlogById);
+router.post("/blogs", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.CREATE ), getBlogs);
+router.get("/blog/:id", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.VIEW ), getBlogById);
 router.post("/add-blog",  upload.single("image"), createBlog);
-router.post("/update-blog", authenticateToken, updateBlog);
-router.post("/delete-blog", authenticateToken, deleteBlog);
+router.post("/update-blog", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.UPDATE ), updateBlog);
+router.post("/delete-blog", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.DELETE ), deleteBlog);
 
 router.post("/upload-image", upload.array("images"), uploadImages);
 
 
 
 
-router.get("/bookings", authenticateToken, fetchBooking);
-router.post("/update-booking", authenticateToken, updateBooking);
-router.post("/delete-booking", authenticateToken, deleteBooking);
+router.get("/bookings", authenticateToken,checkRolePermission(resources.DASHBOARD,actions.VIEW ), fetchBooking);
+router.post("/update-booking", authenticateToken,checkRolePermission(resources.DASHBOARD,actions.UPDATE ), updateBooking);
+router.post("/delete-booking", authenticateToken,checkRolePermission(resources.DASHBOARD,actions.DELETE ), deleteBooking);
 
 //Baggage Routes
-router.post("/baggage", authenticateToken, addBaggageWeight);
-router.put("/baggage/:id", authenticateToken, upadteBaggageWeight);
-router.get('/baggage', getBaggageWeight);
+router.post("/baggage", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addBaggageWeight);
+router.put("/baggage/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), upadteBaggageWeight);
+router.get('/baggage', authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getBaggageWeight);
 
 //fare settings routes
-router.post("/createFareSetting", createFareSetting);
-router.post("/getAllFareSettings", getAllFareSettings);
-router.put("/updateFareSetting/:id", updateFareSetting);
-router.delete("/deleteFareSetting/:id", deleteFareSetting);
+router.post("/createFareSetting", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), createFareSetting);
+router.post("/getAllFareSettings", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getAllFareSettings);
+router.put("/updateFareSetting/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateFareSetting);
+router.delete("/deleteFareSetting/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteFareSetting);
+
 
 // Scraping Module Routes
-router.post("/scraping-modules", authenticateToken, createScrapingModule);
-router.get("/scraping-modules", authenticateToken, getAllScrapingModules);
-router.get("/scraping-modules/:id", authenticateToken, getScrapingModuleById);
-router.put("/scraping-modules/:id", authenticateToken, updateScrapingModule);
-router.delete("/scraping-modules/:id", authenticateToken, deleteScrapingModule);
+router.post("/scraping-modules", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ),  createScrapingModule);
+router.get("/scraping-modules", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getAllScrapingModules);
+router.get("/scraping-modules/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getScrapingModuleById);
+router.put("/scraping-modules/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateScrapingModule);
+router.delete("/scraping-modules/:id", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteScrapingModule);
 
 export default router;
