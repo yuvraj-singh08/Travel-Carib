@@ -40,15 +40,15 @@ export const checkRolePermission = (resource: string, action: string) => {
     try {
       const roleId = (req as any).user?.roleId;
       
-      if (!roleId) {
-        res.status(401).json({
-          success: false,
-          message: "Role ID not found. User may not be authenticated properly."
-        });
-        return;
-      }
+      // if (!roleId) {
+      //   res.status(401).json({
+      //     success: false,
+      //     message: "Role ID not found. User may not be authenticated properly."
+      //   });
+      //   return;
+      // }
 
-      const permission = await checkPermission(roleId, resource, action);
+      const permission = await checkPermission(roleId || "", resource, action);
       
       if (!permission) {
         res.status(401).json({

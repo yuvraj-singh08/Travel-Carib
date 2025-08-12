@@ -132,10 +132,10 @@ router.post("/add-user", authenticateToken,checkRolePermission(resources.USER_MA
 router.post("/update-user", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.UPDATE ), updateUser);
 router.post("/delete-user", authenticateToken,checkRolePermission(resources.USER_MANAGEMENT,actions.DELETE ), deleteUser);
 
-router.get("/tickets", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), getTickets);
-router.get("/ticket/:id", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), getTicketById);
-router.get("/count-tickets", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.VIEW ), countTickets);
-router.post("/add-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.CREATE ), addTicket);
+router.get("/tickets", authenticateToken, getTickets);
+router.get("/ticket/:id", authenticateToken, getTicketById);
+router.get("/count-tickets", authenticateToken, countTickets);
+router.post("/add-ticket", authenticateToken, addTicket);
 router.post("/update-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.UPDATE ), updateTicket);
 router.post("/delete-ticket", authenticateToken,checkRolePermission(resources.TICKET_SYSTEM,actions.DELETE ), deleteTicket);
 

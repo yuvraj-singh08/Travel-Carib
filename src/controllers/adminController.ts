@@ -944,10 +944,14 @@ export const addTicket = async (
   next: NextFunction
 ) => {
   const data = req.body;
+  const userId = (req as any).user?.id;
 
   try {
     const ticket = await prisma.ticketManagement.create({
-      data: data,
+      data: {
+        ...data,
+        userId: userId,
+      },
     });
 
     if (ticket) {
