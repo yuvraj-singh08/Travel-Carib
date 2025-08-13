@@ -145,14 +145,14 @@ router.post("/add-cookie", authenticateToken,checkRolePermission(resources.SETTI
 router.post("/update-cookie", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateCookie);
 router.post("/delete-cookie", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteCookie);
 
-router.post("/privacies", authenticateToken, getPrivacy);
-router.get("/privacy/:id", authenticateToken, getPrivacyById);
+router.post("/privacies", getPrivacy);
+router.get("/privacy/:id", getPrivacyById);
 router.post("/add-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addPrivacy);
 router.post("/update-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updatePrivacy);
 router.post("/delete-privacy", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deletePrivacy);
 
-router.get("/socials", authenticateToken, getSocials);
-router.get("/social/:id", authenticateToken, getSocialById);
+router.get("/socials", getSocials);
+router.get("/social/:id", getSocialById);
 router.post("/add-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addSocials);
 router.post("/update-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateSocial);
 router.post("/delete-social", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteSocials);
@@ -163,16 +163,16 @@ router.post("/add-email-smtp", authenticateToken,checkRolePermission(resources.S
 router.post("/update-email-smtp", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateEmailSMTP);
 router.post("/delete-email-smtp", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteEmailSMTP);
 
-router.get("/deals", authenticateToken, getDeals);
-router.get("/deal/:id", authenticateToken, getDealById);
+router.get("/deals", getDeals);
+router.get("/deal/:id", getDealById);
 router.get("/code-deal/:code", authenticateToken,checkRolePermission(resources.SETTINGS,actions.VIEW ), getDealByCode);
 router.post("/add-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), createDeal);
 router.post("/update-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateDeal);
 router.post("/delete-deal", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteDeal);
 
 
-router.post("/terms", authenticateToken, getTerms);
-router.get("/term/:id", authenticateToken, getTermById);
+router.post("/terms", getTerms);
+router.get("/term/:id", getTermById);
 router.post("/add-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.CREATE ), addTerms);
 router.post("/update-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.UPDATE ), updateTerm);
 router.post("/delete-term", authenticateToken,checkRolePermission(resources.SETTINGS,actions.DELETE ), deleteTerm);
@@ -182,8 +182,8 @@ router.post("/add-search", authenticateToken,checkRolePermission(resources.SEARC
 router.post("/update-search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.UPDATE ), updateSearchManagement);
 router.post("/delete-search", authenticateToken,checkRolePermission(resources.SEARCH_MANAGEMENT,actions.DELETE ), deleteSearchManagement);
 
-router.post("/blogs", authenticateToken, getBlogs);
-router.get("/blog/:id", authenticateToken, getBlogById);
+router.post("/blogs" , getBlogs);
+router.get("/blog/:id", getBlogById);
 router.post("/add-blog",  upload.single("image"), createBlog);
 router.post("/update-blog", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.UPDATE ), updateBlog);
 router.post("/delete-blog", authenticateToken,checkRolePermission(resources.LANDING_PAGE,actions.DELETE ), deleteBlog);

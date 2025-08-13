@@ -44,7 +44,7 @@ router.post("/verify", verifyOTP);
 router.get("/profile", authenticateToken, getUserById);
 router.post("/profile", authenticateToken, updateUser);
 router.post("/update-password", authenticateToken, changePassword);
-router.post("/allprofile", authenticateToken, updateUser);
+router.post("/allprofile", authenticateToken, updateUser);  
 router.post("/traveller", authenticateToken, addCoTraveller);
 router.post("/del-traveller", authenticateToken, deleteCoTraveller);
 router.get("/", getAllUsers);
