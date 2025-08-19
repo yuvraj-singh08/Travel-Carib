@@ -811,12 +811,29 @@ export const getUsers = async (
   next: NextFunction
 ) => {
   try {
-    const users = await prisma.userManagement.findMany();
+
+    const { page, limit } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const totalItems = await prisma.userManagement.count();
+
+
+    const users = await prisma.userManagement.findMany(
+      {
+        skip: skip,
+        take: Number(limit),
+      }
+    );
 
     if (users) {
       res.status(200).json({
         message: "Users fetched",
         users: users,
+        pagination: {
+          page: Number(page),
+          pageSize: Number(limit),
+          totalPages: Math.ceil(totalItems / Number(limit)),
+          totalItems: totalItems,
+        },
         success: true,
       });
     } else {
@@ -2250,8 +2267,29 @@ export const getSearchManagement = async (
   next: NextFunction
 ) => {
   try {
-    const entries = await prisma.searchManagement.findMany();
-    res.status(200).json(entries);
+
+    //add pagination
+    const { page, limit } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const totalItems = await prisma.searchManagement.count();
+
+
+    const entries = await prisma.searchManagement.findMany({
+      skip,
+      take: Number(limit),
+    });
+
+ 
+    res.status(200).json({
+      entries: entries,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(limit),
+        totalPages: Math.ceil(totalItems / Number(limit)),
+        totalItems: totalItems,
+      },
+    });
+
   } catch (error) {
     console.log(error);
     next(handlePrismaError(error));

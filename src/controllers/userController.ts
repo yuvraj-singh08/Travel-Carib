@@ -261,8 +261,27 @@ export const resetPassword = async (req: Request, res: Response) => {
 // Get all users
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    const { page, limit } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const totalItems = await prisma.user.count();
+
+
+    const users = await prisma.user.findMany(
+      {
+        skip: skip,
+        take: Number(limit),
+      }
+    );
+    
+    res.json({
+      users: users,
+      pagination: {
+        page: Number(page),
+        pageSize: Number(limit),
+        totalPages: Math.ceil(totalItems / Number(limit)),
+        totalItems: totalItems,
+      },
+    });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Failed to fetch users" });
