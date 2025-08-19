@@ -3,7 +3,7 @@ import { BuildBookingRequestParams, FlightSearchParams, KiuJsonResponseType, Kiu
 import { multiCityFlightSearchParams } from "../../types/amadeusTypes";
 import moment from "moment";
 import { GDS } from "../../constants/cabinClass";
-import { Offer, Segment, Slice } from "../../types/flightTypes";
+import { MiniOffer, Offer, Segment, Slice } from "../../types/flightTypes";
 import { capitalizeFirstLetter, getDifferenceInMinutes, reorganizeFareCodes } from "./utils";
 import HttpError from "./httperror";
 
@@ -277,12 +277,16 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
     let slices: Slice[] = [];
     const fareOptions = [];
     let stops = 0;
+    let minOnwardDuration = offer[0].minOnwardDuration;
+    let maxOnwardDuration = offer[0].maxOnwardDuration;
     let responseId = "";
     let routeId = "";
     offer.forEach((route) => {
       slices.push(...(route.slices));
       responseId += route?.responseId
       routeId += route?.routeId
+      minOnwardDuration = Math.min(minOnwardDuration, route.minOnwardDuration);
+      maxOnwardDuration = Math.max(maxOnwardDuration, route.maxOnwardDuration);
       if (route.fareBrands)
         fareOptions.push({
           fareBrands: route.fareBrands,
@@ -332,7 +336,9 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
       // base_currency: offer[0].base_currency,
       // tax_currency: offer[0].tax_currency,
       slices,
-      cabinClass
+      cabinClass,
+      minOnwardDuration,
+      maxOnwardDuration
     };
   })
   return result;
@@ -691,11 +697,16 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
   try {
     let responseId = "";
     let validSegment: boolean = true;
+    let stops = data?.FlightSegment?.length - 1;
+    let minOnwardDuration = moment(data?.FlightSegment[0]?.$?.ArrivalDateTime).diff(moment(data?.FlightSegment[0]?.$?.DepartureDateTime), 'minutes');
+    let maxOnwardDuration = moment(data?.FlightSegment[0]?.$?.ArrivalDateTime).diff(moment(data?.FlightSegment[0]?.$?.DepartureDateTime), 'minutes');
     const segments = data?.FlightSegment.map((segment, index): Segment => {
       responseId += segment?.MarketingAirline?.[0]?.$?.CompanyShortName + segment?.$?.FlightNumber + segment?.$?.DepartureDateTime;
       if (index > 0) {
         validSegment = false;
       }
+      minOnwardDuration = Math.min(minOnwardDuration, moment(segment?.$?.ArrivalDateTime).diff(moment(segment?.$?.DepartureDateTime), 'minutes'));
+      maxOnwardDuration = Math.max(maxOnwardDuration, moment(segment?.$?.ArrivalDateTime).diff(moment(segment?.$?.DepartureDateTime), 'minutes'));
       return {
         origin: {
           iata_code: segment?.DepartureAirport?.[0]?.$?.LocationCode
@@ -735,6 +746,9 @@ export const newKiuParser = (data: OriginDestinationOptionsType, RPH: number) =>
       ],
       responseId,
       sourceId: GDS.kiu,
+      stops,
+      minOnwardDuration,
+      maxOnwardDuration
     }
   } catch (error) {
     console.error(error);

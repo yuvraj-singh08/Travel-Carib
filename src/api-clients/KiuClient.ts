@@ -4,9 +4,9 @@ import xml2js from 'xml2js';
 import { BookingRequestParams, FlightSearchParams, KiuJsonResponseType, NewKiuFlightSearchParams, PriceFlightSegment, PriceOriginDestinationOption, PriceRequestBuilderParams, PriceRequestParams } from '../../types/kiuTypes';
 import { multiCityFlightSearchParams } from '../../types/amadeusTypes';
 import { kiuClasses } from '../../constants/cabinClass';
-import { CommissionType, FareBrandType, Offer, Slice } from '../../types/flightTypes';
+import { AirlineProvider, CommissionType, FareBrandType, Offer, Slice } from '../../types/flightTypes';
 import { getGdsCreds } from '../services/GdsCreds.service';
-import { capitalizeFirstLetter } from '../utils/utils';
+import { capitalizeFirstLetter, getAirlineLogo, getAirlineNameByCode } from '../utils/utils';
 import HttpError from '../utils/httperror';
 import { KiuBaggageData } from '../../types/types';
 import { prisma } from '../prismaClient';
@@ -236,6 +236,10 @@ class KiuClient {
         return data;
       })
       console.log(itenaries)
+
+      const airlineSet = new Set<string>();
+      const extendedDataMap = new Map<string, AirlineProvider>();
+      
       await Promise.allSettled(itenaries.map(async (itinerary) => {
         const offerPromises = await Promise.allSettled(itinerary.map(async (offer) => {
           const fareBrands: FareBrandType[] = [];
@@ -244,6 +248,16 @@ class KiuClient {
               OriginDestinationOptions: [
                 {
                   FlightSegments: offer.slices[0].segments.map((segment) => {
+                    // Add airline to set and extended data map
+                    const iata_code = segment.marketing_carrier.iata_code;
+                    airlineSet.add(iata_code);
+                    extendedDataMap.set(iata_code, {
+                      id: iata_code,
+                      label: segment.marketing_carrier.name ?? getAirlineNameByCode(iata_code) ?? iata_code ?? "",
+                      src: segment.marketing_carrier.logo_symbol_url || getAirlineLogo(iata_code),
+                      iata_code
+                    });
+
                     return {
                       OriginLocation: segment.origin.iata_code,
                       DestinationLocation: segment.destination.iata_code,
@@ -342,7 +356,7 @@ class KiuClient {
         return priceResponse;
       }))
 
-      return normalizedResponse.filter((offer: any) => !offer.invalidResponse) || [];
+      return {response: normalizedResponse.filter((offer: any) => !offer.invalidResponse) || [], airlines: Array.from(airlineSet), extendedData: Array.from(extendedDataMap.values())};
     } catch (error) {
       if (error?.response?.status === 509) {
         console.log("KIU's request limit exceeded");

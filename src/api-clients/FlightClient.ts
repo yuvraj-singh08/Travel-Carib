@@ -1,21 +1,20 @@
-import { FlightSupplier } from "@prisma/client";
-import { AirlineProvider, FlightOfferSearchParams, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
+import { AirlineProvider, FlightOfferSearchParams, MiniOffer, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineMultiCityRoutes, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { amadeusNewParser, combineAllRoutes, combineManualLayoverIteneries, combineMultiCityRoutes, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { combineKiuRoutes } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
-import { getOffer, saveData, saveSearchResponses } from "../services/OfferService";
-import { cacheResponseInChunks, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
+import { getOffer } from "../services/OfferService";
+import { cacheAirlineDetails, cacheResponseInChunks, getCachedAirlineDetails, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
-import redis from "../../config/redis";
 import { DuffelMulticityBookingParams, getCustomFarePrice, ManualLayoverSearchParams } from "../../types/types";
 import { BookingRequestParams, PriceFlightSegment } from "../../types/kiuTypes";
 import { kiuClasses } from "../../constants/cabinClass";
 import HttpError from "../utils/httperror";
+import { cacheOffer } from "../utils/cachingHelper";
 
 class FlightClient {
     private duffelClient: DuffelClientInstance
@@ -40,7 +39,7 @@ class FlightClient {
         }
     }
 
-    async searchFlights({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
+    async searchFlights({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters, limit=20, offset=0, nextProcessingOffset=0 }: NewMultiCitySearchParams) {
         try {
             const id = JSON.stringify({
                 FlightDetails, cabinClass
@@ -50,54 +49,74 @@ class FlightClient {
                 prisma.commissionManagement.findMany(),
             ])
 
-            const cachedResponse = await getCachedResponse(id);
+            // Check if we have cached data first
+            const cachedResponse = await getCachedResponse(id, 1, 0);
             if (cachedResponse) {
-                const airlinesDetails = getAirlineCodes(cachedResponse);
-                const filteredResponse = filterResponse(cachedResponse, filters, firewall, airlinesDetails.airlines)
-                const sortedResponse = sortResponse(filteredResponse, sortBy);
-                return { flightData: sortedResponse.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
+                const response = await combineManualLayoverIteneries(cachedResponse, 60);
+                // Process cached response with while loop logic
+                const airlinesDetails = await getCachedAirlineDetails(id);
+                const {flightData, processingOffset, searchKey} = await this.processOffersWithWhileLoop(id, response, filters, firewall, sortBy, limit, offset, nextProcessingOffset || 0, airlinesDetails.airlines);
+                return {flightData, processingOffset, searchKey, airlinesDetails};
             }
+
             let manualLayoverSearch, multiCityFlightSearch;
+            let airlineSet = new Set<string>();
+            let extendedDataMap = new Map<string, AirlineProvider>();
             if (FlightDetails.length > 1) {
                 [manualLayoverSearch, multiCityFlightSearch] = await Promise.all([
-                    Promise.all(FlightDetails.map((flightDetail) => {
-                        return this.manualLayoverSearch({
+                    Promise.all(FlightDetails.map(async (flightDetail) => {
+                        const {response, airlines, extendedData} = await this.manualLayoverSearch({
                             origin: flightDetail.originLocation,
                             destination: flightDetail.destinationLocation,
                             departureDate: flightDetail.departureDate,
                             passengers,
                             cabinClass
                         })
+                        airlines.forEach((airline) => {
+                            airlineSet.add(airline);
+                        });
+                        extendedData.forEach((airline) => {
+                            extendedDataMap.set(airline.iata_code, airline);
+                        });
+                        return response;
                     })),
                     await this.newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters })
                 ])
-
-                // console.log("commission---------------------------",commission)
             }
             else {
-                manualLayoverSearch = await Promise.all(FlightDetails.map((flightDetail) => {
-                    return this.manualLayoverSearch({
+                manualLayoverSearch = await Promise.all(FlightDetails.map(async (flightDetail) => {
+                    const {response, airlines, extendedData} = await this.manualLayoverSearch({
                         origin: flightDetail.originLocation,
                         destination: flightDetail.destinationLocation,
                         departureDate: flightDetail.departureDate,
                         passengers,
                         cabinClass
                     })
+                    airlines.forEach((airline) => {
+                        airlineSet.add(airline);
+                    });
+                    extendedData.forEach((airline) => {
+                        extendedDataMap.set(airline.iata_code, airline);
+                    });
+                    return response;
                 }));
             }
 
-            const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
-            const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
-            // let temp = multiCityFlightSearch;
-            let temp = normalizedResponse;
-            if (FlightDetails.length > 1) {
-                temp = [...normalizedResponse, ...multiCityFlightSearch];
+            // const combinedIteneries = combineKiuRoutes(manualLayoverSearch, 60 * 6);
+            // const normalizedResponse = newNormalizeResponse(combinedIteneries, cabinClass)
+            // // let temp = multiCityFlightSearch;
+            // let temp = normalizedResponse;
+            // if (FlightDetails.length > 1) {
+            //     temp = [...normalizedResponse, ...multiCityFlightSearch];
+            // }
+            // const uniqueResponses = filterRoutes(temp as unknown as MiniOffer[]);
+            // const sortedResponse = sortResponse(uniqueResponses, sortBy);
+            const airlinesDetails = {
+                airlines: Array.from(airlineSet),
+                extendedData: Array.from(extendedDataMap.values())
             }
-            const uniqueResponses = filterRoutes(temp as unknown as Offer[]);
-            const sortedResponse = sortResponse(uniqueResponses, sortBy);
-            const airlinesDetails = getAirlineCodes(normalizedResponse)
             const idSet = new Set();
-            const dataWithId = sortedResponse.map((response) => {
+            const dataWithId = manualLayoverSearch[0].map((response) => {
                 let id = uuidv4();
                 while (true) {
                     if (idSet.has(id)) {
@@ -111,19 +130,74 @@ class FlightClient {
                 return { ...response, id };
             })
 
-            const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
-            const filteredResponse = filterResponse(dataWithId, filters, firewall, airlinesDetails.airlines)
+            // const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
             cacheResponseInChunks(id, dataWithId);
-            return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
+            cacheAirlineDetails(id, airlinesDetails);
+            
+            let chunkSize = 10;
+            let filterOffset = 0;
+            let filteredResponse = [];
+
+            while (filteredResponse.length < limit && filterOffset < dataWithId.length) {
+                const filteredChunk = filterResponse(dataWithId.slice(filterOffset, filterOffset + chunkSize), filters, firewall, airlinesDetails.airlines)
+                filteredResponse.push(...filteredChunk);
+                filterOffset += chunkSize;
+            }
+            
+            const combinedIteneries = await combineManualLayoverIteneries(filteredResponse.slice(0, 10), 60);
+            // return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
+            return {flightData: combinedIteneries, nextProcessingOffset: 11, airlinesDetails};
         } catch (error) {
             throw error;
         }
+    }
+
+    private async processOffersWithWhileLoop(id: string, rawData: any[], filters: any, firewall: any[], sortBy: 'BEST' | 'FAST' | 'CHEAP', limit: number, offset: number, startOffset: number, airlines: string[]) {
+        // const airlinesDetails = getAirlineCodes(rawData);
+        let currentOffset = startOffset;
+        let filteredOffers: any[] = [];
+        let hasMoreData = true;
+        const chunkSize = 30; // Process 10 offers at a time
+
+        while (filteredOffers.length < limit && hasMoreData) {
+            // Get next chunk of data from cache5
+            const chunkData = await getCachedResponse(id, chunkSize, currentOffset);
+            
+            if (!chunkData || chunkData.length === 0) {
+                hasMoreData = false;
+                break;
+            }
+
+            // Apply filters to this chunk
+            const filteredChunk = filterResponse(chunkData as any[], filters, firewall, airlines);
+            
+            // Add filtered offers to our collection
+            filteredOffers.push(...filteredChunk);
+            
+            // Move to next chunk
+            currentOffset += chunkSize;
+        }
+        const combinedData = await combineManualLayoverIteneries(filteredOffers, 60);
+
+        // Sort all filtered offers
+        // const sortedResponse = sortResponse(combinedData, sortBy);
+        
+        // Apply pagination (limit and offset)
+        const paginatedResponse = combinedData.filter((_, index) => index < limit);
+
+        return {
+            flightData: paginatedResponse,
+            searchKey: id,
+            processingOffset: currentOffset
+        };
     }
 
     async manualLayoverSearch({ origin, destination, passengers, cabinClass, departureDate }: ManualLayoverSearchParams) {
         try {
             const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(passengers);
             const { searchManagement, possibleRoutes } = await getRouteOptions({ origin, destination });
+            const airlineSet = new Set<string>();
+            const extendedDataMap = new Map<string, AirlineProvider>();
             //Duffel Request
             const duffelRequests = possibleRoutes.map((route) => {
                 return route.map(async (segment, index) => {
@@ -204,10 +278,33 @@ class FlightClient {
                                 Passengers: passengers
                             })
                         ]);
-                        const parsedData = [...data[0], ...data[1]];
+                        // Handle new return structure from KiuClient and collect airline data
+                        const parsedData = [
+                            ...(data[0]?.response || []),
+                            ...(data[1]?.response || [])
+                        ];
+                        
+                        // Add airlines from both responses to the sets
+                        if (data[0]?.airlines) {
+                            data[0].airlines.forEach((airline: string) => airlineSet.add(airline));
+                        }
+                        if (data[1]?.airlines) {
+                            data[1].airlines.forEach((airline: string) => airlineSet.add(airline));
+                        }
+                        if (data[0]?.extendedData) {
+                            data[0].extendedData.forEach((airline: AirlineProvider) => {
+                                extendedDataMap.set(airline.iata_code, airline);
+                            });
+                        }
+                        if (data[1]?.extendedData) {
+                            data[1].extendedData.forEach((airline: AirlineProvider) => {
+                                extendedDataMap.set(airline.iata_code, airline);
+                            });
+                        }
+                        
                         return parsedData;
                     }
-                    return this.kiuClient.newSearchFlights({
+                    const result = await this.kiuClient.newSearchFlights({
                         OriginDestinationOptions: [{
                             OriginLocation: segment.origin,
                             DestinationLocation: segment.destination,
@@ -215,7 +312,20 @@ class FlightClient {
                         }],
                         CabinClass: cabinClass,
                         Passengers: passengers
-                    })
+                    });
+                    
+                    // Add airlines from single response to the sets
+                    if (result?.airlines) {
+                        result.airlines.forEach((airline: string) => airlineSet.add(airline));
+                    }
+                    if (result?.extendedData) {
+                        result.extendedData.forEach((airline: AirlineProvider) => {
+                            extendedDataMap.set(airline.iata_code, airline);
+                        });
+                    }
+                    
+                    // Handle new return structure from KiuClient
+                    return result?.response || [];
                 })
             })
 
@@ -234,20 +344,41 @@ class FlightClient {
             const parsedDuffelResponse = await Promise.all(
                 duffelResponse.map(async (possibleRoutes) => {
                     const parsedPossibleRoutes = await Promise.all(
-                        possibleRoutes.map((response) => {
-                            const parsedResponse = duffelResponseParser(response);
-                            return parsedResponse;
+                        possibleRoutes.map(async (response) => {
+                            const {result, airlines, extendedData} = await duffelResponseParser(response);
+                            airlines.forEach((airline) => {
+                                airlineSet.add(airline);
+                            });
+                            extendedData.forEach((airline) => {
+                                extendedDataMap.set(airline.iata_code, airline);
+                            });
+                            return result;
                         })
                     );
                     return parsedPossibleRoutes;
                 })
             );
 
+            const miniDuffelResponse = await Promise.all(parsedDuffelResponse.map(async (route) => {
+                return Promise.all(route.map(async (response) => {
+                    return await Promise.all(response.map(async (offer) => {
+                        return await cacheOffer(offer as unknown as Offer);
+                    }));
+                }))
+            }))
+            const miniKiuResponse = await Promise.all(parsedKiuResponse.map(async (route) => {
+                return Promise.all(route.map(async (response) => {
+                    return await Promise.all(response.map(async (offer) => {
+                        return await cacheOffer(offer as unknown as Offer);
+                    }));
+                }))
+            }))
+            
             let combination: any = [];
 
             possibleRoutes.forEach((route, index) => {
-                const duffel = parsedDuffelResponse?.[index]
-                const kiu = parsedKiuResponse?.[index]
+                const duffel = miniDuffelResponse?.[index]
+                const kiu = miniKiuResponse?.[index]
                 const temp = [];
                 route.forEach((data, index2) => {
                     temp.push([
@@ -269,8 +400,8 @@ class FlightClient {
                 temp.push(...route)
             })
 
-            const normalizedResponse = mapCombinedResponseToOfferType(temp)
-            return normalizedResponse;
+            const normalizedResponse = mapCombinedResponseToOfferType(temp as unknown as MiniOffer[][])
+            return {response: normalizedResponse, airlines: Array.from(airlineSet), extendedData: Array.from(extendedDataMap.values())};
         } catch (error) {
             throw error;
         }
@@ -279,6 +410,8 @@ class FlightClient {
     async newMulticityFlightSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
         try {
             const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(passengers);
+            const airlineSet = new Set<string>();
+            const extendedDataMap = new Map<string, AirlineProvider>();
             const duffelRequest = this.duffelClient.createOfferRequest({
                 passengers: duffelPassengersArray,
                 cabin_class: cabinClass,
@@ -306,13 +439,26 @@ class FlightClient {
                 }),
 
             })
-            const [kiuResponse, duffelResponse] = await Promise.all([
+            const [{response: kiuResponse, airlines: kiuAirlines, extendedData: kiuExtendedData}, duffelResponse] = await Promise.all([
                 kiuRequest,
                 duffelRequest
             ]);
-            const parsedDuffelResponse = await duffelMulticityResponseFormatter(duffelResponse);
+            kiuAirlines.forEach((airline) => {
+                airlineSet.add(airline);
+            });
+            kiuExtendedData.forEach((airline) => {
+                extendedDataMap.set(airline.iata_code, airline);
+            });
 
-            return [...kiuResponse, ...parsedDuffelResponse]; //Add Amadeus Response
+            const {result, airlines, extendedData} = await duffelMulticityResponseFormatter(duffelResponse);
+            airlines.forEach((airline) => {
+                airlineSet.add(airline);
+            });
+            extendedData.forEach((airline) => {
+                extendedDataMap.set(airline.iata_code, airline);
+            });
+
+            return {response: [...kiuResponse, ...result], airlines: Array.from(airlineSet), extendedData: Array.from(extendedDataMap.values())}; //Add Amadeus Response
 
         } catch (error) {
             throw error;

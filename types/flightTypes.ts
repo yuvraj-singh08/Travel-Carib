@@ -51,7 +51,29 @@ export type NewMultiCitySearchParams = {
     },
     cabinClass: 'first' | 'business' | 'economy' | 'premium_economy';
     filters?: FilterType;
-    latest?: boolean
+    latest?: boolean;
+    limit?: number;
+    offset?: number;
+    nextProcessingOffset?: number;
+}
+
+export interface ManualLayoverSearchResponse{
+    origin: Location;
+    destination: Location;
+    departing_at: string;
+    arriving_at: string;
+    responseId: string;
+    commissionAmount: number;
+    routeId: string;
+    serverSlices: any[];
+    fareOptionGDS: string;
+    total_amount: number;
+    cabinBaggage: number;
+    checkedBaggage: number;
+    stops: number;
+    minOnwardDuration: number;
+    maxOnwardDuration: number;
+    selfTransfer: boolean;
 }
 
 export type UpdatedFlightDetailsParams = {
@@ -77,8 +99,29 @@ export type MulticityOffer = {
     id: string;
 }
 
+export type MiniOffer = {
+    id: string,
+    origin: Location,
+    destination: Location,
+    departureDate: string,
+    arrivalDate: string,
+    totalAmount: number,
+    responseId: string,
+    checkedBaggage: number,
+    cabinBaggage: number,
+    routeId: string,
+    commissionAmount: number,
+    serverSlices?: string[],
+    fareOptions?: any,
+    stops: number,
+    minOnwardDuration: number,
+    maxOnwardDuration: number,
+}
+
 export type Offer = {
     total_emissions_kg: string;
+    origin?: string;
+    destination?: string;
     payment_requirements: {
         price_guarantee_expires_at: string | null;
         payment_required_by: string | null;
@@ -121,6 +164,8 @@ export type Offer = {
     routeId: string;
     serverSlices?: Slice[];
     fareOptions: any;
+    minOnwardDuration: number;
+    maxOnwardDuration: number;
 };
 
 export type FareBrandType = {
