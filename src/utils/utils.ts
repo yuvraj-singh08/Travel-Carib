@@ -1,6 +1,9 @@
+import { RuleType } from "@prisma/client";
 import redis from "../../config/redis";
-import { AggregatedFareBrand, DbBaggageType, FareBrandType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
+import { AggregatedFareBrand, DbBaggageType, FareBrandType, FlightLeg, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
+import { prisma } from "../prismaClient";
 import { airlines } from "./airlines";
+import { RouteOptionParams } from "../../types/types";
 
 export function getDifferenceInMinutes(time1: string, time2: string): number {
   // Convert the string times into Date objects
@@ -574,5 +577,30 @@ export async function clearCache(searchKey) {
     }
   } catch (error) {
     console.error('Error clearing cache:', error);
+  }
+}
+
+export async function checkIfSelfTransferRoundTrip(flightDetails: FlightLeg[]) {
+  if(flightDetails.length !== 2) return false;
+  if(flightDetails[0].originLocation !== flightDetails[1].destinationLocation) return false;
+  if(flightDetails[0].destinationLocation !== flightDetails[1].originLocation) return false;
+
+  try {
+    const searchManagement = await prisma.searchManagement.findFirst({
+      where:{
+        origins:{
+          has:flightDetails[0].originLocation
+        },
+        destinations:{
+          has:flightDetails[0].destinationLocation
+        },
+      }
+    })
+    if(!searchManagement) return false;
+    if(searchManagement.ruleType === RuleType.CREATE_COMBINATION) return true;
+    else return false;
+  } catch (error) {
+    console.error('Error checking if self transfer round trip:', error);
+    return false;
   }
 }

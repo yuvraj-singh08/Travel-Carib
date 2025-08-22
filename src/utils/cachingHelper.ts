@@ -11,6 +11,18 @@ export const cacheOffer = async (offer: Offer): Promise<Partial<MiniOffer>> => {
             if (err) {
                 reject(err);
             }
+            const slices = offer.slices.map((slice) => {
+                return {
+                    origin: {
+                        iata_code: slice.origin.iata_code,
+                    },
+                    destination: {
+                        iata_code: slice.destination.iata_code,
+                    },
+                    departureDate: slice.segments[0].departing_at,
+                    arrivalDate: slice.segments[slice.segments.length - 1].arriving_at,
+                }
+            })
             const miniOffer = {
                 id: cacheKey,
                 origin: {
@@ -30,6 +42,7 @@ export const cacheOffer = async (offer: Offer): Promise<Partial<MiniOffer>> => {
                 stops: offer.stops,
                 minOnwardDuration: offer.minOnwardDuration,
                 maxOnwardDuration: offer.maxOnwardDuration,
+                slices: slices,
             }
             resolve(miniOffer);
         });

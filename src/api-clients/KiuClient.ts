@@ -30,7 +30,7 @@ class KiuClient {
   private mode: 'Testing' | 'Production';
   private requestQueue: QueueItem[] = [];
   private isProcessingQueue: boolean = false;
-  private queueInterval: number = 20; // 50ms between requests
+  private queueInterval: number = 50; // 50ms between requests
 
   constructor(creds: { clientId: string; clientSecret: string, mode: 'Testing' | 'Production' }) {
     this.clientId = creds.clientId;
@@ -207,9 +207,6 @@ class KiuClient {
 
   async newSearchFlights(params: NewKiuFlightSearchParams): Promise<any> {
     try {
-
-      console.log("-----------------------------------")
-
       const requestXML = newbuildFlightSearchRequest(params, this.mode);
       const response = await this.queuedPost(requestXML);
       const parser = new xml2js.Parser();
@@ -360,10 +357,10 @@ class KiuClient {
     } catch (error) {
       if (error?.response?.status === 509) {
         console.log("KIU's request limit exceeded");
-        return [];
+        return {response: [], airlines: [], extendedData: []};
       }
       console.log(error);
-      return [];
+      return {response: [], airlines: [], extendedData: []};
     }
   }
 

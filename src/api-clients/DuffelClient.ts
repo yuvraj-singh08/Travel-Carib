@@ -15,7 +15,7 @@ class DuffelClient {
   private client: Duffel;
   private requestQueue: QueueItem[] = [];
   private isProcessingQueue: boolean = false;
-  private queueInterval: number = 20; // 50ms between requests
+  private queueInterval: number = 50; // 50ms between requests
 
   constructor(creds: { token: string }) {
     this.client = new Duffel(creds);

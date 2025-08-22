@@ -1,12 +1,12 @@
-import { AirlineProvider, FlightOfferSearchParams, MiniOffer, MultiCitySearchParams, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
+import { AirlineProvider, MiniOffer, NewMultiCitySearchParams, Offer, PassengerType, Slice } from "../../types/flightTypes";
 import { prisma } from "../prismaClient";
-import { amadeusNewParser, combineAllRoutes, combineManualLayoverIteneries, combineMultiCityRoutes, duffelMulticityResponseFormatter, duffelNewParser, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getPossibleRoutes, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
+import { combineAllRoutes, combineDiscountedRoundTripRoutes, combineIteneries, duffelDiscountedRoundTripParser, duffelMulticityResponseFormatter, duffelResponseParser, filterResponse, filterRoutes, getAirlineCodes, getDetailedRoundTripRoutes, getPossibleRoutes, getRoundTripRouteOptions, getRouteOptions, getSearchManagementRoutes, mapCombinedResponseToOfferType, mapDiscountedRoundTripOffers, newNormalizeResponse, normalizeMultiResponse, normalizeResponse, parseMulticityKiuResponse, sortMultiCityResponse, sortResponse } from "../utils/flights";
 import { combineKiuRoutes } from "../utils/kiu";
 import AmadeusClient, { AmadeusClientInstance } from "./AmadeusClient";
 import DuffelClient, { DuffelClientInstance } from "./DuffelClient";
 import KiuClient, { KiuClientInstance } from "./KiuClient";
 import { getOffer } from "../services/OfferService";
-import { cacheAirlineDetails, cacheResponseInChunks, getCachedAirlineDetails, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
+import { cacheAirlineDetails, cacheResponseInChunks, checkIfSelfTransferRoundTrip, getCachedAirlineDetails, getCachedResponse, getNextDay, getPassengerArrays } from "../utils/utils";
 import { CreateOrderPassenger } from "@duffel/api/types";
 import { getCachedAmadeusOffer } from "../services/caching.service";
 import { v4 as uuidv4 } from 'uuid';
@@ -52,11 +52,48 @@ class FlightClient {
             // Check if we have cached data first
             const cachedResponse = await getCachedResponse(id, 1, 0);
             if (cachedResponse) {
-                const response = await combineManualLayoverIteneries(cachedResponse, 60);
+                const response = await combineIteneries(cachedResponse, 60);
                 // Process cached response with while loop logic
                 const airlinesDetails = await getCachedAirlineDetails(id);
                 const {flightData, processingOffset, searchKey} = await this.processOffersWithWhileLoop(id, response, filters, firewall, sortBy, limit, offset, nextProcessingOffset || 0, airlinesDetails.airlines);
                 return {flightData, processingOffset, searchKey, airlinesDetails};
+            }
+
+            const isSelfTransferRoundTrip = await checkIfSelfTransferRoundTrip(FlightDetails);
+            if (isSelfTransferRoundTrip) {
+                const { response, airlines, extendedData } = await this.selfTransferRoundTripSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters });
+                const airlinesDetails = { airlines, extendedData }
+                const idSet = new Set();
+                const dataWithId = response.map((response) => {
+                    let id = uuidv4();
+                    while (true) {
+                        if (idSet.has(id)) {
+                            id = uuidv4();
+                        }
+                        else {
+                            idSet.add(id);
+                            break;
+                        }
+                    }
+                    return { ...response, id };
+                })
+
+                // const savedData = saveSearchResponses(dataWithId, passengers, "ONEWAY");
+                cacheResponseInChunks(id, dataWithId);
+                cacheAirlineDetails(id, airlinesDetails);
+
+                let chunkSize = 10;
+                let filterOffset = 0;
+                let filteredResponse = [];
+
+                while (filteredResponse.length < limit && filterOffset < dataWithId.length) {
+                    const filteredChunk = filterResponse(dataWithId.slice(filterOffset, filterOffset + chunkSize), filters, firewall, airlinesDetails.airlines)
+                    filteredResponse.push(...filteredChunk);
+                    filterOffset += chunkSize;
+                }
+
+                const combinedIteneries = await combineIteneries(filteredResponse.slice(0, 10), 0)
+                return { flightData: combinedIteneries, airlinesDetails };
             }
 
             let manualLayoverSearch, multiCityFlightSearch;
@@ -144,7 +181,7 @@ class FlightClient {
                 filterOffset += chunkSize;
             }
             
-            const combinedIteneries = await combineManualLayoverIteneries(filteredResponse.slice(0, 10), 60);
+            const combinedIteneries = await combineIteneries(filteredResponse.slice(0, 10), 60);
             // return { flightData: filteredResponse?.filter((_, index) => index < 200), airlinesDetails, searchKey: id };
             return {flightData: combinedIteneries, nextProcessingOffset: 11, airlinesDetails};
         } catch (error) {
@@ -177,7 +214,7 @@ class FlightClient {
             // Move to next chunk
             currentOffset += chunkSize;
         }
-        const combinedData = await combineManualLayoverIteneries(filteredOffers, 60);
+        const combinedData = await combineIteneries(filteredOffers, 60);
 
         // Sort all filtered offers
         // const sortedResponse = sortResponse(combinedData, sortBy);
@@ -403,6 +440,321 @@ class FlightClient {
             const normalizedResponse = mapCombinedResponseToOfferType(temp as unknown as MiniOffer[][])
             return {response: normalizedResponse, airlines: Array.from(airlineSet), extendedData: Array.from(extendedDataMap.values())};
         } catch (error) {
+            throw error;
+        }
+    }
+
+    async selfTransferRoundTripSearch({ FlightDetails, sortBy, maxLayovers, passengers, cabinClass, filters }: NewMultiCitySearchParams) {
+        try {
+            const startTime = Date.now();
+            console.log(`[selfTransferRoundTripSearch] Starting at: 0ms`);
+            
+            const { offerPassengerArray, duffelPassengersArray, amadeusPassengersArray } = getPassengerArrays(passengers);
+            let { searchManagement, possibleRoutes } = await getRouteOptions({ origin: FlightDetails[0].originLocation, destination: FlightDetails[0].destinationLocation });
+            possibleRoutes = possibleRoutes.slice(1);
+            const departureDate = FlightDetails[0].departureDate;
+            const returnDate = FlightDetails[1].departureDate;
+            const airlineSet = new Set<string>();
+            const extendedDataMap = new Map<string, AirlineProvider>();
+            
+            
+            console.log(`[selfTransferRoundTripSearch] Initial setup completed at: ${Date.now() - startTime}ms`);
+            
+            const duffelRequests = possibleRoutes.map((route) => {
+                return route.map(async (segment, index) => {
+                    const data = await Promise.all([
+                        // Case 1: departure_date: departureDate, return_date: returnDate
+                        this.duffelClient.createOfferRequest({
+                            passengers: duffelPassengersArray,
+                            cabin_class: cabinClass,
+                            max_connections: 2,
+                            slices: [
+                                {
+                                    origin: segment.origin,
+                                    destination: segment.destination,
+                                    departure_date: departureDate,
+                                    departure_time: null,
+                                    arrival_time: null,
+                                },
+                                {
+                                    origin: segment.destination,
+                                    destination: segment.origin,
+                                    departure_date: returnDate,
+                                    departure_time: null,
+                                    arrival_time: null,
+                                }
+                            ]
+                        }),
+                        // Case 2: departure_date: getNextDay(departureDate), return_date: getNextDay(returnDate)
+                        segment.origin !== FlightDetails[0].originLocation && segment.destination !== FlightDetails[0].destinationLocation ? 
+                        this.duffelClient.createOfferRequest({
+                            passengers: duffelPassengersArray,
+                            cabin_class: cabinClass,
+                            max_connections: 2,
+                            slices: [
+                                {
+                                    origin: segment.origin,
+                                    destination: segment.destination,
+                                    departure_date: getNextDay(departureDate),
+                                    departure_time: null,
+                                    arrival_time: null,
+                                },
+                                {
+                                    origin: segment.destination,
+                                    destination: segment.origin,
+                                    departure_date: getNextDay(returnDate),
+                                    departure_time: null,
+                                    arrival_time: null,
+                                }
+                            ]
+                        }) : {data: {offers: []}},
+                        // Case 3: departure_date: getNextDay(departureDate), return_date: returnDate
+                        segment.origin !== FlightDetails[0].originLocation ? 
+                        this.duffelClient.createOfferRequest({
+                            passengers: duffelPassengersArray,
+                            cabin_class: cabinClass,
+                            max_connections: 2,
+                            slices: [
+                                {
+                                    origin: segment.origin,
+                                    destination: segment.destination,
+                                    departure_date: getNextDay(departureDate),
+                                    departure_time: null,
+                                    arrival_time: null,
+                                },
+                                {
+                                    origin: segment.destination,
+                                    destination: segment.origin,
+                                    departure_date: returnDate,
+                                    departure_time: null,
+                                    arrival_time: null,
+                                }
+                            ]
+                        }) : {data: {offers: []}},
+                        // Case 4: departure_date: departureDate, return_date: getNextDay(returnDate)
+                        segment.destination !== FlightDetails[0].destinationLocation ? this.duffelClient.createOfferRequest({
+                            passengers: duffelPassengersArray,
+                            cabin_class: cabinClass,
+                            max_connections: 2,
+                            slices: [
+                                {
+                                    origin: segment.origin,
+                                    destination: segment.destination,
+                                    departure_date: departureDate,
+                                    departure_time: null,
+                                    arrival_time: null,
+                                },
+                                {
+                                    origin: segment.destination,
+                                    destination: segment.origin,
+                                    departure_date: getNextDay(returnDate),
+                                    departure_time: null,
+                                    arrival_time: null,
+                                }
+                            ]
+                        }) : {data: {offers: []}},
+                    ])
+                    const parsedData = {
+                        ...(data[0].data),
+                        offers: [...(data[0].data.offers), ...(data[1].data.offers), ...(data[2].data.offers), ...(data[3].data.offers)]
+                    }
+                    return { ...data[0], data: parsedData }
+                })
+            });
+            
+            console.log(`[selfTransferRoundTripSearch] Duffel requests built at: ${Date.now() - startTime}ms`);
+
+            const kiuRequests = possibleRoutes.map((route) => {
+                return route.map(async (segment, index) => {
+                    const data = await Promise.all([
+                        // Case 1: departure_date: departureDate, return_date: returnDate
+                        this.kiuClient.newSearchFlights({
+                            OriginDestinationOptions: [
+                                {
+                                    OriginLocation: segment.origin,
+                                    DestinationLocation: segment.destination,
+                                    DepartureDate: departureDate
+                                },
+                                {
+                                    OriginLocation: segment.destination,
+                                    DestinationLocation: segment.origin,
+                                    DepartureDate: returnDate
+                                }
+                            ],
+                            Passengers: passengers,
+                            CabinClass: cabinClass,
+                        }),
+                        // Case 2: departure_date: getNextDay(departureDate), return_date: getNextDay(returnDate)
+                        segment.origin !== FlightDetails[0].originLocation && segment.destination !== FlightDetails[0].destinationLocation ? this.kiuClient.newSearchFlights({
+                            OriginDestinationOptions: [
+                                {
+                                    OriginLocation: segment.origin,
+                                    DestinationLocation: segment.destination,
+                                    DepartureDate: getNextDay(departureDate)
+                                },
+                                {
+                                    OriginLocation: segment.destination,
+                                    DestinationLocation: segment.origin,
+                                    DepartureDate: getNextDay(returnDate)
+                                }
+                            ],
+                            Passengers: passengers,
+                            CabinClass: cabinClass,
+                        }) : {response: []},
+                        // Case 3: departure_date: getNextDay(departureDate), return_date: returnDate
+                        segment.origin !== FlightDetails[0].originLocation ? this.kiuClient.newSearchFlights({
+                            OriginDestinationOptions: [
+                                {
+                                    OriginLocation: segment.origin,
+                                    DestinationLocation: segment.destination,
+                                    DepartureDate: getNextDay(departureDate)
+                                },
+                                {
+                                    OriginLocation: segment.destination,
+                                    DestinationLocation: segment.origin,
+                                    DepartureDate: returnDate
+                                }
+                            ],
+                            Passengers: passengers,
+                            CabinClass: cabinClass,
+                        }) : {response: []},
+                        // Case 4: departure_date: departureDate, return_date: getNextDay(returnDate)
+                        segment.destination !== FlightDetails[0].destinationLocation ? this.kiuClient.newSearchFlights({
+                            OriginDestinationOptions: [
+                                {
+                                    OriginLocation: segment.origin,
+                                    DestinationLocation: segment.destination,
+                                    DepartureDate: departureDate
+                                },
+                                {
+                                    OriginLocation: segment.destination,
+                                    DestinationLocation: segment.origin,
+                                    DepartureDate: getNextDay(returnDate)
+                                }
+                            ],
+                            Passengers: passengers,
+                            CabinClass: cabinClass,
+                        }) : {response: []},
+                    ]);
+                    // Handle new return structure from KiuClient and collect airline data
+                    const parsedData = [
+                        ...(data[0]?.response || []),
+                        ...(data[1]?.response || []),
+                        ...(data[2]?.response || []),
+                        ...(data[3]?.response || [])
+                    ];
+                    
+                    // Add airlines from all 4 responses to the sets
+                    data.forEach((response, idx) => {
+                        if (response?.airlines) {
+                            response.airlines.forEach((airline: string) => airlineSet.add(airline));
+                        }
+                        if (response?.extendedData) {
+                            response.extendedData.forEach((airline: AirlineProvider) => {
+                                extendedDataMap.set(airline.iata_code, airline);
+                            });
+                        }
+                    });
+                    
+                    return parsedData;
+                })
+            })
+            
+            console.log(`[selfTransferRoundTripSearch] KIU requests built at: ${Date.now() - startTime}ms`);
+
+            const [duffelResponse, parsedKiuResponse, commissions] = await Promise.all([
+
+                Promise.all(duffelRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                })),
+                Promise.all(kiuRequests.map(async (request) => {
+                    const result = await Promise.all(request);
+                    return result;
+                })),
+                prisma.commissionManagement.findMany({
+                    where: {
+                        supplier: {
+                            in: ["DUFFEL", "ALL"]
+                        },
+                        type: "AIRLINE"
+                    }
+                })
+            ])
+            
+            console.log(`[selfTransferRoundTripSearch] API requests executed at: ${Date.now() - startTime}ms`);
+
+            const parsedDuffelResponse = duffelResponse.map((possibleRoutes, routeIndex) => {
+                console.log(`[selfTransferRoundTripSearch] Processing route ${routeIndex + 1}/${duffelResponse.length} at: ${Date.now() - startTime}ms`);
+                return possibleRoutes.map((response, segmentIndex) => {
+                    console.log(`[selfTransferRoundTripSearch] Processing segment ${segmentIndex + 1}/${possibleRoutes.length} with ${response?.data?.offers?.length || 0} offers at: ${Date.now() - startTime}ms`);
+                    const parseStart = Date.now();
+                    const {result, airlines, extendedData} = duffelDiscountedRoundTripParser(response, commissions);
+                    console.log(`[selfTransferRoundTripSearch] Parser took ${Date.now() - parseStart}ms for segment ${segmentIndex + 1} at: ${Date.now() - startTime}ms`);
+                    airlines.forEach((airline) => {
+                        airlineSet.add(airline);
+                    });
+                    extendedData.forEach((airline) => {
+                        extendedDataMap.set(airline.iata_code, airline);
+                    });
+                    return result;
+                });
+            });
+            
+            console.log(`[selfTransferRoundTripSearch] Duffel response parsing completed at: ${Date.now() - startTime}ms`);
+
+            const miniDuffelResponse = await Promise.all(parsedDuffelResponse.map(async (route) => {
+                return Promise.all(route.map(async (response) => {
+                    return await Promise.all(response.map(async (offer) => {
+                        return await cacheOffer(offer as unknown as Offer);
+                    }));
+                }))
+            }))
+            const miniKiuResponse = await Promise.all(parsedKiuResponse.map(async (route) => {
+                return Promise.all(route.map(async (response) => {
+                    return await Promise.all(response.map(async (offer) => {
+                        return await cacheOffer(offer as unknown as Offer);
+                    }));
+                }))
+            }))
+            
+            console.log(`[selfTransferRoundTripSearch] Offer caching completed at: ${Date.now() - startTime}ms`);
+
+            let combination: any = [];
+            possibleRoutes.forEach((route, index) => {
+                const duffel = miniDuffelResponse?.[index]
+                const kiu = miniKiuResponse?.[index]
+                const temp = [];
+                route.forEach((data, index2) => {
+                    temp.push([
+                        ...(duffel?.[index2] || []),
+                        ...(kiu?.[index2] || [])
+                    ])
+                })
+                const paired = combineDiscountedRoundTripRoutes(temp, { maxConnectionTime: searchManagement?.[0]?.maxConnectionTime, minConnectionTime: searchManagement?.[0]?.minConnectionTime })
+                if (paired.length > 0)
+                    combination.push(paired)
+            })
+
+
+            let temp: any = []
+
+            combination.forEach((route, index) => {
+                // if (index === 0)
+                //     return;
+                temp.push(...route)
+            })
+            
+            console.log(`[selfTransferRoundTripSearch] Route combination completed at: ${Date.now() - startTime}ms`);
+            
+            const normalizedResponse = mapDiscountedRoundTripOffers(temp as unknown as MiniOffer[][])
+            
+            console.log(`[selfTransferRoundTripSearch] Final normalization completed at: ${Date.now() - startTime}ms`);
+            console.log(`[selfTransferRoundTripSearch] Successfully completed in: ${Date.now() - startTime}ms`);
+            
+            return {response: normalizedResponse, airlines: Array.from(airlineSet), extendedData: Array.from(extendedDataMap.values())};
+        } catch (error) {
+            console.error('Error in self transfer round trip search:', error);
             throw error;
         }
     }

@@ -66,14 +66,15 @@ export interface ManualLayoverSearchResponse{
     commissionAmount: number;
     routeId: string;
     serverSlices: any[];
-    fareOptionGDS: string;
+    fareOptionGDS?: string;
     total_amount: number;
     cabinBaggage: number;
     checkedBaggage: number;
-    stops: number;
+    stops?: number;
     minOnwardDuration: number;
     maxOnwardDuration: number;
     selfTransfer: boolean;
+    type: 'MANUAL_LAYOVER' | 'DISCOUNTED_ROUNDTRIP';
 }
 
 export type UpdatedFlightDetailsParams = {
@@ -99,6 +100,13 @@ export type MulticityOffer = {
     id: string;
 }
 
+export type MiniSlice = {
+    origin: Location,
+    destination: Location,
+    departureDate: string,
+    arrivalDate: string,
+}
+
 export type MiniOffer = {
     id: string,
     origin: Location,
@@ -113,6 +121,7 @@ export type MiniOffer = {
     commissionAmount: number,
     serverSlices?: string[],
     fareOptions?: any,
+    slices: MiniSlice[],
     stops: number,
     minOnwardDuration: number,
     maxOnwardDuration: number,
