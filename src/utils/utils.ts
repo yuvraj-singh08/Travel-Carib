@@ -469,11 +469,11 @@ export async function getCachedResponse(searchKey, limit?: number, offset: numbe
       }
 
       // Combine required chunks
-      const combinedData = [];
+      let combinedData = [];
       chunkResults.forEach(chunkStr => {
         if (chunkStr) {
           const chunkData = JSON.parse(chunkStr);
-          combinedData.push(...chunkData);
+          combinedData = combinedData.concat(chunkData);
         }
       });
 
@@ -505,11 +505,11 @@ export async function getCachedResponse(searchKey, limit?: number, offset: numbe
     }
 
     // Combine all chunks
-    const combinedData = [];
+    let combinedData = [];
     chunkResults.forEach(chunkStr => {
       if (chunkStr) {
         const chunkData = JSON.parse(chunkStr);
-        combinedData.push(...chunkData);
+        combinedData = combinedData.concat(chunkData);
       }
     });
 

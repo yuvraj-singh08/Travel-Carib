@@ -1080,7 +1080,7 @@ export const mapManualLayoverSearchResponse = (response: Offer[]) => {
         let responseId = "";
         let routeId = "";
         response.forEach((route) => {
-            serverSlices.push(...(route.slices));
+            serverSlices = serverSlices.concat(route.slices);
             responseId += route?.responseId
             routeId += route?.routeId
         })
@@ -1112,7 +1112,7 @@ export const mapManualLayoverSearchResponse = (response: Offer[]) => {
             if (index > 0) {
                 route.slices[0].segments[0].selfTransferSegment = true;
             }
-            slice.segments.push(...(route.slices[0].segments))
+            slice.segments = slice.segments.concat(route.slices[0].segments)
 
             if (route.fareOptions) { 
                 route.fareOptions.forEach((fareOption) => {
@@ -1157,11 +1157,11 @@ export const newNormalizeResponse = (response: Offer[][], cabinClass: string) =>
         let fareOptions = [];
         let serverSlices = [];
         offer.forEach((route) => {
-            slices.push(...(route.slices));
+            slices = slices.concat(route.slices);
             responseId += route?.responseId
             routeId += route?.routeId
             fareOptions.push(route.fareOptions);
-            serverSlices.push(...(route.serverSlices));
+            serverSlices = serverSlices.concat(route.serverSlices);
         })
         slices.forEach((slice) => {
             stops += slice?.segments?.length - 1 || 0;
@@ -1219,7 +1219,7 @@ export const normalizeResponse = (response: Offer[][], commission: CommissionTyp
         let routeId = "";
         const applicableCommission = commission.filter(c => c.supplier === "ALL")?.[0];
         offer.forEach((route) => {
-            slices.push(...(route.slices));
+            slices = slices.concat(route.slices);
             responseId += route?.responseId
             routeId += route?.routeId
         })
@@ -1512,7 +1512,7 @@ export const getRouteOptions = async ({ origin, destination }: RouteOptionParams
             }
         }
 
-        const formattedRoutes = [];
+        let formattedRoutes = [];
         searchManagement.forEach((route, routeIndex) => {
             const possibleLayovers = route.connectingAirports as unknown as String[][]
             const results = possibleLayovers.map((layovers, layoversIndex) => {
@@ -1536,7 +1536,7 @@ export const getRouteOptions = async ({ origin, destination }: RouteOptionParams
                 })
                 return possibleRoutes;
             })
-            formattedRoutes.push(...results);
+            formattedRoutes = formattedRoutes.concat(results);
         })
         const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
         // const possibleRoutes = formattedRoutes;
@@ -1592,7 +1592,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
                 }
         }
 
-        const formattedRoutes = [];
+        let formattedRoutes = [];
         searchManagement.forEach((route, routeIndex) => {
             const possibleLayovers = route.connectingAirports as unknown as String[][]
             const results = possibleLayovers.map((layovers, layoversIndex) => {
@@ -1616,7 +1616,7 @@ export const getSearchManagementRoutes = async (origin: string, destination: str
                 })
                 return possibleRoutes;
             })
-            formattedRoutes.push(...results);
+            formattedRoutes = formattedRoutes.concat(results);
         })
         const possibleRoutes = [[{ origin, destination }], ...formattedRoutes]
         // const possibleRoutes = formattedRoutes;
@@ -2036,7 +2036,7 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
                     fareBrand: offer.slices[0].fare_brand_name,
                     refund,
                     change,
-                    stops: offer.slices[0].segments.length - 1,
+                    stops: Math.max(offer.slices[0].segments.length - 1, offer.slices[1].segments.length - 1),
                     paymentRequirements,
                     minOnwardDuration,
                     maxOnwardDuration
@@ -2076,6 +2076,7 @@ export const mapDiscountedRoundTripOffers = (response: MiniOffer[][]): ManualLay
         let minOnwardDuration = offer[0].minOnwardDuration;
         let maxOnwardDuration = offer[0].maxOnwardDuration;
         let totalAmount = 0, totalCommission = 0;
+        let stops = offer[0].stops;
         offer.forEach((route) => {
             serverSlices.push(route.id);
             responseId += route?.responseId
@@ -2084,6 +2085,7 @@ export const mapDiscountedRoundTripOffers = (response: MiniOffer[][]): ManualLay
             maxOnwardDuration = Math.max(maxOnwardDuration, route.maxOnwardDuration);
             totalAmount = totalAmount + route.totalAmount;
             totalCommission = totalCommission + (route.commissionAmount);
+            stops = Math.max(stops, route.stops);
         })
         if (totalAmount > 10000) {
             console.log("Route Price is over the limit");
@@ -2104,7 +2106,7 @@ export const mapDiscountedRoundTripOffers = (response: MiniOffer[][]): ManualLay
             total_amount: finalAmount,
             minOnwardDuration,
             maxOnwardDuration,
-            stops: 0,
+            stops: stops + offer.length - 1,
             type: 'DISCOUNTED_ROUNDTRIP' as const,
             cabinBaggage: offer?.[0]?.cabinBaggage || 0,
             checkedBaggage: offer?.[0]?.checkedBaggage || 0,
@@ -2119,13 +2121,13 @@ export const combineDiscountedIteneries = async (response: ManualLayoverSearchRe
         const offers = await Promise.all(response.serverSlices.map(async (offerId) => {
             return await getCachedOffer(offerId)
         }))
-        const onWardSegments = [], returnSegments = [];
+        let onWardSegments = [], returnSegments = [];
         offers.forEach((offer) => {
             offer.slices.forEach((slice, index) => {
                 if (index === 0) {
-                    onWardSegments.push(...slice.segments)
+                    onWardSegments = onWardSegments.concat(slice.segments)
                 } else {
-                    returnSegments.push(...(slice.segments.reverse()))
+                    returnSegments = returnSegments.concat(slice.segments.reverse())
                 }
             })
         })

@@ -88,7 +88,7 @@ class FlightClient {
 
                 while (filteredResponse.length < limit && filterOffset < dataWithId.length) {
                     const filteredChunk = filterResponse(dataWithId.slice(filterOffset, filterOffset + chunkSize), filters, firewall, airlinesDetails.airlines)
-                    filteredResponse.push(...filteredChunk);
+                    filteredResponse = filteredResponse.concat(filteredChunk);
                     filterOffset += chunkSize;
                 }
 
@@ -177,7 +177,7 @@ class FlightClient {
 
             while (filteredResponse.length < limit && filterOffset < dataWithId.length) {
                 const filteredChunk = filterResponse(dataWithId.slice(filterOffset, filterOffset + chunkSize), filters, firewall, airlinesDetails.airlines)
-                filteredResponse.push(...filteredChunk);
+                filteredResponse = filteredResponse.concat(filteredChunk);
                 filterOffset += chunkSize;
             }
             
@@ -209,7 +209,7 @@ class FlightClient {
             const filteredChunk = filterResponse(chunkData as any[], filters, firewall, airlines);
             
             // Add filtered offers to our collection
-            filteredOffers.push(...filteredChunk);
+            filteredOffers = filteredOffers.concat(filteredChunk);
             
             // Move to next chunk
             currentOffset += chunkSize;
@@ -434,7 +434,7 @@ class FlightClient {
             combination.forEach((route, index) => {
                 // if (index === 0)
                 //     return;
-                temp.push(...route)
+                temp = temp.concat(route)
             })
 
             const normalizedResponse = mapCombinedResponseToOfferType(temp as unknown as MiniOffer[][])
@@ -742,7 +742,7 @@ class FlightClient {
             combination.forEach((route, index) => {
                 // if (index === 0)
                 //     return;
-                temp.push(...route)
+                temp = temp.concat(route)
             })
             
             console.log(`[selfTransferRoundTripSearch] Route combination completed at: ${Date.now() - startTime}ms`);

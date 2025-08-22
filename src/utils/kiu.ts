@@ -282,7 +282,8 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
     let responseId = "";
     let routeId = "";
     offer.forEach((route) => {
-      slices.push(...(route.slices));
+      slices = slices.concat(route.slices);
+      stops = Math.max(stops, route.stops);
       responseId += route?.responseId
       routeId += route?.routeId
       minOnwardDuration = Math.min(minOnwardDuration, route.minOnwardDuration);
@@ -296,13 +297,7 @@ export const normalizeKiuResponse = (response: Offer[][], cabinClass: string) =>
           arriving_at: route.slices[0].arriving_at,
         });
     })
-    slices.forEach((slice) => {
-      stops += slice?.segments?.length - 1 || 0;
-    })
-    if (slices?.length > 1) {
-      stops += 1
-    }
-
+    
     // const slicesWithBookingCode = slices.map((slice) => {
     //   let codesArray: string[][] = [];
     //   slice.segments.forEach((segment) => {
