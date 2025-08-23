@@ -4,11 +4,18 @@ import { PriceOriginDestinationOption } from "./kiuTypes";
 export interface RouteOptionParams {
     origin: string;
     destination: string;
+    active?: boolean;
 }
 
 export type RouteOptionResponse = {
     possibleRoutes: RouteOptionParams[][];
     searchManagement: any
+}
+
+export interface DetailedRouteType {
+    origin: string;
+    destination: string;
+    type: "ONGOING" | "RETURN" | "ROUNDTRIP";
 }
 
 export interface SearchManagementSchema {

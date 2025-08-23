@@ -1,6 +1,9 @@
+import { RuleType } from "@prisma/client";
 import redis from "../../config/redis";
-import { AggregatedFareBrand, DbBaggageType, FareBrandType, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
+import { AggregatedFareBrand, DbBaggageType, FareBrandType, FlightLeg, GdsBaggageType, OfferPassengerType, UtilBaggageType } from "../../types/flightTypes";
+import { prisma } from "../prismaClient";
 import { airlines } from "./airlines";
+import { RouteOptionParams } from "../../types/types";
 
 export function getDifferenceInMinutes(time1: string, time2: string): number {
   // Convert the string times into Date objects
@@ -351,6 +354,24 @@ export function reorganizeFareCodes(data: string[][]): string[][] {
   return result;
 }
 
+export async function cacheAirlineDetails(searchKey, data) {
+  try {
+    await redis.set(`${searchKey}:airlines`, JSON.stringify(data), "EX", 60 * 30);
+  } catch (error) {
+    console.error('Error caching airline details:', error);
+  }
+}
+
+export async function getCachedAirlineDetails(searchKey) {
+  try {
+    const data = await redis.get(`${searchKey}:airlines`);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Error getting cached airline details:', error);
+    return null;
+  }
+}
+
 export async function cacheResponseInChunks(searchKey, data, chunkSize = 1000) {
   try {
     const chunks = [];
@@ -371,7 +392,7 @@ export async function cacheResponseInChunks(searchKey, data, chunkSize = 1000) {
     // Store all chunks and metadata in parallel
     const cachePromises = [
       // Store metadata
-      redis.set(`${searchKey}:meta`, JSON.stringify(metadata), "EX", 60 * 10),
+      redis.set(`${searchKey}:meta`, JSON.stringify(metadata), "EX", 60 * 30),
       // Store each chunk
       ...chunks.map((chunk, index) =>
         redis.set(
@@ -398,7 +419,7 @@ export async function cacheResponseInChunks(searchKey, data, chunkSize = 1000) {
   }
 }
 
-export async function getCachedResponse(searchKey) {
+export async function getCachedResponse(searchKey, limit?: number, offset: number = 0) {
   try {
     // Try to get metadata first
     const metadataStr = await redis.get(`${searchKey}:meta`);
@@ -406,12 +427,67 @@ export async function getCachedResponse(searchKey) {
     if (!metadataStr) {
       // Check for fallback cache
       const fallbackStr = await redis.get(`${searchKey}:fallback`);
-      return fallbackStr ? JSON.parse(fallbackStr) : null;
+      if (!fallbackStr) return null;
+      
+      const fallbackData = JSON.parse(fallbackStr);
+      // Apply pagination to fallback data
+      if (limit !== undefined) {
+        return fallbackData.slice(offset, offset + limit);
+      }
+      return fallbackData;
     }
 
     const metadata = JSON.parse(metadataStr);
 
-    // Get all chunks in parallel
+    // If limit is provided, we can optimize by only fetching necessary chunks
+    if (limit !== undefined) {
+      const startIndex = offset;
+      const endIndex = offset + limit;
+      
+      // Calculate which chunks we need to fetch
+      const startChunk = Math.floor(startIndex / metadata.chunkSize);
+      const endChunk = Math.floor((endIndex - 1) / metadata.chunkSize);
+      
+      // Get only the required chunks
+      const chunkPromises = [];
+      for (let i = startChunk; i <= endChunk && i < metadata.totalChunks; i++) {
+        chunkPromises.push(redis.get(`${searchKey}:chunk:${i}`));
+      }
+
+      const chunkResults = await Promise.all(chunkPromises);
+
+      // Check if any chunk is missing
+      const missingChunks = chunkResults.some(chunk => chunk === null);
+      if (missingChunks) {
+        console.warn(`Some chunks missing for key: ${searchKey}`);
+        // Try fallback
+        const fallbackStr = await redis.get(`${searchKey}:fallback`);
+        if (!fallbackStr) return null;
+        
+        const fallbackData = JSON.parse(fallbackStr);
+        return fallbackData.slice(offset, offset + limit);
+      }
+
+      // Combine required chunks
+      let combinedData = [];
+      chunkResults.forEach(chunkStr => {
+        if (chunkStr) {
+          const chunkData = JSON.parse(chunkStr);
+          combinedData = combinedData.concat(chunkData);
+        }
+      });
+
+      // Apply pagination
+      const paginatedData = combinedData.slice(
+        startIndex - (startChunk * metadata.chunkSize),
+        endIndex - (startChunk * metadata.chunkSize)
+      );
+
+      console.log(`Retrieved ${paginatedData.length} items (${startIndex}-${endIndex}) from chunks ${startChunk}-${endChunk}`);
+      return paginatedData;
+    }
+
+    // If no limit provided, fetch all chunks (original behavior)
     const chunkPromises = [];
     for (let i = 0; i < metadata.totalChunks; i++) {
       chunkPromises.push(redis.get(`${searchKey}:chunk:${i}`));
@@ -429,11 +505,11 @@ export async function getCachedResponse(searchKey) {
     }
 
     // Combine all chunks
-    const combinedData = [];
+    let combinedData = [];
     chunkResults.forEach(chunkStr => {
       if (chunkStr) {
         const chunkData = JSON.parse(chunkStr);
-        combinedData.push(...chunkData);
+        combinedData = combinedData.concat(chunkData);
       }
     });
 
@@ -445,7 +521,14 @@ export async function getCachedResponse(searchKey) {
     // Try fallback cache
     try {
       const fallbackStr = await redis.get(`${searchKey}:fallback`);
-      return fallbackStr ? JSON.parse(fallbackStr) : null;
+      if (!fallbackStr) return null;
+      
+      const fallbackData = JSON.parse(fallbackStr);
+      // Apply pagination to fallback data
+      if (limit !== undefined) {
+        return fallbackData.slice(offset, offset + limit);
+      }
+      return fallbackData;
     } catch (fallbackError) {
       console.error('Fallback retrieval also failed:', fallbackError);
       return null;
@@ -494,5 +577,30 @@ export async function clearCache(searchKey) {
     }
   } catch (error) {
     console.error('Error clearing cache:', error);
+  }
+}
+
+export async function checkIfSelfTransferRoundTrip(flightDetails: FlightLeg[]) {
+  if(flightDetails.length !== 2) return false;
+  if(flightDetails[0].originLocation !== flightDetails[1].destinationLocation) return false;
+  if(flightDetails[0].destinationLocation !== flightDetails[1].originLocation) return false;
+
+  try {
+    const searchManagement = await prisma.searchManagement.findFirst({
+      where:{
+        origins:{
+          has:flightDetails[0].originLocation
+        },
+        destinations:{
+          has:flightDetails[0].destinationLocation
+        },
+      }
+    })
+    if(!searchManagement) return false;
+    if(searchManagement.ruleType === RuleType.CREATE_COMBINATION) return true;
+    else return false;
+  } catch (error) {
+    console.error('Error checking if self transfer round trip:', error);
+    return false;
   }
 }
