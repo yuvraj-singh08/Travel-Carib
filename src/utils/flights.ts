@@ -231,6 +231,7 @@ export const duffelResponseParser = async (duffelResponse: DuffelResponse<OfferR
                     cabin_class: duffelResponse.data.cabin_class,
                     fareBrand: result.slices[0].fare_brand_name,
                     refund,
+                    offerGDS: "DUFFEL",
                     change,
                     stops: result.slices[0].segments.length - 1,
                     paymentRequirements,
@@ -413,6 +414,7 @@ export const duffelMulticityResponseFormatter = async (duffelResponse: DuffelRes
                 departing_at,
                 arriving_at,
                 fareOptionGDS: "DUFFEL",
+                offerGDS: "DUFFEL",
                 cabinBaggage: sliceCabinBaggage,
                 checkedBaggage: sliceCheckedBaggage,
                 cabin_class: duffelResponse.data.cabin_class,
@@ -1955,44 +1957,7 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
             let minOnwardDuration = moment(offer.slices[0].segments[0].arriving_at).diff(moment(offer.slices[0].segments[0].departing_at), 'minutes');
             let maxOnwardDuration = moment(offer.slices[0].segments[0].arriving_at).diff(moment(offer.slices[0].segments[0].departing_at), 'minutes');
             
-            const segmentProcessStart = Date.now();
-            offer.slices.forEach((slice) => {
-                slice.segments.forEach((segment) => {
-                    // Heavy moment operations
-                    minOnwardDuration = Math.min(minOnwardDuration, moment(segment.arriving_at).diff(moment(segment.departing_at), 'minutes'));
-                    maxOnwardDuration = Math.max(maxOnwardDuration, moment(segment.arriving_at).diff(moment(segment.departing_at), 'minutes'));
-                    
-                    // String concatenations  
-                    routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
-                    responseId += segment.operating_carrier.iata_code + (segment.operating_carrier_flight_number || segment.marketing_carrier_flight_number) + segment.departing_at + segment.arriving_at;
-                    
-                    // Airline lookups
-                    const iata_code = segment.operating_carrier.iata_code;
-                    airlineSet.add(iata_code);
-                    extendedDataMap.set(iata_code, {
-                        id: iata_code,
-                        label: segment.operating_carrier.name ?? getAirlineNameByCode(iata_code) ?? iata_code ?? "",
-                        src: segment.operating_carrier.logo_symbol_url || getAirlineLogo(iata_code),
-                        iata_code
-                    });
-                })
-            })
-            
-            if (offerIndex === 0) {
-                console.log(`[Parser] First offer - moment ops: ${segmentProcessStart - momentStart}ms, segment processing: ${Date.now() - segmentProcessStart}ms`);
-            }
-
-            let totalAmount = parseFloat(offer.total_amount);
-            let commissionAmount = 0;
-            commissions.forEach((commission) => {
-                if (commission.feeType === 'FIXED') {
-                    commissionAmount += parseFloat(commission.commissionFees);
-                }
-                else {
-                    commissionAmount += (totalAmount * parseFloat(commission.commissionFees)) / 100.0;
-                }
-            })
-            totalAmount = totalAmount + commissionAmount;
+            let sliceCabinBaggage = offer?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'carry_on')?.[0]?.quantity || 0, sliceCheckedBaggage = offer?.slices?.[0]?.segments?.[0]?.passengers?.[0]?.baggages.filter((b) => b.type === 'checked')?.[0]?.quantity || 0;
 
             //Refund and Change Conditions
             let refund = {}
@@ -2025,6 +1990,54 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
                 payment_required_by: offer.payment_requirements.payment_required_by
             }
 
+            const segmentProcessStart = Date.now();
+            let fareOptions = [];
+            offer.slices.forEach((slice) => {
+                slice.segments.forEach((segment) => {
+                    // Heavy moment operations
+                    minOnwardDuration = Math.min(minOnwardDuration, moment(segment.arriving_at).diff(moment(segment.departing_at), 'minutes'));
+                    maxOnwardDuration = Math.max(maxOnwardDuration, moment(segment.arriving_at).diff(moment(segment.departing_at), 'minutes'));
+                    
+                    // String concatenations  
+                    routeId += segment.origin.iata_code + segment.destination.iata_code + ',';
+                    responseId += segment.operating_carrier.iata_code + (segment.operating_carrier_flight_number || segment.marketing_carrier_flight_number) + segment.departing_at + segment.arriving_at;
+                    
+                    // Airline lookups
+                    const iata_code = segment.operating_carrier.iata_code;
+                    airlineSet.add(iata_code);
+                    extendedDataMap.set(iata_code, {
+                        id: iata_code,
+                        label: segment.operating_carrier.name ?? getAirlineNameByCode(iata_code) ?? iata_code ?? "",
+                        src: segment.operating_carrier.logo_symbol_url || getAirlineLogo(iata_code),
+                        iata_code
+                    });
+                })
+                fareOptions.push({
+                    fareBrand: slice.fare_brand_name,
+                    cabinBaggage: sliceCabinBaggage,
+                    checkedBaggage: sliceCheckedBaggage,
+                    refund: refund,
+                    change: change,
+                    paymentRequirements: paymentRequirements
+                })
+            })
+            
+            if (offerIndex === 0) {
+                console.log(`[Parser] First offer - moment ops: ${segmentProcessStart - momentStart}ms, segment processing: ${Date.now() - segmentProcessStart}ms`);
+            }
+
+            let totalAmount = parseFloat(offer.total_amount);
+            let commissionAmount = 0;
+            commissions.forEach((commission) => {
+                if (commission.feeType === 'FIXED') {
+                    commissionAmount += parseFloat(commission.commissionFees);
+                }
+                else {
+                    commissionAmount += (totalAmount * parseFloat(commission.commissionFees)) / 100.0;
+                }
+            })
+            totalAmount = totalAmount + commissionAmount;
+
             const parsedOffer = {
                 ...offer,
                     total_amount: totalAmount,
@@ -2036,6 +2049,8 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
                     fareBrand: offer.slices[0].fare_brand_name,
                     refund,
                     change,
+                    fareOptions,
+                    offerGDS: "DUFFEL",
                     stops: Math.max(offer.slices[0].segments.length - 1, offer.slices[1].segments.length - 1),
                     paymentRequirements,
                     minOnwardDuration,
@@ -2049,6 +2064,7 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
         const finalProcessStart = Date.now();
         uniqueResponses.forEach((offers, key) => {
             let totalAmount = offers[0].total_amount;
+            let fareOptions = [];
             let offerIndex = 0;
             offers.forEach((offer, index) => {
                 if (index === 0) return;
@@ -2056,7 +2072,13 @@ export const duffelDiscountedRoundTripParser = (response: DuffelResponse<OfferRe
                     totalAmount = offer.total_amount;
                     offerIndex = index;
                 }
+                fareOptions.push({
+                    fareOptions: offer.fareOptions,
+                    price: offer.total_amount,
+                    offerId: offer.id,
+                })
             })
+            offers[offerIndex].fareOptions = fareOptions;
             result.push(offers[offerIndex]);
         })
 
@@ -2121,7 +2143,7 @@ export const combineDiscountedIteneries = async (response: ManualLayoverSearchRe
         const offers = await Promise.all(response.serverSlices.map(async (offerId) => {
             return await getCachedOffer(offerId)
         }))
-        let onWardSegments = [], returnSegments = [];
+        let onWardSegments = [], returnSegments = [], fareOptions = [];
         offers.forEach((offer) => {
             offer.slices.forEach((slice, index) => {
                 if (index === 0) {
@@ -2129,6 +2151,21 @@ export const combineDiscountedIteneries = async (response: ManualLayoverSearchRe
                 } else {
                     returnSegments = returnSegments.concat(slice.segments.reverse())
                 }
+            })
+            fareOptions.push({
+                origin: {
+                    iata_code: offer.slices[0].segments[0].origin.iata_code,
+                },
+                destination: {
+                    iata_code: offer.slices[0].segments[offer.slices[0].segments.length - 1].destination.iata_code,
+                },
+                onWardDeparture: offer.slices[0].segments[0].departing_at,
+                onWardArrival: offer.slices[0].segments[offer.slices[0].segments.length - 1].arriving_at,
+                returnDeparture: offer.slices[1].segments[0].departing_at,
+                returnArrival: offer.slices[1].segments[offer.slices[1].segments.length - 1].arriving_at,
+                fareOptions: offer.fareOptions,
+                type: offer.offerGDS,
+                roundTrip: true
             })
         })
         returnSegments.reverse();
@@ -2141,7 +2178,8 @@ export const combineDiscountedIteneries = async (response: ManualLayoverSearchRe
             destination: onWardSegments[onWardSegments.length - 1].destination,
             total_amount: response.total_amount,
             commissionAmount: response.commissionAmount,
-            fareOptionGDS: [],
+            fareOptionGDS: "discountedRoundTrip",
+            fareOptions,
             minOnwardDuration: response.minOnwardDuration,
             maxOnwardDuration: response.maxOnwardDuration,
             cabinBaggage: response.cabinBaggage,

@@ -148,6 +148,7 @@ export type Offer = {
     private_fares: any[];
     tax_amount: string;
     total_currency: string;
+    offerGDS: string;
     created_at: string;
     live_mode: boolean;
     fareOptionGDS?: string;

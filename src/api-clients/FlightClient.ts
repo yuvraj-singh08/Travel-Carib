@@ -220,10 +220,9 @@ class FlightClient {
         // const sortedResponse = sortResponse(combinedData, sortBy);
         
         // Apply pagination (limit and offset)
-        const paginatedResponse = combinedData.filter((_, index) => index < limit);
-
+        
         return {
-            flightData: paginatedResponse,
+            flightData: combinedData,
             searchKey: id,
             processingOffset: currentOffset
         };
