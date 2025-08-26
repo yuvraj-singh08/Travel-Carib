@@ -2269,12 +2269,25 @@ export const getSearchManagement = async (
   try {
 
     //add pagination
-    const { page, limit } = req.query;
+    const { page, limit,search } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
-    const totalItems = await prisma.searchManagement.count();
+    const totalItems = await prisma.searchManagement.count({
+      where: {
+        OR: [
+          { ruleTitle: { contains: search as string, mode: "insensitive" } },
+         
+        ],
+      },
+    });
 
 
     const entries = await prisma.searchManagement.findMany({
+      where: {
+        OR: [
+          { ruleTitle: { contains: search as string, mode: "insensitive" } },
+         
+        ],
+      },
       skip,
       take: Number(limit),
     });
@@ -2295,6 +2308,9 @@ export const getSearchManagement = async (
     next(handlePrismaError(error));
   }
 };
+
+
+
 
 // Update an existing SearchManagement entry
 export const updateSearchManagement = async (
